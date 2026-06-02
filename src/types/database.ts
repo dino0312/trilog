@@ -54,7 +54,7 @@ export type Database = {
           nickname:    string | null
           gender:      Gender | null
           birth_year:  number | null
-          nationality: string | null           // ISO 3166-1 alpha-3
+          nationality: string | null
           bio:         string | null
           avatar_url:  string | null
           is_minor:    boolean
@@ -63,11 +63,21 @@ export type Database = {
           updated_at:  string
           deleted_at:  string | null
         }
-        Insert: Omit<
-          Database['public']['Tables']['athletes']['Row'],
-          'is_minor' | 'created_at' | 'updated_at'
-        >
+        Insert: {
+          id:           string
+          email:        string
+          nickname?:    string | null
+          gender?:      Gender | null
+          birth_year?:  number | null
+          nationality?: string | null
+          bio?:         string | null
+          avatar_url?:  string | null
+          is_minor?:    boolean
+          role?:        Role
+          deleted_at?:  string | null
+        }
         Update: Partial<Database['public']['Tables']['athletes']['Insert']>
+        Relationships: []
       }
 
       // ── races ────────────────────────────────────────────
@@ -87,11 +97,21 @@ export type Database = {
           created_at: string
           updated_at: string
         }
-        Insert: Omit<
-          Database['public']['Tables']['races']['Row'],
-          'created_at' | 'updated_at'
-        >
+        Insert: {
+          id?:         string
+          name:        string
+          slug:        string
+          status?:     RaceStatus
+          country?:    string | null
+          city?:       string | null
+          lat?:        number | null
+          lng?:        number | null
+          organizer?:  string | null
+          website?:    string | null
+          created_by?: string | null
+        }
         Update: Partial<Database['public']['Tables']['races']['Insert']>
+        Relationships: []
       }
 
       // ── race_editions ────────────────────────────────────
@@ -117,11 +137,27 @@ export type Database = {
           created_at:         string
           updated_at:         string
         }
-        Insert: Omit<
-          Database['public']['Tables']['race_editions']['Row'],
-          'created_at' | 'updated_at'
-        >
+        Insert: {
+          id?:                 string
+          race_id:             string
+          year:                number
+          race_date:           string
+          distance_category:   DistanceCategory
+          swim_distance_m?:    number | null
+          bike_distance_km?:   number | null
+          run_distance_km?:    number | null
+          is_wetsuit_allowed?: boolean | null
+          water_temp_c?:       number | null
+          swim_type?:          SwimType | null
+          weather_source?:     WeatherSource | null
+          weather_data?:       WeatherData | null
+          finisher_count?:     number | null
+          dnf_count?:          number | null
+          total_starters?:     number | null
+          notes?:              string | null
+        }
         Update: Partial<Database['public']['Tables']['race_editions']['Insert']>
+        Relationships: []
       }
 
       // ── results ──────────────────────────────────────────
@@ -152,11 +188,31 @@ export type Database = {
           created_at:            string
           updated_at:            string
         }
-        Insert: Omit<
-          Database['public']['Tables']['results']['Row'],
-          'claim_tag_count' | 'created_at' | 'updated_at'
-        >
+        Insert: {
+          id?:                    string
+          result_type:            ResultType
+          race_edition_id:        string
+          athlete_id?:            string | null
+          athlete_name_snapshot?: string | null
+          source_credibility:     SourceCredibility
+          claim_status?:          ClaimStatus
+          total_seconds:          number
+          swim_seconds?:          number | null
+          t1_seconds?:            number | null
+          bike_seconds?:          number | null
+          t2_seconds?:            number | null
+          run_seconds?:           number | null
+          is_public?:             boolean
+          certificate_url?:       string | null
+          overall_rank?:          number | null
+          ag_rank?:               number | null
+          bib_number?:            string | null
+          notes?:                 string | null
+          claimed_at?:            string | null
+          verified_at?:           string | null
+        }
         Update: Partial<Database['public']['Tables']['results']['Insert']>
+        Relationships: []
       }
 
       // ── claim_tags ───────────────────────────────────────
@@ -168,8 +224,14 @@ export type Database = {
           message:    string | null
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['claim_tags']['Row'], 'created_at'>
+        Insert: {
+          id?:       string
+          result_id: string
+          tagged_by: string
+          message?:  string | null
+        }
         Update: Partial<Database['public']['Tables']['claim_tags']['Insert']>
+        Relationships: []
       }
 
       // ── teams ────────────────────────────────────────────
@@ -183,8 +245,16 @@ export type Database = {
           t2_seconds:      number | null
           created_at:      string
         }
-        Insert: Omit<Database['public']['Tables']['teams']['Row'], 'created_at'>
+        Insert: {
+          id?:              string
+          result_id:        string
+          team_name?:       string | null
+          gender_category:  GenderCategory
+          t1_seconds?:      number | null
+          t2_seconds?:      number | null
+        }
         Update: Partial<Database['public']['Tables']['teams']['Insert']>
+        Relationships: []
       }
 
       // ── team_members ─────────────────────────────────────
@@ -194,7 +264,7 @@ export type Database = {
           team_id:               string
           athlete_id:            string | null
           athlete_name_snapshot: string
-          disciplines:           string[]        // 'swim' | 'bike' | 'run'
+          disciplines:           string[]
           split_seconds:         number | null
           source_credibility:    SourceCredibility
           claim_status:          ClaimStatus
@@ -204,8 +274,22 @@ export type Database = {
           verified_at:           string | null
           created_at:            string
         }
-        Insert: Omit<Database['public']['Tables']['team_members']['Row'], 'created_at'>
+        Insert: {
+          id?:                    string
+          team_id:                string
+          athlete_id?:            string | null
+          athlete_name_snapshot:  string
+          disciplines:            string[]
+          split_seconds?:         number | null
+          source_credibility?:    SourceCredibility
+          claim_status?:          ClaimStatus
+          certificate_url?:       string | null
+          sort_order?:            number
+          claimed_at?:            string | null
+          verified_at?:           string | null
+        }
         Update: Partial<Database['public']['Tables']['team_members']['Insert']>
+        Relationships: []
       }
 
       // ── race_editors ─────────────────────────────────────
@@ -218,8 +302,15 @@ export type Database = {
           granted_by: string | null
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['race_editors']['Row'], 'created_at'>
+        Insert: {
+          id?:         string
+          race_id:     string
+          athlete_id:  string
+          role?:       EditorRole
+          granted_by?: string | null
+        }
         Update: Partial<Database['public']['Tables']['race_editors']['Insert']>
+        Relationships: []
       }
 
     }
@@ -247,7 +338,7 @@ export type Database = {
           nationality:       string | null
           gender:            Gender | null
           birth_year:        number | null
-          age_group:         string | null      // 如 'M30-34'
+          age_group:         string | null
           avatar_url:        string | null
           athlete_id:        string | null
           edition_id:        string
@@ -261,6 +352,7 @@ export type Database = {
           race_country:      string | null
           created_at:        string
         }
+        Relationships: []
       }
 
       // ── relay_leaderboard_entries ────────────────────────
@@ -285,6 +377,7 @@ export type Database = {
           race_slug:         string
           created_at:        string
         }
+        Relationships: []
       }
 
       // ── athlete_public_profiles ──────────────────────────
@@ -300,6 +393,7 @@ export type Database = {
           created_at:          string
           public_result_count: number
         }
+        Relationships: []
       }
 
     }
