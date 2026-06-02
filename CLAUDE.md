@@ -1,104 +1,190 @@
-@AGENTS.md
+# CLAUDE.md — Tri·log AI Agent 操作手冊
 
-# Tri·log — Claude Code 操作指南
-
-## 文件維護規則（最高優先）
-
-**每次架構變更後，必須更新以下文件：**
-
-| 變更類型 | 必須更新 |
-|---------|---------|
-| 資料庫 schema（`supabase/migrations/`） | `docs/decisions.md`（ADR）、`docs/api.md`（資料模型） |
-| API endpoint（`src/app/api/`） | `docs/api.md`、視情況更新 `docs/decisions.md` |
-| 型別定義（`src/types/database.ts`） | `docs/api.md`（回傳格式）、`CLAUDE.md`（若影響操作規則） |
-| 中介層（`src/middleware.ts` / `src/proxy.ts`） | `docs/decisions.md`（ADR-003）、`docs/architecture.md` |
-| 框架設定（`next.config.ts`、`package.json`） | `docs/decisions.md`（新 ADR 或更新既有 ADR） |
-
-**文件與程式碼不一致時，永遠優先更新文件。**
-
-這條規則已同時設定為 `PostToolUse` hook（`.claude/settings.json`），架構變更後 Claude 會自動觸發文件更新。
+> 這份文件是新 Claude Session 的第一份讀物。  
+> 目標：讀完後可以立刻接手任何開發任務，不需要問背景問題。
 
 ---
 
-## 專案概述
+## 1. 產品一句話
 
-**Tri·log** — 鐵人三項成績記錄與跨賽事排行榜平台。  
-Spec 版本：v11（`trilog_spec_v11.docx`）  
-文件索引：`docs/architecture.md`（系統架構）、`docs/decisions.md`（ADR）、`docs/api.md`（API）
+Tri·log 是鐵人三項選手的**跨賽事成績記錄與排行榜平台**。  
+核心差異：內建「策展層」——助手預先建立官方成績，讓平台上線第一天就有完整內容，選手再逐步「認領」屬於自己的成績。
 
-## 技術堆疊
+---
 
-| 層次 | 技術 | 版本 |
-|------|------|------|
-| 框架 | Next.js App Router | 16.2.7（⚠️ 有 breaking changes，詳見下方） |
-| 語言 | TypeScript strict mode | 5.x |
-| 樣式 | Tailwind CSS v4 + CSS Custom Properties | 4.x |
-| 後端 / DB | Supabase (PostgreSQL + Auth + Storage) | — |
-| 套件管理 | npm | — |
+## 2. 知識庫導覽
 
-## ⚠️ Next.js 16 Breaking Changes
+| 想了解 | 讀這份文件 |
+|--------|-----------|
+| 產品邏輯、業務規則、資料概念 | `docs/domain.md` |
+| 資料庫 schema、RLS、trigger | `docs/database.md` |
+| API 端點設計、請求格式 | `docs/api.md` |
+| 技術選型理由、架構決策 | `docs/decisions.md` |
+| 系統架構圖、資料流 | `docs/architecture.md` |
 
-**這不是你熟悉的 Next.js。** 詳見 `AGENTS.md` 警告。
+---
 
-關鍵差異：
-- `middleware.ts` 已 deprecated，正式名稱改為 `proxy.ts`（目前暫緩遷移，見 ADR-003）
-- 在寫任何 Next.js 相關程式碼前，先讀 `node_modules/next/dist/docs/` 中的相關文件
+## 3. 技術堆疊速查
 
-## 目錄結構重點
+| 層次 | 技術 | 重要版本備注 |
+|------|------|------------|
+| 框架 | Next.js App Router | **v16.2.7 — 有 breaking changes，見第 5 節** |
+| 語言 | TypeScript strict | v5 |
+| 樣式 | Tailwind CSS v4 + CSS Custom Properties | `@theme inline` 語法，非 v3 config |
+| DB / Auth | Supabase (PostgreSQL) | Row Level Security 全面啟用 |
+| 部署 | Vercel | 自動 CI/CD |
+| 天氣 API | Open-Meteo | 免費，無需金鑰 |
+| Email | Resend | Phase 2 功能，尚未整合 |
+
+---
+
+## 4. 專案目錄結構
 
 ```
 src/
-├── app/
-│   ├── (main)/          # 主應用 Route Group（有 Nav）
-│   ├── (auth)/          # 認證頁 Route Group（全螢幕置中）
-│   └── api/             # Route Handlers
-├── lib/supabase/
-│   ├── client.ts        # 瀏覽器端（Client Components）
-│   ├── server.ts        # Server Components / Route Handlers
-│   └── middleware.ts    # Edge Middleware（proxy.ts 遷移前）
-├── types/
-│   ├── database.ts      # Supabase DB 型別（手動維護）
-│   └── index.ts         # 應用層業務型別
-└── middleware.ts        # Next.js Middleware 入口
+  app/
+    (main)/          主應用 Route Group，有 Nav Layout
+      leaderboard/   公開排行榜
+      records/       我的成績（需登入）
+        new/         新增成績
+      profile/       個人資料（需登入）
+    (auth)/          認證 Route Group，全螢幕置中 Layout
+      login/
+      register/
+    api/             Route Handlers（待建立）
+    globals.css      設計 token + Tailwind v4 主題橋接
+    layout.tsx       根 Layout
+    page.tsx         / → redirect /leaderboard
+  lib/
+    supabase/
+      client.ts      瀏覽器端（'use client' 元件用）
+      server.ts      Server Component / Route Handler 用
+      middleware.ts  Edge Middleware 用
+    utils/
+      cn.ts          clsx + tailwind-merge
+      time.ts        秒數 ↔ HH:MM:SS 轉換
+  middleware.ts      路由守衛入口（⚠️ deprecated，見第 5 節）
+  types/
+    database.ts      Supabase DB 型別（手動維護）
+    index.ts         應用層業務型別
 
-supabase/migrations/     # 依序執行的 SQL migration
-docs/                    # 架構文件（architecture.md、decisions.md、api.md）
+supabase/
+  migrations/        9 個 SQL migration，按序號執行
+
+docs/               知識庫文件（本目錄）
+.claude/
+  settings.json      PostToolUse hook（架構變更時自動更新文件）
 ```
 
-## 開發規則
+---
 
-### Supabase Client 使用規則
+## 5. ⚠️ Next.js 16 重要差異
 
-| 情境 | 使用哪個 client |
-|------|---------------|
-| `'use client'` 元件 | `src/lib/supabase/client.ts` |
-| Server Component / Route Handler | `src/lib/supabase/server.ts` |
-| `middleware.ts` / `proxy.ts` | `src/lib/supabase/middleware.ts` |
+**這是 Next.js 16，不是你訓練資料裡的 Next.js 13/14。**
 
-**絕對不要在 `createServerClient` 和 `supabase.auth.getUser()` 之間插入任何程式碼。**
+寫任何 Next.js 程式碼前，先查：
+```
+node_modules/next/dist/docs/01-app/
+```
 
-### 資料庫規則
+### 最重要的 Breaking Change：Middleware → Proxy
 
-- 時間欄位一律用 `timestamptz`，不用 `timestamp`
-- 時間值一律以**整數秒**儲存，UI 負責格式化（`src/lib/utils/time.ts`）
-- 不使用 PostgreSQL ENUM，一律用 `CHECK constraint`
-- 所有新資料表必須啟用 RLS 並建立 policy
-- `SECURITY DEFINER` 函式必須加 `SET search_path = public`
+Next.js 16 將 `middleware.ts` 更名為 `proxy.ts`。  
+現狀：本專案仍用 `middleware.ts`（build 時有 deprecation warning）。  
+遷移時機：等 `@supabase/ssr` 官方更新文件後再遷移。詳見 `docs/decisions.md` ADR-003。
 
-### 環境變數規則
+**在遷移前，不要把 `middleware.ts` 改成 `proxy.ts`。**
 
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — 可以出現在前端
-- `SUPABASE_SERVICE_ROLE_KEY` — **絕對不能出現在前端或 `NEXT_PUBLIC_` 變數**
+---
 
-### 不可違反的核心規則
+## 6. Supabase Client 使用規則
 
-完整清單見 `docs/decisions.md` 附錄「不可違反的全域規則總表」（17 條）。
+三個 client 對應三個 Next.js 執行環境，不可混用：
 
-## 常用指令
+| 你在哪裡 | 用哪個 import |
+|---------|-------------|
+| `'use client'` 元件 | `@/lib/supabase/client` |
+| Server Component 或 Route Handler | `@/lib/supabase/server` |
+| `middleware.ts` / `proxy.ts` | `@/lib/supabase/middleware` |
+
+**絕對禁止**：在 `createServerClient()` 和 `supabase.auth.getUser()` 之間放任何程式碼。  
+理由：這會破壞 token 自動刷新，導致用戶莫名被登出。
+
+---
+
+## 7. 環境變數
+
+| 變數 | 哪裡用 | 可以暴露在前端？ |
+|------|--------|--------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | 三個 client | ✅ 可以（NEXT_PUBLIC_） |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 三個 client | ✅ 可以（RLS 保護資料） |
+| `SUPABASE_SERVICE_ROLE_KEY` | 僅 server-side 管理操作 | ❌ **絕對不行** |
+
+複製 `.env.local.example` 為 `.env.local` 並填入值。
+
+---
+
+## 8. 資料庫工作規則
+
+### 必須遵守
+
+- **時間戳**：一律 `timestamptz`，不用 `timestamp`
+- **時間值**：一律整數秒儲存，UI 用 `secondsToTime()` 格式化
+- **值域限制**：用 `CHECK constraint`，不用 PostgreSQL ENUM
+- **所有新表**：必須 `ENABLE ROW LEVEL SECURITY` + 建立對應 policy
+- **SECURITY DEFINER 函式**：必須加 `SET search_path = public`
+
+### 禁止
+
+- 直接用 `INSERT INTO athletes` 新增選手（由 `handle_new_user` trigger 處理）
+- 直接 `DELETE FROM athletes`（只做軟刪除 `SET deleted_at = now()`）
+- 降低 `source_credibility`（`official` 不可降級，trigger 強制執行）
+- 刪除策展層成績（`source_credibility = 'official'`，永久保留）
+
+---
+
+## 9. 設計 Token 系統
+
+設計使用 Variation C（Modern Sport Tech）深色主題，定義在 `globals.css`：
+
+| 用途 | CSS 變數 | Tailwind class |
+|------|---------|---------------|
+| 頁面背景 | `--bg` (#0b0f14) | `bg-bg` |
+| 卡片背景 | `--bg-card` (#161b22) | `bg-bg-card` |
+| 主色強調 | `--accent` (#66c6be 薄荷綠) | `text-accent` / `bg-accent` |
+| 主文字 | `--ink` (白) | `text-ink` |
+| 次要文字 | `--ink-3` (#8892a0) | `text-ink-3` |
+| 游泳顏色 | `--swim` (#4ea1ff 藍) | `text-swim` |
+| 自行車顏色 | `--bike` (#66c6be 綠) | `text-bike` |
+| 跑步顏色 | `--run` (#ff685e 紅) | `text-run` |
+
+新增 token 時，`globals.css` 的 `:root {}` 和 `@theme inline {}` 必須同時更新。
+
+---
+
+## 10. 常用指令
 
 ```bash
-npm run dev      # 啟動開發伺服器
-npm run build    # 生產環境建置
-npm run lint     # ESLint 檢查
-npx tsc --noEmit # TypeScript 型別檢查
+npm run dev          開發伺服器
+npm run build        生產建置（確認無 TypeScript error）
+npx tsc --noEmit     純 TypeScript 型別檢查
+npm run lint         ESLint
 ```
+
+---
+
+## 11. 文件維護義務
+
+**每次觸及以下路徑時，必須同步更新對應文件：**
+
+| 觸碰的檔案 | 必須更新 |
+|-----------|---------|
+| `supabase/migrations/*.sql` | `docs/database.md`、`docs/decisions.md`（若有新決策） |
+| `src/app/api/**` | `docs/api.md` |
+| `src/types/database.ts` | `docs/database.md`（型別欄位）、`docs/api.md`（回傳格式） |
+| 新增/修改 Route Group 或 middleware | `docs/architecture.md`、`CLAUDE.md` |
+| `package.json` 新增依賴 | `docs/decisions.md`（若有新決策）、`CLAUDE.md`（第 3 節） |
+
+文件與程式碼不一致時，**永遠優先更新文件**。
+
+`.claude/settings.json` 的 `PostToolUse` hook 會在觸碰架構檔案後自動提醒更新文件。
