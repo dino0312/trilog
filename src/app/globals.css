@@ -1,26 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
+/* ── Tri·log Design Tokens (Variation C · Modern Sport Tech) ── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg:           #0b0f14;
+  --bg-alt:       #101418;
+  --bg-card:      #161b22;
+  --bg-elev:      #1b222b;
+  --border:       #1f2731;
+  --border-strong:#2a3441;
+
+  --ink:          #ffffff;
+  --ink-2:        #d1d5db;
+  --ink-3:        #8892a0;
+  --ink-4:        #5a6573;
+
+  --accent:       #66c6be;   /* mint teal */
+  --accent-soft:  rgba(102, 198, 190, 0.12);
+  --accent-ink:   #0b0f14;
+
+  --blue:         #4ea1ff;
+  --red:          #ff685e;
+
+  --swim:         #4ea1ff;
+  --bike:         #66c6be;
+  --run:          #ff685e;
+
+  --good:         #66c6be;
+  --warn:         #ffb547;
+  --bad:          #ff685e;
+
+  --font-body:    'Manrope', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, monospace;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg:           var(--bg);
+  --color-bg-alt:       var(--bg-alt);
+  --color-bg-card:      var(--bg-card);
+  --color-bg-elev:      var(--bg-elev);
+  --color-border:       var(--border);
+  --color-border-strong:var(--border-strong);
+  --color-ink:          var(--ink);
+  --color-ink-2:        var(--ink-2);
+  --color-ink-3:        var(--ink-3);
+  --color-ink-4:        var(--ink-4);
+  --color-accent:       var(--accent);
+  --color-accent-soft:  var(--accent-soft);
+  --color-accent-ink:   var(--accent-ink);
+  --color-blue:         var(--blue);
+  --color-red:          var(--red);
+  --color-swim:         var(--swim);
+  --color-bike:         var(--bike);
+  --color-run:          var(--run);
+  --color-good:         var(--good);
+  --color-warn:         var(--warn);
+  --color-bad:          var(--bad);
+  --font-sans:          var(--font-body);
+  --font-mono:          var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* { box-sizing: border-box; }
+
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(127,127,127,.25); border-radius: 6px; }
+
+/* Utilities */
+.tab-num { font-variant-numeric: tabular-nums; }
+.mono    { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }

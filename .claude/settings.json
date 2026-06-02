@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "agent",
+            "statusMessage": "檢查是否需要更新架構文件…",
+            "timeout": 120,
+            "prompt": "你是 Tri·log 專案的文件守護者。一個檔案剛被寫入或修改。\n\n變更的檔案路徑：$ARGUMENTS\n\n**判斷步驟：**\n1. 解析 $ARGUMENTS（JSON），取出 tool_input.file_path 或 tool_response.filePath\n2. 判斷是否屬於「架構變更」，架構變更的定義是以下任一：\n   - supabase/migrations/*.sql（資料庫 schema 變更）\n   - src/app/api/**（API endpoint 新增或修改）\n   - src/types/database.ts（DB 型別更新）\n   - src/middleware.ts 或 src/proxy.ts（路由守衛變更）\n   - next.config.ts（框架設定變更）\n   - package.json（依賴套件變更）\n3. 如果「不是」架構變更（例如 UI 元件、樣式、測試），直接回傳空字串，不做任何事。\n\n**如果是架構變更，依序更新以下文件（文件存在才更新；文件不存在且需要則建立）：**\n\n**CLAUDE.md**（路徑：/Users/dino/Developments/Trilog/trilog/CLAUDE.md）\n- 如果變更影響 Claude Code 應如何操作此專案（新規則、新目錄、新工具），更新對應段落\n- 如果 CLAUDE.md 的內容與程式碼現狀有不一致，優先修正文件\n\n**docs/decisions.md**（路徑：/Users/dino/Developments/Trilog/trilog/docs/decisions.md）\n- 如果這是新的架構決策（新表格、新欄位設計、新 API 規則、依賴替換），新增一筆 ADR\n- 如果是修改既有決策，更新對應 ADR 的狀態、後果或規則\n- ADR 格式遵循現有格式（狀態、背景脈絡、決策、放棄的選項、後果、不能改動的規則）\n- 如果只是補充細節而非新決策，更新對應 ADR 的內容\n\n**docs/api.md**（路徑：/Users/dino/Developments/Trilog/trilog/docs/api.md）\n- 如果是 API endpoint 新增、修改或刪除，更新 API 文件\n- 如果是 DB schema 變更影響 API 回傳格式，同步更新回傳格式範例\n- 如果 docs/api.md 不存在且此次是 API 相關變更，建立初版 API 文件\n\n**文件與程式碼不一致時，永遠優先更新文件。**\n\n專案根目錄：/Users/dino/Developments/Trilog/trilog"
+          }
+        ]
+      }
+    ]
+  }
+}
