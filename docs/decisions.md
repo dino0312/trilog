@@ -265,6 +265,36 @@
 
 ---
 
+## ADR-019：GitHub Actions Keep-Alive 取代升級 Supabase Pro
+
+**狀態**：🟢 Accepted
+
+**背景**：Supabase Free 方案在連續 7 天無任何 API 請求後會自動暫停專案，用戶首次訪問需等待 20–30 秒喚醒，體驗極差。升級 Supabase Pro（$25/月）可解除此限制，但對早期個人專案而言成本不划算。
+
+**決策**：使用 GitHub Actions Scheduled Workflow，每週一 09:00 UTC 自動呼叫 `/api/health` endpoint，維持 Supabase 活躍狀態，暫不升級 Supabase Pro。
+
+**實作**：`.github/workflows/keep-alive.yml`
+- 排程：`cron: '0 9 * * 1'`（每週一 09:00 UTC，台灣時間 17:00）
+- 呼叫 `${{ vars.APP_URL }}/api/health`，回傳非 200 時 workflow 失敗並發 GitHub 通知
+- 支援 `workflow_dispatch` 手動觸發測試
+
+**部署前置作業**：
+1. Vercel 部署後，到 GitHub repo → Settings → Variables → New repository variable
+2. 新增 `APP_URL` = `https://你的網域.vercel.app`
+
+**成本分析**：
+
+| 方案 | 月費 | 缺點 |
+|------|------|------|
+| Supabase Pro | $25/月 | 有持續費用 |
+| GitHub Actions Keep-Alive | $0/月 | 每週一次 ping，極低資源消耗 |
+
+GitHub Actions Free 每月 2,000 分鐘，keep-alive 一年 52 次 × 約 1 分鐘 = **52 分鐘**，遠低於免費額度。
+
+**升級觸發條件**：月活躍用戶超過 500 人，或資料庫接近 450 MB（免費上限 500 MB），再評估升級 Supabase Pro。
+
+---
+
 ## 全域不可違反規則速查表
 
 | # | 規則 | 違反後果 |

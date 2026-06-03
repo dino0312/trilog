@@ -162,7 +162,21 @@ Next.js 16 將 `middleware.ts` 更名為 `proxy.ts`。
 
 ---
 
-## 10. 常用指令
+## 10. 部署與維運
+
+### Vercel 部署
+Push 到 `main` branch 後 Vercel 自動部署。環境變數在 Vercel Dashboard 設定（不在 `.env.local`）。
+
+### Supabase Free 方案注意事項
+Free 方案閒置 7 天自動暫停。已設定 GitHub Actions keep-alive（`.github/workflows/keep-alive.yml`）每週一自動 ping `/api/health`。
+
+**部署後必做**：GitHub repo → Settings → Variables → 新增 `APP_URL = https://你的網域.vercel.app`
+
+升級條件：MAU > 500 或 DB > 450 MB 時考慮升 Supabase Pro（$25/月）。詳見 `docs/decisions.md` ADR-019。
+
+---
+
+## 11. 常用指令
 
 ```bash
 npm run dev          開發伺服器
