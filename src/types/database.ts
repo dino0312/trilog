@@ -176,6 +176,7 @@ export type Database = {
           bike_seconds:          number | null
           t2_seconds:            number | null
           run_seconds:           number | null
+          curated_gender:        Gender | null
           is_public:             boolean
           certificate_url:       string | null
           claim_tag_count:       number
@@ -202,6 +203,7 @@ export type Database = {
           bike_seconds?:          number | null
           t2_seconds?:            number | null
           run_seconds?:           number | null
+          curated_gender?:        Gender | null
           is_public?:             boolean
           certificate_url?:       string | null
           overall_rank?:          number | null

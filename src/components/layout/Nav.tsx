@@ -3,13 +3,17 @@ import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/app/actions/auth'
 
 const NAV_LINKS = [
-  { href: '/leaderboard', label: '排行榜' },
+  { href: '/leaderboard', label: '最速榜' },
+  { href: '/rankings',    label: '排行榜' },
   { href: '/unclaimed',   label: '未認領' },
 ]
 
 export async function Nav() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  const { data: isAssistant } = user
+    ? await supabase.rpc('is_assistant_or_above')
+    : { data: false }
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-bg/80 backdrop-blur-md">
@@ -33,6 +37,12 @@ export async function Nav() {
 
           {user ? (
             <>
+              {isAssistant && (
+                <Link href="/admin"
+                  className="rounded-lg px-3 py-1.5 text-sm text-warn hover:bg-bg-elev transition">
+                  審核
+                </Link>
+              )}
               <Link href="/records"
                 className="rounded-lg px-3 py-1.5 text-sm text-ink-3 hover:text-ink hover:bg-bg-elev transition">
                 我的紀錄

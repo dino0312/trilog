@@ -25,7 +25,8 @@ SELECT
   -- 選手資訊（未認領成績用 snapshot，已認領用帳號資料）
   COALESCE(a.nickname, r.athlete_name_snapshot)   AS display_name,
   COALESCE(a.nationality, NULL)                    AS nationality,
-  COALESCE(a.gender, NULL)                         AS gender,
+  -- 未認領成績以 curated_gender 作為性別來源，已認領則用帳號 gender
+  COALESCE(a.gender, r.curated_gender)             AS gender,
   COALESCE(a.birth_year, NULL)                     AS birth_year,
   -- 年齡組自動計算（如 'M30-34'）
   CASE

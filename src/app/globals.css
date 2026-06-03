@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@800&family=DM+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
 /* ── Tri·log Design Tokens (Variation C · Modern Sport Tech) ── */
@@ -32,6 +32,8 @@
 
   --font-body:    'Manrope', system-ui, sans-serif;
   --font-mono:    'JetBrains Mono', ui-monospace, monospace;
+  --font-syne:    'Syne', system-ui, sans-serif;
+  --font-dm:      'DM Mono', ui-monospace, monospace;
 }
 
 @theme inline {
@@ -58,6 +60,8 @@
   --color-bad:          var(--bad);
   --font-sans:          var(--font-body);
   --font-mono:          var(--font-mono);
+  --font-syne:          var(--font-syne);
+  --font-dm:            var(--font-dm);
 }
 
 * { box-sizing: border-box; }
