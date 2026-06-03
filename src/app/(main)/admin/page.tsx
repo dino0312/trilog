@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { secondsToTime } from '@/lib/utils/time'
 import { ApproveButton, RejectButton, ResetButton } from './ClaimActions'
@@ -8,13 +7,6 @@ export const metadata: Metadata = { title: '審核中心 · Tri·log' }
 
 export default async function AdminPage() {
   const supabase = await createClient()
-
-  // 權限檢查
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  const { data: isAssistant } = await supabase.rpc('is_assistant_or_above')
-  if (!isAssistant) redirect('/leaderboard')
 
   // 待審核認領（pending）
   const { data: pending } = await supabase
