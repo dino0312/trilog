@@ -20,10 +20,10 @@ type Entry = {
 }
 
 function RankBadge({ rank }: { rank: number }) {
-  if (rank === 1) return <span style={{ color: '#F5C842', fontSize: 14, fontFamily: 'var(--font-dm)', fontWeight: 500 }}>1</span>
-  if (rank === 2) return <span style={{ color: '#A0A0A0', fontSize: 13, fontFamily: 'var(--font-dm)' }}>2</span>
-  if (rank === 3) return <span style={{ color: '#CD9660', fontSize: 13, fontFamily: 'var(--font-dm)' }}>3</span>
-  return <span style={{ color: '#4A5568', fontSize: 11, fontFamily: 'var(--font-dm)' }}>{rank}</span>
+  if (rank === 1) return <span style={{ color: '#F5C842', fontSize: 17, fontFamily: 'var(--font-dm)', fontWeight: 500 }}>1</span>
+  if (rank === 2) return <span style={{ color: '#A0A0A0', fontSize: 16, fontFamily: 'var(--font-dm)' }}>2</span>
+  if (rank === 3) return <span style={{ color: '#CD9660', fontSize: 16, fontFamily: 'var(--font-dm)' }}>3</span>
+  return <span style={{ color: '#4A5568', fontSize: 14, fontFamily: 'var(--font-dm)' }}>{rank}</span>
 }
 
 function TimeCell({ seconds, rank, gender }: { seconds: number; rank: number; gender: 'M' | 'F' }) {
@@ -36,7 +36,7 @@ function TimeCell({ seconds, rank, gender }: { seconds: number; rank: number; ge
     else if (seconds < FEMALE_THRESHOLD) color = '#D4537E'
   }
   return (
-    <span style={{ color, fontFamily: 'var(--font-dm)', fontSize: 14, fontWeight: 500, letterSpacing: '0.02em' }}>
+    <span style={{ color, fontFamily: 'var(--font-dm)', fontSize: 17, fontWeight: 500, letterSpacing: '0.02em' }}>
       {secondsToTime(seconds)}
     </span>
   )
@@ -46,7 +46,7 @@ function StatusBadge({ claimStatus }: { claimStatus: string }) {
   if (claimStatus === 'unclaimed') {
     return (
       <span style={{
-        fontSize: 9, fontFamily: 'var(--font-dm)', letterSpacing: '0.1em',
+        fontSize: 11, fontFamily: 'var(--font-dm)', letterSpacing: '0.1em',
         color: '#4A5568', border: '1px solid rgba(255,255,255,0.08)',
         padding: '1px 6px', borderRadius: 100,
       }}>未認領</span>
@@ -68,16 +68,16 @@ function GenderSection({ entries, gender, updatedAt }: {
   return (
     <>
       {/* 性別標頭 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 20px 10px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 24px 12px' }}>
         <span style={{
-          fontFamily: 'var(--font-dm)', fontSize: 10, letterSpacing: '0.12em',
-          color: labelColor, borderLeft: `2px solid ${labelColor}`, paddingLeft: 8,
+          fontFamily: 'var(--font-dm)', fontSize: 13, letterSpacing: '0.12em',
+          color: labelColor, borderLeft: `2px solid ${labelColor}`, paddingLeft: 10,
         }}>{label}</span>
         <span style={{
-          fontFamily: 'var(--font-dm)', fontSize: 10, color: '#4A5568',
+          fontFamily: 'var(--font-dm)', fontSize: 11, color: '#4A5568',
           padding: '2px 8px', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 100,
         }}>{updatedAt} 更新</span>
-        <span style={{ fontFamily: 'var(--font-dm)', fontSize: 10, color: '#4A5568', marginLeft: 'auto' }}>
+        <span style={{ fontFamily: 'var(--font-dm)', fontSize: 11, color: '#4A5568', marginLeft: 'auto' }}>
           {entries.length} 筆
         </span>
       </div>
@@ -95,18 +95,18 @@ function GenderSection({ entries, gender, updatedAt }: {
             )}
             <div className="tlb-row" style={{
               display: 'grid',
-              gridTemplateColumns: '36px minmax(0,1fr) 110px 1fr',
+              gridTemplateColumns: '44px minmax(0,1fr) 130px 1fr',
               alignItems: 'center',
-              padding: '9px 20px',
-              borderTop: '1px solid rgba(255,255,255,0.04)',
+              padding: '12px 24px',
+              borderTop: '1px solid rgba(255,255,255,0.05)',
               cursor: 'pointer',
             }}
             >
-              <div style={{ width: 36 }}><RankBadge rank={rank} /></div>
+              <div style={{ width: 44 }}><RankBadge rank={rank} /></div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                 <span style={{
-                  fontSize: 14, fontWeight: 500,
+                  fontSize: 16, fontWeight: 500,
                   color: e.claim_status === 'unclaimed' ? '#8A96A8' : '#F0EDE6',
                   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   fontFamily: "'Noto Sans TC', sans-serif",
@@ -121,7 +121,7 @@ function GenderSection({ entries, gender, updatedAt }: {
               </div>
 
               <div style={{
-                fontSize: 11, color: '#4A5568', textAlign: 'right', paddingLeft: 12,
+                fontSize: 13, color: '#4A5568', textAlign: 'right', paddingLeft: 12,
                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                 fontFamily: 'var(--font-dm)',
               }}>
@@ -174,20 +174,24 @@ export default async function LeaderboardPage() {
         </p>
         <h1 style={{
           fontFamily: 'var(--font-syne)', fontWeight: 800,
-          fontSize: 'clamp(1.8rem, 4vw, 3rem)', letterSpacing: '-0.03em',
-          lineHeight: 1, color: '#F0EDE6', marginBottom: 6,
+          fontSize: 'clamp(2.8rem, 6vw, 4.5rem)', letterSpacing: '-0.03em',
+          lineHeight: 1, color: '#F0EDE6', marginBottom: 8,
         }}>
           最<span style={{ color: '#FF6B3D' }}>速</span>榜
         </h1>
-        <p style={{ fontSize: 13, color: '#4A5568' }}>各選手個人最佳完賽時間，跨賽事排列</p>
+        <p style={{ fontSize: 15, color: '#4A5568' }}>各選手個人最佳完賽時間，跨賽事排列</p>
       </div>
 
-      {/* 最速榜卡片 */}
+      {/* 最速榜卡片 — 液態玻璃 */}
       <div style={{
-        background: '#060D18',
-        border: '1px solid rgba(255,255,255,0.07)',
-        borderRadius: 16,
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)',
+        backdropFilter: 'blur(24px) saturate(160%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(160%)',
+        border: '1px solid rgba(255,255,255,0.12)',
+        borderTop: '1px solid rgba(255,255,255,0.2)',
+        borderRadius: 20,
         overflow: 'hidden',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
       }}>
 
         {/* 英雄區 */}
@@ -213,13 +217,13 @@ export default async function LeaderboardPage() {
           </div>
 
           <div style={{
-            fontFamily: 'var(--font-syne)', fontWeight: 800, fontSize: 28,
-            color: '#F0EDE6', letterSpacing: '-0.03em', lineHeight: 1, marginBottom: 4,
+            fontFamily: 'var(--font-syne)', fontWeight: 800, fontSize: 36,
+            color: '#F0EDE6', letterSpacing: '-0.03em', lineHeight: 1, marginBottom: 6,
           }}>
             台灣鐵人 <span style={{ color: '#FF6B3D' }}>226</span>
           </div>
           <div style={{
-            fontSize: 12, color: '#4A5568', fontFamily: 'var(--font-dm)',
+            fontSize: 14, color: '#4A5568', fontFamily: 'var(--font-dm)',
             letterSpacing: '0.04em', marginBottom: '1.5rem',
           }}>
             各選手個人最佳成績 · 跨賽事排列 · 僅供參考
@@ -237,7 +241,7 @@ export default async function LeaderboardPage() {
               { label: '25.75 衝刺',  active: false },
             ].map(tab => (
               <div key={tab.label} style={{
-                padding: '10px 20px', fontSize: 12, fontWeight: 500,
+                padding: '12px 22px', fontSize: 14, fontWeight: 500,
                 color: tab.active ? '#F0EDE6' : '#4A5568',
                 borderBottom: tab.active ? '2px solid #FF6B3D' : '2px solid transparent',
                 opacity: tab.active ? 1 : 0.35,
@@ -255,7 +259,7 @@ export default async function LeaderboardPage() {
         )}
 
         {/* 性別分隔 */}
-        <div style={{ height: 8, background: '#060D18' }} />
+        <div style={{ height: 8, background: 'rgba(255,255,255,0.02)' }} />
 
         {/* 女子組 */}
         {female.length > 0 && (
@@ -268,11 +272,11 @@ export default async function LeaderboardPage() {
           padding: '12px 20px',
           borderTop: '1px solid rgba(255,255,255,0.07)',
         }}>
-          <span style={{ fontSize: 11, color: '#4A5568', fontFamily: 'var(--font-dm)' }}>
+          <span style={{ fontSize: 13, color: '#4A5568', fontFamily: 'var(--font-dm)' }}>
             未認領成績來自官方賽事成績；認領後成為個人紀錄
           </span>
           <a href="/unclaimed" style={{
-            marginLeft: 'auto', fontSize: 11, color: '#FF6B3D',
+            marginLeft: 'auto', fontSize: 13, color: '#FF6B3D',
             fontFamily: 'var(--font-dm)', cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 4,
             border: '1px solid rgba(255,107,61,0.25)', padding: '4px 10px',
