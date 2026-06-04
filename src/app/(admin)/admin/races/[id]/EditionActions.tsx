@@ -144,23 +144,32 @@ function EditForm({ edition, raceId, onClose }: { edition: Edition; raceId: stri
 // ── 刪除確認 ──────────────────────────────────────────────────
 function DeleteConfirm({ edition, raceId, onClose }: { edition: Edition; raceId: string; onClose: () => void }) {
   const [state, action, pending] = useActionState(deleteEdition, initial)
+  const blocked = !!state.error
 
   return (
     <tr>
       <td colSpan={4} className="px-4 py-3 bg-bg-elev">
-        <form action={action} className="flex items-center gap-3">
+        <form action={action} className="flex flex-col gap-2">
           <input type="hidden" name="edition_id" value={edition.id} />
           <input type="hidden" name="race_id" value={raceId} />
-          <p className="text-sm text-ink flex-1">確定刪除此屆次？此操作無法復原。</p>
-          {state.error && <p className="text-xs text-red">{state.error}</p>}
-          <button type="button" onClick={onClose}
-            className="px-3 py-1.5 rounded-lg text-sm text-ink-3 hover:bg-bg transition">
-            取消
-          </button>
-          <button type="submit" disabled={pending}
-            className="px-4 py-1.5 rounded-lg bg-red/10 border border-red/30 text-sm font-semibold text-red hover:bg-red/20 transition disabled:opacity-50">
-            {pending ? '刪除中…' : '確認刪除'}
-          </button>
+
+          {state.error
+            ? <p className="text-sm text-red">{state.error}</p>
+            : <p className="text-sm text-ink">確定刪除此屆次？此操作無法復原。</p>
+          }
+
+          <div className="flex gap-2 justify-end">
+            <button type="button" onClick={onClose}
+              className="px-3 py-1.5 rounded-lg text-sm text-ink-3 hover:bg-bg transition">
+              取消
+            </button>
+            {!blocked && (
+              <button type="submit" disabled={pending}
+                className="px-4 py-1.5 rounded-lg bg-red/10 border border-red/30 text-sm font-semibold text-red hover:bg-red/20 transition disabled:opacity-50">
+                {pending ? '刪除中…' : '確認刪除'}
+              </button>
+            )}
+          </div>
         </form>
       </td>
     </tr>

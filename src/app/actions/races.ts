@@ -160,6 +160,16 @@ export async function deleteEdition(_prev: RaceActionState, formData: FormData):
   const id      = formData.get('edition_id') as string
   const race_id = formData.get('race_id')    as string
 
+  // 先確認是否有關聯成績
+  const { count } = await supabase
+    .from('results')
+    .select('id', { count: 'exact', head: true })
+    .eq('race_edition_id', id)
+
+  if (count && count > 0) {
+    return { error: `此屆次有 ${count} 筆成績資料，無法直接刪除。請先移除相關成績後再試。`, success: false }
+  }
+
   const { error } = await supabase.from('race_editions').delete().eq('id', id)
 
   if (error) return { error: error.message, success: false }
