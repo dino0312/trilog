@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/Button'
 
 const DISTANCES = [
   { value: 'sprint',  label: 'Sprint' },
-  { value: 'olympic', label: 'Olympic' },
-  { value: '70.3',    label: '70.3' },
-  { value: 'full',    label: 'Full' },
+  { value: 'olympic', label: '51.5' },
+  { value: '70.3',    label: '113' },
+  { value: 'full',    label: '226' },
 ]
 
 const initial: RaceActionState = { error: null, success: false }
@@ -30,7 +30,7 @@ export function EditionForm({ raceId, onSuccess }: Props) {
     <form action={action} className="flex flex-col gap-4">
       <input type="hidden" name="race_id" value={raceId} />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {/* 比賽日期 */}
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-ink-2">比賽日期 *</label>
@@ -38,6 +38,16 @@ export function EditionForm({ raceId, onSuccess }: Props) {
             name="race_date"
             type="date"
             required
+            className="w-full rounded-lg border border-border-strong bg-bg-elev px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+          />
+        </div>
+
+        {/* 結束日期 */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-ink-2">結束日期 <span className="text-ink-4 font-normal">（多日賽事）</span></label>
+          <input
+            name="race_date_end"
+            type="date"
             className="w-full rounded-lg border border-border-strong bg-bg-elev px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
           />
         </div>

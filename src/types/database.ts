@@ -121,6 +121,7 @@ export type Database = {
           race_id:            string
           year:               number
           race_date:          string
+          race_date_end:      string | null
           distance_category:  DistanceCategory
           swim_distance_m:    number | null
           bike_distance_km:   number | null
@@ -142,6 +143,7 @@ export type Database = {
           race_id:             string
           year:                number
           race_date:           string
+          race_date_end?:      string | null
           distance_category:   DistanceCategory
           swim_distance_m?:    number | null
           bike_distance_km?:   number | null

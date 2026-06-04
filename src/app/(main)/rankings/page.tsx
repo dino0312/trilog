@@ -5,7 +5,7 @@ import { secondsToTime } from '@/lib/utils/time'
 export const metadata: Metadata = { title: '排行榜 · Tri·log' }
 
 const DISTANCE_LABEL: Record<string, string> = {
-  sprint: 'Sprint', olympic: 'Olympic', '70.3': '70.3', full: 'Full',
+  sprint: 'Sprint', olympic: '51.5', '70.3': '113', full: '226',
 }
 
 type SearchParams = Promise<{ race?: string; distance?: string; gender?: string }>

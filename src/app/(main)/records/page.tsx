@@ -7,7 +7,7 @@ import { redirect } from 'next/navigation'
 export const metadata: Metadata = { title: '我的紀錄' }
 
 const DISTANCE_LABEL: Record<string, string> = {
-  sprint: 'Sprint', olympic: 'Olympic', '70.3': '70.3', full: 'Full',
+  sprint: 'Sprint', olympic: '51.5', '70.3': '113', full: '226',
 }
 
 const CREDIBILITY_LABEL: Record<string, string> = {

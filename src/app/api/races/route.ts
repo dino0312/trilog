@@ -10,6 +10,7 @@ export async function GET() {
       id,
       year,
       race_date,
+      race_date_end,
       distance_category,
       races ( id, name, slug, city )
     `)

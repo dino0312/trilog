@@ -6,7 +6,7 @@ import { ClaimButton } from '@/components/claims/ClaimButton'
 export const metadata: Metadata = { title: '未認領成績' }
 
 const DISTANCE_LABEL: Record<string, string> = {
-  sprint: 'Sprint', olympic: 'Olympic', '70.3': '70.3', full: 'Full',
+  sprint: 'Sprint', olympic: '51.5', '70.3': '113', full: '226',
 }
 
 type SearchParams = Promise<{ q?: string; race?: string; distance?: string }>

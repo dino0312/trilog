@@ -82,6 +82,7 @@ export async function createEdition(_prev: RaceActionState, formData: FormData):
 
   const race_id            = formData.get('race_id') as string
   const race_date          = formData.get('race_date') as string
+  const race_date_end      = (formData.get('race_date_end') as string) || null
   const distance_categories = formData.getAll('distance_category') as DistanceCategory[]
   const swimType           = (formData.get('swim_type') as SwimType) || null
   const year               = parseInt(race_date.slice(0, 4))
@@ -94,6 +95,7 @@ export async function createEdition(_prev: RaceActionState, formData: FormData):
       race_id,
       year,
       race_date,
+      race_date_end,
       distance_category,
       swim_distance_m:  defaults?.swim  ?? null,
       bike_distance_km: defaults?.bike  ?? null,
@@ -122,10 +124,12 @@ export async function updateEdition(_prev: RaceActionState, formData: FormData):
   const id      = formData.get('edition_id') as string
   const race_id = formData.get('race_id')    as string
   const race_date = formData.get('race_date') as string
+  const race_date_end = (formData.get('race_date_end') as string) || null
 
   const { error } = await supabase.from('race_editions').update({
     year:               parseInt(race_date.slice(0, 4)),
     race_date,
+    race_date_end,
     distance_category:  formData.get('distance_category') as DistanceCategory,
     swim_distance_m:    parseIntOrNull(formData.get('swim_distance_m')  as string),
     bike_distance_km:   parseFloatOrNull(formData.get('bike_distance_km') as string),

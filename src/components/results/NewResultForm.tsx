@@ -16,7 +16,7 @@ type RaceEdition = {
 const initial: ResultState = { error: null }
 
 const DISTANCE_LABEL: Record<string, string> = {
-  sprint: 'Sprint', olympic: 'Olympic', '70.3': '70.3', full: 'Full',
+  sprint: 'Sprint', olympic: '51.5', '70.3': '113', full: '226',
 }
 
 const DISTANCE_ORDER: Record<string, number> = {

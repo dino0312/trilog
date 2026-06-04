@@ -8,7 +8,7 @@ import { EditionFormPanel } from './EditionFormPanel'
 export const metadata: Metadata = { title: '賽事詳情 · Tri·log' }
 
 const DISTANCE_LABEL: Record<string, string> = {
-  sprint: 'Sprint', olympic: 'Olympic', '70.3': '70.3', full: 'Full',
+  sprint: 'Sprint', olympic: '51.5', '70.3': '113', full: '226',
 }
 
 const SWIM_LABEL: Record<string, string> = {
@@ -29,7 +29,7 @@ export default async function RaceDetailPage({ params }: { params: Promise<{ id:
 
   const { data: editions } = await supabase
     .from('race_editions')
-    .select('id, year, race_date, distance_category, swim_distance_m, bike_distance_km, run_distance_km, swim_type, finisher_count, dnf_count, total_starters, notes')
+    .select('id, year, race_date, race_date_end, distance_category, swim_distance_m, bike_distance_km, run_distance_km, swim_type, finisher_count, dnf_count, total_starters, notes')
     .eq('race_id', id)
     .order('race_date', { ascending: false })
 
@@ -81,7 +81,7 @@ export default async function RaceDetailPage({ params }: { params: Promise<{ id:
                   {/* 年份標頭 */}
                   <div className="px-4 py-2.5 bg-bg-elev border-b border-border flex items-center gap-2">
                     <span className="text-sm font-semibold text-ink">{year}</span>
-                    <span className="text-xs text-ink-4">{byYear[year][0].race_date}</span>
+                    <span className="text-xs text-ink-4">{byYear[year][0].race_date}{byYear[year][0].race_date_end ? ` – ${byYear[year][0].race_date_end}` : ''}</span>
                   </div>
                   {/* 該年的各距離 */}
                   <table className="w-full text-sm">
