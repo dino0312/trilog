@@ -78,11 +78,18 @@
 
 | 欄位 | 型別 | 語意 |
 |------|------|------|
-| `distance_category` | text | 'sprint' / 'olympic' / '70.3' / 'full'（CHECK）|
+| `race_date` | date | 開始日期 |
+| `race_date_end` | date \| null | 結束日期（多日賽事用，單日賽事為 null）|
+| `distance_category` | text | `'sprint'`（Sprint）/ `'olympic'`（51.5）/ `'70.3'`（113）/ `'full'`（226）（CHECK）|
+| `swim_distance_m` | int \| null | 游泳距離（公尺），預設：Sprint 750 / 51.5 1500 / 113 1900 / 226 3800 |
+| `bike_distance_km` | numeric \| null | 騎車距離（公里），預設：Sprint 20 / 51.5 40 / 113 90 / 226 180 |
+| `run_distance_km` | numeric \| null | 跑步距離（公里），預設：Sprint 5 / 51.5 10 / 113 21.1 / 226 42.2 |
 | `weather_data` | jsonb | `{temp_c, humidity_pct, wind_speed_ms, wind_direction, precipitation_mm}` |
 | `weather_source` | text | 'open-meteo' / 'visual-crossing' / 'manual'（CHECK）|
 
-**約束**：`UNIQUE(race_id, year, distance_category)` — 同一賽事同一年同一距離只有一個屆次。同年不同距離（如同時舉辦 Full 與 70.3）允許各自建立屆次。
+**約束**：`UNIQUE(race_id, year, distance_category)` — 同一賽事同年同距離只有一個屆次。同年不同距離允許各自建立。
+
+**UI 概念**：屆次以「年份」為操作單位（一個年份可含多個距離）。新增屆次時可一次勾選多個距離，各自帶入或自訂 km 值。編輯與刪除也以年份為單位，刪除時若有關聯成績則阻擋。
 
 **RLS 摘要**：與 races 相同策略。
 
