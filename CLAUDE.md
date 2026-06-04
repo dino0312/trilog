@@ -196,6 +196,9 @@ npm run lint         ESLint
 | `src/types/database.ts` | `docs/database.md`（型別欄位）、`docs/api.md`（回傳格式） |
 | 新增/修改 Route Group 或 middleware | `docs/architecture.md`、`CLAUDE.md` |
 | `package.json` 新增依賴 | `docs/decisions.md`（若有新決策）、`CLAUDE.md`（第 3 節） |
+| UI 流程、Nav、頁面入口有變動 | `docs/features.md` |
+| Admin 功能新增或修改 | `docs/features.md`（第 2 節） |
+| 角色權限規則變動 | `docs/features.md` + `docs/domain.md`（第 9 節角色矩陣） |
 
 文件與程式碼不一致時，**永遠優先更新文件**。
 
