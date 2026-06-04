@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { secondsToTime } from '@/lib/utils/time'
 import { redirect } from 'next/navigation'
 import { RecordActions } from '@/components/results/RecordActions'
+import { UnlinkButton } from '@/components/results/UnlinkButton'
 
 export const metadata: Metadata = { title: '我的紀錄' }
 
@@ -123,6 +124,13 @@ export default async function RecordsPage() {
                     isPublic={r.is_public}
                     notes={r.notes}
                   />
+                )}
+
+                {/* 21.4：已認領的官方成績可申請解除關聯 */}
+                {r.source_credibility === 'official' && r.claim_status === 'claimed' && (
+                  <div className="mt-3 flex justify-end">
+                    <UnlinkButton resultId={r.id} />
+                  </div>
                 )}
               </div>
             )

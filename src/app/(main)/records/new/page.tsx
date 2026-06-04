@@ -1,9 +1,25 @@
 import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { NewResultForm } from '@/components/results/NewResultForm'
 
 export const metadata: Metadata = { title: '新增成績' }
 
-export default function NewResultPage() {
+export default async function NewResultPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login?redirectTo=/records/new')
+
+  const { data: athlete } = await supabase
+    .from('athletes')
+    .select('nickname, gender, birth_year, nationality')
+    .eq('id', user.id)
+    .single()
+
+  const profileComplete = Boolean(
+    athlete?.nickname && athlete?.gender && athlete?.birth_year && athlete?.nationality
+  )
+
   return (
     <main className="flex-1 p-6 max-w-2xl mx-auto w-full">
       <div className="mb-6">
@@ -11,7 +27,10 @@ export default function NewResultPage() {
         <p className="mt-1 text-sm text-ink-3">記錄你的完賽時間</p>
       </div>
       <div className="rounded-xl border border-border bg-bg-card p-6">
-        <NewResultForm />
+        <NewResultForm
+          profileComplete={profileComplete}
+          profile={athlete ?? { nickname: null, gender: null, birth_year: null, nationality: null }}
+        />
       </div>
     </main>
   )

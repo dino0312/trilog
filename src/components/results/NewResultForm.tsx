@@ -13,21 +13,46 @@ type RaceEdition = {
   races: { id: string; name: string; city: string } | null
 }
 
+type Profile = {
+  nickname: string | null
+  gender: string | null
+  birth_year: number | null
+  nationality: string | null
+}
+
+type Props = {
+  profileComplete: boolean
+  profile: Profile
+}
+
 const initial: ResultState = { error: null }
 
 const DISTANCE_LABEL: Record<string, string> = {
   sprint: 'Sprint', olympic: '51.5', '70.3': '113', full: '226',
 }
-
 const DISTANCE_ORDER: Record<string, number> = {
   sprint: 1, olympic: 2, '70.3': 3, full: 4,
 }
 
-export function NewResultForm() {
+const NATIONALITIES = [
+  { value: 'TWN', label: '🇹🇼 台灣' },
+  { value: 'JPN', label: '🇯🇵 日本' },
+  { value: 'KOR', label: '🇰🇷 韓國' },
+  { value: 'CHN', label: '🇨🇳 中國' },
+  { value: 'HKG', label: '🇭🇰 香港' },
+  { value: 'USA', label: '🇺🇸 美國' },
+  { value: 'GBR', label: '🇬🇧 英國' },
+  { value: 'AUS', label: '🇦🇺 澳洲' },
+  { value: 'DEU', label: '🇩🇪 德國' },
+  { value: 'FRA', label: '🇫🇷 法國' },
+]
+
+export function NewResultForm({ profileComplete, profile }: Props) {
   const [state, action, pending] = useActionState(createResult, initial)
   const [editions, setEditions] = useState<RaceEdition[]>([])
   const [raceYearKey, setRaceYearKey] = useState('')
   const [editionId, setEditionId] = useState('')
+  const [isPublic, setIsPublic] = useState(true)
 
   useEffect(() => {
     fetch('/api/races').then(r => r.json()).then(setEditions)
@@ -47,7 +72,6 @@ export function NewResultForm() {
     return result
   }, [editions])
 
-  // 選定賽事年份後，顯示可用距離
   const availableDistances = useMemo(() => {
     if (!raceYearKey) return []
     const [raceId, year] = raceYearKey.split('__')
@@ -56,14 +80,19 @@ export function NewResultForm() {
       .sort((a, b) => (DISTANCE_ORDER[a.distance_category] ?? 9) - (DISTANCE_ORDER[b.distance_category] ?? 9))
   }, [editions, raceYearKey])
 
-  // 當可用距離剩一個時自動選取
   useEffect(() => {
-    if (availableDistances.length === 1) {
-      setEditionId(availableDistances[0].id)
-    } else {
-      setEditionId('')
-    }
+    if (availableDistances.length === 1) setEditionId(availableDistances[0].id)
+    else setEditionId('')
   }, [availableDistances])
+
+  // 需要顯示 profile 補充欄位：公開 + profile 不完整
+  const showProfileSection = isPublic && !profileComplete
+
+  // 哪些 profile 欄位需要補填
+  const needNickname    = !profile.nickname
+  const needGender      = !profile.gender
+  const needBirthYear   = !profile.birth_year
+  const needNationality = !profile.nationality
 
   return (
     <form action={action} className="flex flex-col gap-5">
@@ -85,7 +114,7 @@ export function NewResultForm() {
         </select>
       </div>
 
-      {/* Step 2：選距離（有多個才顯示） */}
+      {/* Step 2：距離 */}
       {raceYearKey && availableDistances.length > 1 && (
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-ink-2">距離組別</label>
@@ -133,9 +162,79 @@ export function NewResultForm() {
 
       {/* 公開設定 */}
       <label className="flex items-center gap-3 cursor-pointer">
-        <input type="checkbox" name="is_public" value="true" defaultChecked className="w-4 h-4 accent-accent" />
+        <input type="hidden" name="is_public" value="false" />
+        <input
+          type="checkbox"
+          name="is_public"
+          value="true"
+          checked={isPublic}
+          onChange={e => setIsPublic(e.target.checked)}
+          className="w-4 h-4 accent-accent"
+        />
         <span className="text-sm text-ink-2">公開成績（納入排行榜）</span>
       </label>
+
+      {/* ── 21.3 Profile 補充欄位 ─────────────────────────────── */}
+      {showProfileSection && (
+        <div className="rounded-xl border border-accent/20 bg-accent/5 p-4 flex flex-col gap-4">
+          <div>
+            <p className="text-sm font-semibold text-ink">完成個人資料以進入排行榜</p>
+            <p className="text-xs text-ink-3 mt-0.5">
+              公開成績需要以下資料才能納入排行榜。僅此一次，之後不再詢問。
+            </p>
+          </div>
+
+          {needNickname && (
+            <Input
+              label="暱稱（排行榜顯示名稱）"
+              id="p-nickname" name="nickname"
+              placeholder="你的名字或暱稱"
+              required={isPublic}
+            />
+          )}
+
+          {needGender && (
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="p-gender" className="text-sm font-medium text-ink-2">性別</label>
+              <select
+                id="p-gender" name="gender"
+                required={isPublic}
+                className="w-full rounded-lg border border-border-strong bg-bg-elev px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+              >
+                <option value="">請選擇…</option>
+                <option value="M">男</option>
+                <option value="F">女</option>
+              </select>
+            </div>
+          )}
+
+          {needBirthYear && (
+            <Input
+              label="出生年份"
+              id="p-birth-year" name="birth_year" type="number"
+              placeholder="1990"
+              min={1900} max={new Date().getFullYear()}
+              required={isPublic}
+            />
+          )}
+
+          {needNationality && (
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="p-nationality" className="text-sm font-medium text-ink-2">國籍</label>
+              <select
+                id="p-nationality" name="nationality"
+                required={isPublic}
+                className="w-full rounded-lg border border-border-strong bg-bg-elev px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+              >
+                <option value="">請選擇…</option>
+                {NATIONALITIES.map(n => (
+                  <option key={n.value} value={n.value}>{n.label}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+      )}
 
       {state.error && <p className="text-sm text-red">{state.error}</p>}
 
