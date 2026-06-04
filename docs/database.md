@@ -82,7 +82,7 @@
 | `weather_data` | jsonb | `{temp_c, humidity_pct, wind_speed_ms, wind_direction, precipitation_mm}` |
 | `weather_source` | text | 'open-meteo' / 'visual-crossing' / 'manual'（CHECK）|
 
-**約束**：`UNIQUE(race_id, year)` — 同一賽事同一年只有一個屆次。
+**約束**：`UNIQUE(race_id, year, distance_category)` — 同一賽事同一年同一距離只有一個屆次。同年不同距離（如同時舉辦 Full 與 70.3）允許各自建立屆次。
 
 **RLS 摘要**：與 races 相同策略。
 

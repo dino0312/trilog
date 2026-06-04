@@ -97,7 +97,10 @@ export async function createEdition(_prev: RaceActionState, formData: FormData):
     notes:              (formData.get('notes') as string) || null,
   })
 
-  if (error) return { error: error.message, success: false }
+  if (error) {
+    if (error.code === '23505') return { error: `${race_date.slice(0, 4)} 年相同距離的屆次已存在，請確認年份與距離是否重複。`, success: false }
+    return { error: error.message, success: false }
+  }
 
   revalidatePath(`/admin/races/${race_id}`)
   return { error: null, success: true }
