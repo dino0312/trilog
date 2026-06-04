@@ -69,10 +69,10 @@ export async function updateRace(_prev: RaceActionState, formData: FormData): Pr
 // ── Race Editions ─────────────────────────────────────────────
 
 const DISTANCE_DEFAULTS: Record<string, { swim: number; bike: number; run: number }> = {
-  sprint:  { swim: 750,  bike: 20,   run: 5    },
-  olympic: { swim: 1500, bike: 40,   run: 10   },
-  '70.3':  { swim: 1900, bike: 90,   run: 21.1 },
-  full:    { swim: 3860, bike: 180,  run: 42.2 },
+  sprint:  { swim: 750,  bike: 20,  run: 5    },
+  olympic: { swim: 1500, bike: 40,  run: 10   },
+  '70.3':  { swim: 1900, bike: 90,  run: 21.1 },
+  full:    { swim: 3800, bike: 180, run: 42.2 },
 }
 
 export async function createEdition(_prev: RaceActionState, formData: FormData): Promise<RaceActionState> {
@@ -91,15 +91,20 @@ export async function createEdition(_prev: RaceActionState, formData: FormData):
 
   for (const distance_category of distance_categories) {
     const defaults = DISTANCE_DEFAULTS[distance_category]
+    // 優先使用表單中各距離獨立欄位，fallback 到預設值
+    const swim = parseIntOrNull(formData.get(`swim_${distance_category}`) as string) ?? defaults?.swim ?? null
+    const bike = parseFloatOrNull(formData.get(`bike_${distance_category}`) as string) ?? defaults?.bike ?? null
+    const run  = parseFloatOrNull(formData.get(`run_${distance_category}`)  as string) ?? defaults?.run  ?? null
+
     const { error } = await supabase.from('race_editions').insert({
       race_id,
       year,
       race_date,
       race_date_end,
       distance_category,
-      swim_distance_m:  defaults?.swim  ?? null,
-      bike_distance_km: defaults?.bike  ?? null,
-      run_distance_km:  defaults?.run   ?? null,
+      swim_distance_m:  swim,
+      bike_distance_km: bike,
+      run_distance_km:  run,
       swim_type:        swimType,
       finisher_count:   parseIntOrNull(formData.get('finisher_count') as string),
       dnf_count:        parseIntOrNull(formData.get('dnf_count')      as string),

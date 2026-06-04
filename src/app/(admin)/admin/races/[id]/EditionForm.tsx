@@ -11,6 +11,13 @@ const DISTANCES = [
   { value: 'full',    label: '226' },
 ]
 
+const DISTANCE_DEFAULTS: Record<string, { swim: number; bike: number; run: number }> = {
+  sprint:  { swim: 750,  bike: 20,  run: 5    },
+  olympic: { swim: 1500, bike: 40,  run: 10   },
+  '70.3':  { swim: 1900, bike: 90,  run: 21.1 },
+  full:    { swim: 3800, bike: 180, run: 42.2 },
+}
+
 const initial: RaceActionState = { error: null, success: false }
 
 type Props = { raceId: string; onSuccess?: () => void }
@@ -26,33 +33,31 @@ export function EditionForm({ raceId, onSuccess }: Props) {
   const toggle = (val: string) =>
     setSelected(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val])
 
+  // 依照固定順序顯示已選距離
+  const selectedInOrder = DISTANCES.filter(d => selected.includes(d.value))
+
   return (
     <form action={action} className="flex flex-col gap-4">
       <input type="hidden" name="race_id" value={raceId} />
 
+      {/* 日期 + 距離選擇 */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {/* 比賽日期 */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-ink-2">比賽日期 *</label>
+          <label className="text-sm font-medium text-ink-2">開始日期 *</label>
           <input
-            name="race_date"
-            type="date"
-            required
+            name="race_date" type="date" required
             className="w-full rounded-lg border border-border-strong bg-bg-elev px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
           />
         </div>
-
-        {/* 結束日期 */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-ink-2">結束日期 <span className="text-ink-4 font-normal">（多日賽事）</span></label>
+          <label className="text-sm font-medium text-ink-2">
+            結束日期 <span className="text-ink-4 font-normal">（多日賽事）</span>
+          </label>
           <input
-            name="race_date_end"
-            type="date"
+            name="race_date_end" type="date"
             className="w-full rounded-lg border border-border-strong bg-bg-elev px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
           />
         </div>
-
-        {/* 距離組別（多選） */}
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-ink-2">距離組別 *</label>
           <div className="flex flex-wrap gap-2 pt-1">
@@ -84,7 +89,62 @@ export function EditionForm({ raceId, onSuccess }: Props) {
         </div>
       </div>
 
-      {/* 游泳環境 */}
+      {/* 每個距離各自的游泳/騎車/跑步 */}
+      {selectedInOrder.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <p className="text-xs text-ink-3 font-medium">各距離公里數</p>
+          <div className="rounded-lg border border-border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-bg-elev text-xs text-ink-3 border-b border-border">
+                  <th className="px-3 py-2 text-left w-20">距離</th>
+                  <th className="px-3 py-2 text-left">游泳（m）</th>
+                  <th className="px-3 py-2 text-left">騎車（km）</th>
+                  <th className="px-3 py-2 text-left">跑步（km）</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedInOrder.map(d => {
+                  const def = DISTANCE_DEFAULTS[d.value]
+                  return (
+                    <tr key={d.value} className="border-b border-border last:border-0">
+                      <td className="px-3 py-2">
+                        <span className="font-medium text-accent">{d.label}</span>
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          name={`swim_${d.value}`}
+                          type="number" step="1" min="0"
+                          defaultValue={def.swim}
+                          className="w-full rounded border border-border-strong bg-bg-elev px-2 py-1 text-sm text-ink outline-none focus:border-accent"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          name={`bike_${d.value}`}
+                          type="number" step="0.1" min="0"
+                          defaultValue={def.bike}
+                          className="w-full rounded border border-border-strong bg-bg-elev px-2 py-1 text-sm text-ink outline-none focus:border-accent"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          name={`run_${d.value}`}
+                          type="number" step="0.1" min="0"
+                          defaultValue={def.run}
+                          className="w-full rounded border border-border-strong bg-bg-elev px-2 py-1 text-sm text-ink outline-none focus:border-accent"
+                        />
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* 游泳環境 + 人數 */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-ink-2">游泳環境</label>
@@ -100,23 +160,18 @@ export function EditionForm({ raceId, onSuccess }: Props) {
             <option value="other">其他</option>
           </select>
         </div>
-
         <div className="grid grid-cols-3 gap-2">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-ink-2">完賽人數</label>
-            <input name="finisher_count" type="number" min="0"
-              className="w-full rounded-lg border border-border-strong bg-bg-elev px-3 py-2.5 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-ink-2">DNF</label>
-            <input name="dnf_count" type="number" min="0"
-              className="w-full rounded-lg border border-border-strong bg-bg-elev px-3 py-2.5 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-ink-2">出發人數</label>
-            <input name="total_starters" type="number" min="0"
-              className="w-full rounded-lg border border-border-strong bg-bg-elev px-3 py-2.5 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" />
-          </div>
+          {[
+            { name: 'finisher_count', label: '完賽人數' },
+            { name: 'dnf_count',      label: 'DNF' },
+            { name: 'total_starters', label: '出發人數' },
+          ].map(f => (
+            <div key={f.name} className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-ink-2">{f.label}</label>
+              <input name={f.name} type="number" min="0"
+                className="w-full rounded-lg border border-border-strong bg-bg-elev px-3 py-2.5 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" />
+            </div>
+          ))}
         </div>
       </div>
 
@@ -124,8 +179,7 @@ export function EditionForm({ raceId, onSuccess }: Props) {
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-ink-2">備註</label>
         <textarea
-          name="notes"
-          rows={2}
+          name="notes" rows={2}
           className="w-full rounded-lg border border-border-strong bg-bg-elev px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-4 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 resize-none"
           placeholder="特殊說明、場地調整…"
         />
