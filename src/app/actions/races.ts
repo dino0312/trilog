@@ -68,38 +68,46 @@ export async function updateRace(_prev: RaceActionState, formData: FormData): Pr
 
 // ── Race Editions ─────────────────────────────────────────────
 
+const DISTANCE_DEFAULTS: Record<string, { swim: number; bike: number; run: number }> = {
+  sprint:  { swim: 750,  bike: 20,   run: 5    },
+  olympic: { swim: 1500, bike: 40,   run: 10   },
+  '70.3':  { swim: 1900, bike: 90,   run: 21.1 },
+  full:    { swim: 3860, bike: 180,  run: 42.2 },
+}
+
 export async function createEdition(_prev: RaceActionState, formData: FormData): Promise<RaceActionState> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: '未登入', success: false }
 
-  const race_id           = formData.get('race_id') as string
-  const race_date         = formData.get('race_date') as string
-  const distance_category = formData.get('distance_category') as DistanceCategory
+  const race_id            = formData.get('race_id') as string
+  const race_date          = formData.get('race_date') as string
+  const distance_categories = formData.getAll('distance_category') as DistanceCategory[]
+  const swimType           = (formData.get('swim_type') as SwimType) || null
+  const year               = parseInt(race_date.slice(0, 4))
 
-  const swimRaw  = formData.get('swim_distance_m')  as string
-  const bikeRaw  = formData.get('bike_distance_km') as string
-  const runRaw   = formData.get('run_distance_km')  as string
-  const swimType = formData.get('swim_type') as SwimType | null
+  if (!distance_categories.length) return { error: '請至少勾選一個距離組別', success: false }
 
-  const { error } = await supabase.from('race_editions').insert({
-    race_id,
-    year:               parseInt(race_date.slice(0, 4)),
-    race_date,
-    distance_category,
-    swim_distance_m:    swimRaw  ? parseInt(swimRaw)    : null,
-    bike_distance_km:   bikeRaw  ? parseFloat(bikeRaw)  : null,
-    run_distance_km:    runRaw   ? parseFloat(runRaw)   : null,
-    swim_type:          swimType || null,
-    finisher_count:     parseIntOrNull(formData.get('finisher_count') as string),
-    dnf_count:          parseIntOrNull(formData.get('dnf_count')      as string),
-    total_starters:     parseIntOrNull(formData.get('total_starters') as string),
-    notes:              (formData.get('notes') as string) || null,
-  })
-
-  if (error) {
-    if (error.code === '23505') return { error: `${race_date.slice(0, 4)} 年相同距離的屆次已存在，請確認年份與距離是否重複。`, success: false }
-    return { error: error.message, success: false }
+  for (const distance_category of distance_categories) {
+    const defaults = DISTANCE_DEFAULTS[distance_category]
+    const { error } = await supabase.from('race_editions').insert({
+      race_id,
+      year,
+      race_date,
+      distance_category,
+      swim_distance_m:  defaults?.swim  ?? null,
+      bike_distance_km: defaults?.bike  ?? null,
+      run_distance_km:  defaults?.run   ?? null,
+      swim_type:        swimType,
+      finisher_count:   parseIntOrNull(formData.get('finisher_count') as string),
+      dnf_count:        parseIntOrNull(formData.get('dnf_count')      as string),
+      total_starters:   parseIntOrNull(formData.get('total_starters') as string),
+      notes:            (formData.get('notes') as string) || null,
+    })
+    if (error) {
+      if (error.code === '23505') return { error: `${year} 年 ${distance_category} 的屆次已存在。`, success: false }
+      return { error: error.message, success: false }
+    }
   }
 
   revalidatePath(`/admin/races/${race_id}`)

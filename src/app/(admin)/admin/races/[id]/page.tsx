@@ -66,52 +66,66 @@ export default async function RaceDetailPage({ params }: { params: Promise<{ id:
           <div className="rounded-xl border border-border bg-bg-card p-8 text-center">
             <p className="text-ink-3 text-sm">尚無屆次資料，請點上方「新增屆次」</p>
           </div>
-        ) : (
-          <div className="rounded-xl border border-border bg-bg-card overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-ink-3 text-xs">
-                  <th className="px-4 py-3 text-left">年份／日期</th>
-                  <th className="px-4 py-3 text-left">距離</th>
-                  <th className="px-4 py-3 text-left">游泳</th>
-                  <th className="px-4 py-3 text-right">完賽／出發</th>
-                  <th className="px-4 py-3 text-left">備註</th>
-                </tr>
-              </thead>
-              <tbody>
-                {editions.map(e => (
-                  <tr key={e.id} className="border-b border-border last:border-0">
-                    <td className="px-4 py-3">
-                      <p className="font-semibold text-ink">{e.year}</p>
-                      <p className="text-xs text-ink-4">{e.race_date}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-accent font-medium">{DISTANCE_LABEL[e.distance_category] ?? e.distance_category}</span>
-                      <p className="text-xs text-ink-4">
-                        {[
-                          e.swim_distance_m  ? `${e.swim_distance_m}m`  : null,
-                          e.bike_distance_km ? `${e.bike_distance_km}km` : null,
-                          e.run_distance_km  ? `${e.run_distance_km}km`  : null,
-                        ].filter(Boolean).join(' / ')}
-                      </p>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-ink-3">
-                      {e.swim_type ? SWIM_LABEL[e.swim_type] : '—'}
-                    </td>
-                    <td className="px-4 py-3 text-right text-xs text-ink-3">
-                      {e.finisher_count != null
-                        ? `${e.finisher_count} / ${e.total_starters ?? '?'}`
-                        : '—'}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-ink-4 max-w-[180px] truncate">
-                      {e.notes || '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        ) : (() => {
+          // 依年份分組
+          const byYear = editions.reduce<Record<number, typeof editions>>((acc, e) => {
+            ;(acc[e.year] ??= []).push(e)
+            return acc
+          }, {})
+          const years = Object.keys(byYear).map(Number).sort((a, b) => b - a)
+
+          return (
+            <div className="flex flex-col gap-4">
+              {years.map(year => (
+                <div key={year} className="rounded-xl border border-border bg-bg-card overflow-hidden">
+                  {/* 年份標頭 */}
+                  <div className="px-4 py-2.5 bg-bg-elev border-b border-border flex items-center gap-2">
+                    <span className="text-sm font-semibold text-ink">{year}</span>
+                    <span className="text-xs text-ink-4">{byYear[year][0].race_date}</span>
+                  </div>
+                  {/* 該年的各距離 */}
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border text-ink-3 text-xs">
+                        <th className="px-4 py-2 text-left">距離</th>
+                        <th className="px-4 py-2 text-left">游泳</th>
+                        <th className="px-4 py-2 text-right">完賽／出發</th>
+                        <th className="px-4 py-2 text-left">備註</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {byYear[year].map(e => (
+                        <tr key={e.id} className="border-b border-border last:border-0">
+                          <td className="px-4 py-3">
+                            <span className="text-accent font-medium">{DISTANCE_LABEL[e.distance_category] ?? e.distance_category}</span>
+                            <p className="text-xs text-ink-4">
+                              {[
+                                e.swim_distance_m  ? `${e.swim_distance_m}m`  : null,
+                                e.bike_distance_km ? `${e.bike_distance_km}km` : null,
+                                e.run_distance_km  ? `${e.run_distance_km}km`  : null,
+                              ].filter(Boolean).join(' / ')}
+                            </p>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-ink-3">
+                            {e.swim_type ? SWIM_LABEL[e.swim_type] : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-right text-xs text-ink-3">
+                            {e.finisher_count != null
+                              ? `${e.finisher_count} / ${e.total_starters ?? '?'}`
+                              : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-ink-4 max-w-[180px] truncate">
+                            {e.notes || '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+            </div>
+          )
+        })()}
       </section>
     </main>
   )
