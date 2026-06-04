@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/app/actions/auth'
+import { AdminDropdown } from './AdminDropdown'
 
 const NAV_LINKS = [
   { href: '/leaderboard', label: '最速榜' },
@@ -37,12 +38,7 @@ export async function Nav() {
 
           {user ? (
             <>
-              {isAssistant && (
-                <Link href="/admin"
-                  className="rounded-lg px-3 py-1.5 text-sm text-warn hover:bg-bg-elev transition">
-                  審核
-                </Link>
-              )}
+              {isAssistant && <AdminDropdown />}
               <Link href="/records"
                 className="rounded-lg px-3 py-1.5 text-sm text-ink-3 hover:text-ink hover:bg-bg-elev transition">
                 我的紀錄
