@@ -152,6 +152,107 @@ export async function updateEdition(_prev: RaceActionState, formData: FormData):
   return { error: null, success: true }
 }
 
+// ── 年份屆次整體操作（含多距離） ───────────────────────────────
+
+export async function updateYearEdition(_prev: RaceActionState, formData: FormData): Promise<RaceActionState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: '未登入', success: false }
+
+  const race_id            = formData.get('race_id') as string
+  const year               = parseInt(formData.get('year') as string)
+  const race_date          = formData.get('race_date') as string
+  const race_date_end      = (formData.get('race_date_end') as string) || null
+  const swimType           = (formData.get('swim_type') as SwimType) || null
+  const distance_categories = formData.getAll('distance_category') as DistanceCategory[]
+
+  if (!distance_categories.length) return { error: '請至少勾選一個距離組別', success: false }
+
+  const shared = {
+    race_date,
+    race_date_end,
+    swim_type:      swimType,
+    finisher_count: parseIntOrNull(formData.get('finisher_count') as string),
+    dnf_count:      parseIntOrNull(formData.get('dnf_count')      as string),
+    total_starters: parseIntOrNull(formData.get('total_starters') as string),
+    notes:          (formData.get('notes') as string) || null,
+  }
+
+  // 取得目前 DB 中這個年份的所有距離
+  const { data: existing } = await supabase
+    .from('race_editions')
+    .select('id, distance_category')
+    .eq('race_id', race_id)
+    .eq('year', year)
+
+  const existingMap = new Map((existing ?? []).map(e => [e.distance_category, e.id]))
+  const selectedSet = new Set(distance_categories)
+
+  // 更新或新增各距離
+  for (const dist of distance_categories) {
+    const swim = parseIntOrNull(formData.get(`swim_${dist}`) as string) ?? DISTANCE_DEFAULTS[dist]?.swim ?? null
+    const bike = parseFloatOrNull(formData.get(`bike_${dist}`) as string) ?? DISTANCE_DEFAULTS[dist]?.bike ?? null
+    const run  = parseFloatOrNull(formData.get(`run_${dist}`)  as string) ?? DISTANCE_DEFAULTS[dist]?.run  ?? null
+
+    const row = { ...shared, swim_distance_m: swim, bike_distance_km: bike, run_distance_km: run }
+
+    if (existingMap.has(dist)) {
+      const { error } = await supabase.from('race_editions').update(row).eq('id', existingMap.get(dist)!)
+      if (error) return { error: error.message, success: false }
+    } else {
+      const { error } = await supabase.from('race_editions').insert({ race_id, year, distance_category: dist, ...row })
+      if (error) {
+        if (error.code === '23505') return { error: `${year} 年 ${dist} 的屆次已存在。`, success: false }
+        return { error: error.message, success: false }
+      }
+    }
+  }
+
+  // 移除已取消勾選的距離（有成績時阻擋）
+  for (const [dist, id] of existingMap) {
+    if (!selectedSet.has(dist)) {
+      const { count } = await supabase
+        .from('results').select('id', { count: 'exact', head: true }).eq('race_edition_id', id)
+      if (count && count > 0)
+        return { error: `距離 ${dist} 有 ${count} 筆成績，無法移除。請先刪除相關成績。`, success: false }
+      await supabase.from('race_editions').delete().eq('id', id)
+    }
+  }
+
+  revalidatePath(`/admin/races/${race_id}`)
+  return { error: null, success: true }
+}
+
+export async function deleteYearEditions(_prev: RaceActionState, formData: FormData): Promise<RaceActionState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: '未登入', success: false }
+
+  const race_id = formData.get('race_id') as string
+  const year    = parseInt(formData.get('year') as string)
+
+  const { data: editions } = await supabase
+    .from('race_editions')
+    .select('id, distance_category')
+    .eq('race_id', race_id)
+    .eq('year', year)
+
+  for (const e of editions ?? []) {
+    const { count } = await supabase
+      .from('results').select('id', { count: 'exact', head: true }).eq('race_edition_id', e.id)
+    if (count && count > 0)
+      return { error: `${year} 年屆次有 ${count} 筆成績資料，無法刪除。請先移除相關成績。`, success: false }
+  }
+
+  for (const e of editions ?? []) {
+    const { error } = await supabase.from('race_editions').delete().eq('id', e.id)
+    if (error) return { error: error.message, success: false }
+  }
+
+  revalidatePath(`/admin/races/${race_id}`)
+  return { error: null, success: true }
+}
+
 export async function deleteEdition(_prev: RaceActionState, formData: FormData): Promise<RaceActionState> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
