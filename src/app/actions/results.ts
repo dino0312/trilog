@@ -1,6 +1,7 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 
 export type ResultState = {
@@ -54,4 +55,64 @@ export async function createResult(_prev: ResultState, formData: FormData): Prom
   if (error) return { error: error.message }
 
   redirect('/records')
+}
+
+export async function updateResult(_prev: ResultState, formData: FormData): Promise<ResultState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: '請先登入' }
+
+  const id         = formData.get('id') as string
+  const totalStr   = formData.get('total') as string
+  const swimStr    = formData.get('swim') as string
+  const t1Str      = formData.get('t1') as string
+  const bikeStr    = formData.get('bike') as string
+  const t2Str      = formData.get('t2') as string
+  const runStr     = formData.get('run') as string
+  const isPublic   = formData.getAll('is_public').includes('true')
+  const notes      = formData.get('notes') as string | null
+
+  const totalSeconds = parseTime(totalStr)
+  if (!totalSeconds || totalSeconds <= 0) return { error: '請輸入正確的完賽時間（HH:MM:SS）' }
+
+  const { error } = await supabase
+    .from('results')
+    .update({
+      total_seconds: totalSeconds,
+      swim_seconds:  parseTime(swimStr),
+      t1_seconds:    parseTime(t1Str),
+      bike_seconds:  parseTime(bikeStr),
+      t2_seconds:    parseTime(t2Str),
+      run_seconds:   parseTime(runStr),
+      is_public:     isPublic,
+      notes:         notes || null,
+    })
+    .eq('id', id)
+    .eq('athlete_id', user.id)
+    .eq('source_credibility', 'self_reported')
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/records')
+  return { error: null }
+}
+
+export async function deleteResult(_prev: ResultState, formData: FormData): Promise<ResultState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: '請先登入' }
+
+  const id = formData.get('id') as string
+
+  const { error } = await supabase
+    .from('results')
+    .delete()
+    .eq('id', id)
+    .eq('athlete_id', user.id)
+    .eq('source_credibility', 'self_reported')
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/records')
+  return { error: null }
 }

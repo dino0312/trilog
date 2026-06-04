@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { secondsToTime } from '@/lib/utils/time'
 import { redirect } from 'next/navigation'
+import { RecordActions } from '@/components/results/RecordActions'
 
 export const metadata: Metadata = { title: '我的紀錄' }
 
@@ -108,6 +109,20 @@ export default async function RecordsPage() {
 
                 {r.notes && (
                   <p className="mt-2 text-xs text-ink-3 line-clamp-2">{r.notes}</p>
+                )}
+
+                {r.source_credibility === 'self_reported' && (
+                  <RecordActions
+                    id={r.id}
+                    totalSeconds={r.total_seconds}
+                    swimSeconds={r.swim_seconds}
+                    t1Seconds={r.t1_seconds}
+                    bikeSeconds={r.bike_seconds}
+                    t2Seconds={r.t2_seconds}
+                    runSeconds={r.run_seconds}
+                    isPublic={r.is_public}
+                    notes={r.notes}
+                  />
                 )}
               </div>
             )

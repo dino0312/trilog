@@ -1,22 +1,47 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { secondsToTime } from '@/lib/utils/time'
+import { DistanceTabs } from '@/components/leaderboard/DistanceTabs'
 
 export const metadata: Metadata = { title: '最速榜 · Tri·log' }
 
-// 分界線門檻（秒）
-const MALE_THRESHOLD   = 32400  // 9:00:00
-const FEMALE_THRESHOLD = 36000  // 10:00:00
+// Sub 分界線門檻（秒）
+const SUB: Record<string, { M: number; F: number }> = {
+  full:    { M: 36000, F: 36000 },  // Sub 10
+  '70.3':  { M: 18000, F: 19800 },  // Sub 5 / Sub 5.5
+  olympic: { M:  7200, F:  9000 },  // Sub 2 / Sub 2.5
+  sprint:  { M:  3600, F:  4320 },  // Sub 1 / Sub 1.2
+}
+
+const DISTANCE_TITLE: Record<string, string> = {
+  full: '226', '70.3': '113', olympic: '51.5', sprint: 'Sprint',
+}
 
 type Entry = {
   result_id:          string
   total_seconds:      number
   display_name:       string | null
+  athlete_id:         string | null
   race_name:          string
   edition_year:       number
+  race_date:          string | null
   claim_status:       string
   source_credibility: string
   claim_tag_count:    number
+}
+
+/** Best-per-athlete 去重：同一選手只取最快一筆 */
+function deduplicateBest(entries: Entry[]): Entry[] {
+  const best = new Map<string, Entry>()
+  for (const e of entries) {
+    // key：有帳號用 athlete_id，未認領用 display_name
+    const key = e.athlete_id ?? `__unclaimed__${e.display_name}`
+    const prev = best.get(key)
+    if (!prev || e.total_seconds < prev.total_seconds) {
+      best.set(key, e)
+    }
+  }
+  return Array.from(best.values()).sort((a, b) => a.total_seconds - b.total_seconds)
 }
 
 function RankBadge({ rank }: { rank: number }) {
@@ -26,15 +51,17 @@ function RankBadge({ rank }: { rank: number }) {
   return <span style={{ color: '#4A5568', fontSize: 14, fontFamily: 'var(--font-dm)' }}>{rank}</span>
 }
 
-function TimeCell({ seconds, rank, gender }: { seconds: number; rank: number; gender: 'M' | 'F' }) {
+function TimeCell({ seconds, rank, gender }: { seconds: number; rank: number; gender: 'M' | 'F'; distance: string }) {
   let color = '#F0EDE6'
   if (gender === 'M') {
     if (rank === 1) color = '#F5C842'
-    else if (seconds < MALE_THRESHOLD) color = '#FF6B3D'
   } else {
     if (rank === 1) color = '#E870A0'
-    else if (seconds < FEMALE_THRESHOLD) color = '#D4537E'
+    else color = '#D4537E'
   }
+  // sub 10 / sub 5 等用橘色（男子，非第一名）
+  if (gender === 'M' && rank > 1) color = '#FF6B3D'
+
   return (
     <span style={{ color, fontFamily: 'var(--font-dm)', fontSize: 17, fontWeight: 500, letterSpacing: '0.02em' }}>
       {secondsToTime(seconds)}
@@ -42,28 +69,18 @@ function TimeCell({ seconds, rank, gender }: { seconds: number; rank: number; ge
   )
 }
 
-function StatusBadge({ claimStatus }: { claimStatus: string }) {
-  if (claimStatus === 'unclaimed') {
-    return (
-      <span style={{
-        fontSize: 11, fontFamily: 'var(--font-dm)', letterSpacing: '0.1em',
-        color: '#4A5568', border: '1px solid rgba(255,255,255,0.08)',
-        padding: '1px 6px', borderRadius: 100,
-      }}>未認領</span>
-    )
-  }
-  return null
-}
-
-function GenderSection({ entries, gender, updatedAt }: {
+function GenderSection({
+  entries, gender, updatedAt, distance,
+}: {
   entries: Entry[]
   gender: 'M' | 'F'
   updatedAt: string
+  distance: string
 }) {
-  const label     = gender === 'M' ? '男子組' : '女子組'
+  const label      = gender === 'M' ? '男子組' : '女子組'
   const labelColor = gender === 'M' ? '#22C9C9' : '#D4537E'
-  const threshold  = gender === 'M' ? MALE_THRESHOLD : FEMALE_THRESHOLD
-  let crossedThreshold = false
+  const threshold  = SUB[distance]?.[gender] ?? Infinity
+  let   crossed    = false
 
   return (
     <>
@@ -78,49 +95,53 @@ function GenderSection({ entries, gender, updatedAt }: {
           padding: '2px 8px', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 100,
         }}>{updatedAt} 更新</span>
         <span style={{ fontFamily: 'var(--font-dm)', fontSize: 11, color: '#4A5568', marginLeft: 'auto' }}>
-          {entries.length} 筆
+          {entries.length} 人
         </span>
       </div>
 
-      {/* 榜單列 */}
       {entries.map((e, i) => {
-        const rank       = i + 1
-        const showDivider = !crossedThreshold && e.total_seconds >= threshold
-        if (showDivider) crossedThreshold = true
+        const rank        = i + 1
+        const showDivider = !crossed && e.total_seconds >= threshold
+        if (showDivider) crossed = true
 
         return (
           <div key={e.result_id}>
             {showDivider && (
-              <div style={{ height: 1, background: 'rgba(255,255,255,0.04)', margin: '4px 0' }} />
+              <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '4px 0' }} />
             )}
             <div className="tlb-row" style={{
               display: 'grid',
-              gridTemplateColumns: '44px minmax(0,1fr) 130px 1fr',
               alignItems: 'center',
               padding: '12px 24px',
               borderTop: '1px solid rgba(255,255,255,0.05)',
               cursor: 'pointer',
-            }}
-            >
-              <div style={{ width: 44 }}><RankBadge rank={rank} /></div>
+            }}>
+              <div><RankBadge rank={rank} /></div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                 <span style={{
-                  fontSize: 16, fontWeight: 500,
+                  fontSize: 15, fontWeight: 500,
                   color: e.claim_status === 'unclaimed' ? '#8A96A8' : '#F0EDE6',
                   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   fontFamily: "'Noto Sans TC', sans-serif",
                 }}>
                   {e.display_name ?? '—'}
                 </span>
-                <StatusBadge claimStatus={e.claim_status} />
+                {e.claim_status === 'unclaimed' && (
+                  <span style={{
+                    flexShrink: 0,
+                    fontSize: 11, fontFamily: 'var(--font-dm)', letterSpacing: '0.1em',
+                    color: '#4A5568', border: '1px solid rgba(255,255,255,0.08)',
+                    padding: '1px 6px', borderRadius: 100,
+                  }}>未認領</span>
+                )}
               </div>
 
               <div style={{ textAlign: 'right' }}>
-                <TimeCell seconds={e.total_seconds} rank={rank} gender={gender} />
+                <TimeCell seconds={e.total_seconds} rank={rank} gender={gender} distance={distance} />
               </div>
 
-              <div style={{
+              <div className="tlb-race" style={{
                 fontSize: 13, color: '#4A5568', textAlign: 'right', paddingLeft: 12,
                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                 fontFamily: 'var(--font-dm)',
@@ -135,39 +156,62 @@ function GenderSection({ entries, gender, updatedAt }: {
   )
 }
 
-export default async function LeaderboardPage() {
+type SearchParams = Promise<{ distance?: string }>
+
+export default async function LeaderboardPage({ searchParams }: { searchParams: SearchParams }) {
+  const { distance: rawDistance } = await searchParams
+  const distance = rawDistance ?? 'full'
+
   const supabase = await createClient()
 
   const [{ data: maleRaw }, { data: femaleRaw }] = await Promise.all([
     supabase
       .from('leaderboard_entries')
-      .select('result_id, total_seconds, display_name, race_name, edition_year, claim_status, source_credibility, claim_tag_count')
-      .eq('distance_category', 'full')
+      .select('result_id, total_seconds, display_name, athlete_id, race_name, edition_year, race_date, claim_status, source_credibility, claim_tag_count')
+      .eq('distance_category', distance as 'sprint' | 'olympic' | '70.3' | 'full')
       .eq('gender', 'M')
       .order('total_seconds', { ascending: true })
-      .limit(100),
+      .limit(500),
     supabase
       .from('leaderboard_entries')
-      .select('result_id, total_seconds, display_name, race_name, edition_year, claim_status, source_credibility, claim_tag_count')
-      .eq('distance_category', 'full')
+      .select('result_id, total_seconds, display_name, athlete_id, race_name, edition_year, race_date, claim_status, source_credibility, claim_tag_count')
+      .eq('distance_category', distance as 'sprint' | 'olympic' | '70.3' | 'full')
       .eq('gender', 'F')
       .order('total_seconds', { ascending: true })
-      .limit(100),
+      .limit(500),
   ])
 
-  const male   = (maleRaw   ?? []) as Entry[]
-  const female = (femaleRaw ?? []) as Entry[]
+  const male   = deduplicateBest((maleRaw   ?? []) as Entry[])
+  const female = deduplicateBest((femaleRaw ?? []) as Entry[])
+
+  // 最新賽事日期作為「更新時間」
+  const allDates = [...(maleRaw ?? []), ...(femaleRaw ?? [])]
+    .map(e => e.race_date)
+    .filter(Boolean)
+    .sort()
+  const updatedAt = allDates.length
+    ? new Date(allDates[allDates.length - 1]!).toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '/')
+    : '—'
+
+  const distTitle = DISTANCE_TITLE[distance] ?? distance
 
   return (
     <main style={{ maxWidth: 860, margin: '0 auto', padding: '2.5rem 2rem 4rem' }}>
-      <style>{`.tlb-row:hover { background: rgba(255,255,255,0.025); transition: background 0.1s; }`}</style>
+      <style>{`
+        .tlb-row:hover { background: rgba(255,255,255,0.025); transition: background 0.1s; }
+        .tlb-row { grid-template-columns: 36px minmax(0,1fr) 110px minmax(0,1fr); }
+        .tlb-race { display: block; }
+        @media (max-width: 600px) {
+          .tlb-row { grid-template-columns: 36px minmax(0,1fr) 100px; }
+          .tlb-race { display: none; }
+        }
+      `}</style>
 
       {/* 頁面標題 */}
-      <div style={{ padding: '2rem 0 1.5rem' }}>
+      <div style={{ padding: '1.5rem 0 1.5rem' }}>
         <p style={{
           fontFamily: 'var(--font-dm)', fontSize: 11, color: '#22C9C9',
-          letterSpacing: '0.15em', display: 'flex', alignItems: 'center', gap: 8,
-          marginBottom: 10,
+          letterSpacing: '0.15em', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10,
         }}>
           <span style={{ display: 'block', width: 20, height: 1, background: '#22C9C9' }} />
           台灣選手
@@ -182,7 +226,7 @@ export default async function LeaderboardPage() {
         <p style={{ fontSize: 15, color: '#4A5568' }}>各選手個人最佳完賽時間，跨賽事排列</p>
       </div>
 
-      {/* 最速榜卡片 — 液態玻璃 */}
+      {/* 最速榜卡片 */}
       <div style={{
         background: 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)',
         backdropFilter: 'blur(24px) saturate(160%)',
@@ -202,7 +246,7 @@ export default async function LeaderboardPage() {
             fontFamily: 'var(--font-syne)', fontWeight: 800, fontSize: 140,
             color: 'rgba(255,255,255,0.03)', lineHeight: 1,
             pointerEvents: 'none', userSelect: 'none', letterSpacing: -6,
-          }}>226</span>
+          }}>{distTitle}</span>
 
           {/* 標籤膠囊 */}
           <div style={{
@@ -220,7 +264,7 @@ export default async function LeaderboardPage() {
             fontFamily: 'var(--font-syne)', fontWeight: 800, fontSize: 36,
             color: '#F0EDE6', letterSpacing: '-0.03em', lineHeight: 1, marginBottom: 6,
           }}>
-            台灣鐵人 <span style={{ color: '#FF6B3D' }}>226</span>
+            台灣鐵人 <span style={{ color: '#FF6B3D' }}>{distTitle}</span>
           </div>
           <div style={{
             fontSize: 14, color: '#4A5568', fontFamily: 'var(--font-dm)',
@@ -230,40 +274,28 @@ export default async function LeaderboardPage() {
           </div>
 
           {/* 距離頁籤 */}
-          <div style={{
-            display: 'flex', borderTop: '1px solid rgba(255,255,255,0.04)',
-            margin: '0 -2rem',
-          }}>
-            {[
-              { label: '226 全距離', active: true },
-              { label: '113 半程',   active: false },
-              { label: '51.5 奧林匹克', active: false },
-              { label: '25.75 衝刺',  active: false },
-            ].map(tab => (
-              <div key={tab.label} style={{
-                padding: '12px 22px', fontSize: 14, fontWeight: 500,
-                color: tab.active ? '#F0EDE6' : '#4A5568',
-                borderBottom: tab.active ? '2px solid #FF6B3D' : '2px solid transparent',
-                opacity: tab.active ? 1 : 0.35,
-                cursor: tab.active ? 'pointer' : 'not-allowed',
-                whiteSpace: 'nowrap',
-                fontFamily: "'Noto Sans TC', sans-serif",
-              }}>{tab.label}</div>
-            ))}
-          </div>
+          <DistanceTabs current={distance} />
         </div>
 
         {/* 男子組 */}
         {male.length > 0 && (
-          <GenderSection entries={male} gender="M" updatedAt="2026/02/07" />
+          <GenderSection entries={male} gender="M" updatedAt={updatedAt} distance={distance} />
+        )}
+
+        {male.length === 0 && female.length === 0 && (
+          <div style={{ padding: '3rem', textAlign: 'center', color: '#4A5568', fontFamily: 'var(--font-dm)' }}>
+            尚無成績資料
+          </div>
         )}
 
         {/* 性別分隔 */}
-        <div style={{ height: 8, background: 'rgba(255,255,255,0.02)' }} />
+        {male.length > 0 && female.length > 0 && (
+          <div style={{ height: 8, background: 'rgba(255,255,255,0.02)' }} />
+        )}
 
         {/* 女子組 */}
         {female.length > 0 && (
-          <GenderSection entries={female} gender="F" updatedAt="2026/02/07" />
+          <GenderSection entries={female} gender="F" updatedAt={updatedAt} distance={distance} />
         )}
 
         {/* 底部說明 */}
@@ -275,14 +307,14 @@ export default async function LeaderboardPage() {
           <span style={{ fontSize: 13, color: '#4A5568', fontFamily: 'var(--font-dm)' }}>
             未認領成績來自官方賽事成績；認領後成為個人紀錄
           </span>
-          <a href="/unclaimed" style={{
+          <a href="/records/new" style={{
             marginLeft: 'auto', fontSize: 13, color: '#FF6B3D',
             fontFamily: 'var(--font-dm)', cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 4,
             border: '1px solid rgba(255,107,61,0.25)', padding: '4px 10px',
-            borderRadius: 100, textDecoration: 'none',
+            borderRadius: 100, textDecoration: 'none', whiteSpace: 'nowrap',
           }}>
-            認領我的成績 →
+            登錄我的成績 →
           </a>
         </div>
       </div>

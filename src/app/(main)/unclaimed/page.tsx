@@ -1,9 +1,11 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { secondsToTime } from '@/lib/utils/time'
 import { ClaimButton } from '@/components/claims/ClaimButton'
+import { TagButton } from '@/components/claims/TagButton'
 
-export const metadata: Metadata = { title: '未認領成績' }
+export const metadata: Metadata = { title: '未認領成績 · Tri·log' }
 
 const DISTANCE_LABEL: Record<string, string> = {
   sprint: 'Sprint', olympic: '51.5', '70.3': '113', full: '226',
@@ -14,19 +16,17 @@ type SearchParams = Promise<{ q?: string; race?: string; distance?: string }>
 export default async function UnclaimedPage({ searchParams }: { searchParams: SearchParams }) {
   const { q, race, distance } = await searchParams
   const supabase = await createClient()
-
   const { data: { user } } = await supabase.auth.getUser()
 
-  // 取得賽事清單
   const { data: races } = await supabase
     .from('races').select('id, name').eq('status', 'active').order('name')
 
-  // 查詢未認領成績
+  // 查詢未認領成績，依標記數降冪、時間升冪
   let query = supabase
     .from('results')
     .select(`
       id, total_seconds, swim_seconds, bike_seconds, run_seconds,
-      athlete_name_snapshot, claim_tag_count, source_credibility,
+      athlete_name_snapshot, claim_tag_count, source_credibility, claim_status,
       race_editions (
         year, distance_category,
         races ( id, name )
@@ -34,24 +34,36 @@ export default async function UnclaimedPage({ searchParams }: { searchParams: Se
     `)
     .in('claim_status', ['unclaimed', 'unlinked'])
     .eq('result_type', 'solo')
+    .order('claim_tag_count', { ascending: false })
     .order('total_seconds', { ascending: true })
-    .limit(100)
+    .limit(200)
 
   if (q) query = query.ilike('athlete_name_snapshot', `%${q}%`)
-  if (distance) query = query.eq('race_editions.distance_category' as any, distance)
 
   const { data: results } = await query
 
-  // 若有 race 篩選，在 JS 層過濾（nested filter 限制）
-  const filtered = race
-    ? results?.filter(r => (r.race_editions as any)?.races?.id === race)
-    : results
+  const filtered = (() => {
+    let list = results ?? []
+    if (race)     list = list.filter(r => (r.race_editions as any)?.races?.id === race)
+    if (distance) list = list.filter(r => (r.race_editions as any)?.distance_category === distance)
+    return list
+  })()
+
+  // 已登入者：取出自己已標記的 result_id
+  let myTaggedIds = new Set<string>()
+  if (user) {
+    const { data: myTags } = await supabase
+      .from('claim_tags').select('result_id').eq('tagged_by', user.id)
+    myTaggedIds = new Set((myTags ?? []).map(t => t.result_id))
+  }
 
   return (
     <main className="flex-1 p-6 max-w-4xl mx-auto w-full">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-ink">未認領成績</h1>
-        <p className="mt-0.5 text-sm text-ink-3">搜尋你的名字，認領屬於你的成績</p>
+        <p className="mt-0.5 text-sm text-ink-3">
+          搜尋你的名字來認領成績，或通知你認識的選手
+        </p>
       </div>
 
       {/* 搜尋與篩選 */}
@@ -79,65 +91,66 @@ export default async function UnclaimedPage({ searchParams }: { searchParams: Se
         </button>
       </form>
 
-      {/* 結果列表 */}
-      {!filtered?.length ? (
+      {!filtered.length ? (
         <div className="rounded-xl border border-border bg-bg-card p-12 text-center">
           <p className="text-ink-3">沒有符合條件的未認領成績</p>
         </div>
       ) : (
-        <div className="rounded-xl border border-border bg-bg-card overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-ink-3 text-xs">
-                <th className="px-4 py-3 text-left">姓名</th>
-                <th className="px-4 py-3 text-left">賽事</th>
-                <th className="px-4 py-3 text-right font-mono">完賽</th>
-                <th className="px-4 py-3 text-center hidden sm:table-cell">標記</th>
-                <th className="px-4 py-3 text-right">{user ? '認領' : ''}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map(r => {
-                const edition = r.race_editions as any
-                const raceName = edition?.races?.name
-                return (
-                  <tr key={r.id} className="border-b border-border last:border-0 hover:bg-bg-elev transition">
-                    <td className="px-4 py-3">
-                      <p className="text-ink font-medium">{r.athlete_name_snapshot ?? '—'}</p>
-                      <p className="text-xs text-ink-4">
-                        {r.source_credibility === 'official' ? '官方成績' : '自填'}
-                      </p>
-                    </td>
-                    <td className="px-4 py-3 text-ink-3">
+        <div className="flex flex-col gap-3">
+          {filtered.map(r => {
+            const edition = r.race_editions as any
+            const raceName = edition?.races?.name
+            return (
+              <div key={r.id} className="rounded-xl border border-border bg-bg-card p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <Link href={`/results/${r.id}`}
+                      className="font-semibold text-ink hover:text-accent transition">
+                      {r.athlete_name_snapshot ?? '—'}
+                    </Link>
+                    <p className="text-xs text-ink-4 mt-0.5">
                       {raceName} {edition?.year}
-                      <span className="ml-1 text-xs text-ink-4">
-                        {DISTANCE_LABEL[edition?.distance_category]}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right font-mono font-bold text-accent tabular-nums">
+                      {' · '}{DISTANCE_LABEL[edition?.distance_category] ?? edition?.distance_category}
+                      {' · '}{r.source_credibility === 'official' ? '官方成績' : '自填'}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <p className="font-mono text-xl font-bold text-accent tabular-nums">
                       {secondsToTime(r.total_seconds)}
-                    </td>
-                    <td className="px-4 py-3 text-center hidden sm:table-cell">
-                      {r.claim_tag_count > 0 && (
-                        <span className="inline-flex items-center gap-1 text-xs text-warn">
-                          🔔 {r.claim_tag_count}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {user && <ClaimButton resultId={r.id} />}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                    </p>
+                    {r.claim_tag_count > 0 && (
+                      <span className="text-xs text-ink-4">🔔 {r.claim_tag_count} 人已通知</span>
+                    )}
+                  </div>
+                </div>
+
+                {(r.swim_seconds || r.bike_seconds || r.run_seconds) && (
+                  <div className="mt-2 flex gap-3 text-xs font-mono">
+                    {r.swim_seconds && <span className="text-swim">{secondsToTime(r.swim_seconds)}</span>}
+                    {r.bike_seconds && <span className="text-bike">{secondsToTime(r.bike_seconds)}</span>}
+                    {r.run_seconds  && <span className="text-run">{secondsToTime(r.run_seconds)}</span>}
+                  </div>
+                )}
+
+                <div className="mt-3 flex items-center gap-4 flex-wrap">
+                  <ClaimButton resultId={r.id} />
+                  <TagButton
+                    resultId={r.id}
+                    tagCount={r.claim_tag_count ?? 0}
+                    hasTagged={myTaggedIds.has(r.id)}
+                    isLoggedIn={!!user}
+                    claimStatus={r.claim_status}
+                  />
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
 
       {!user && (
         <p className="mt-4 text-center text-sm text-ink-3">
-          <a href="/login" className="text-accent hover:underline">登入</a> 後才能認領成績
+          <Link href="/login" className="text-accent hover:underline">登入</Link> 後才能認領或標記成績
         </p>
       )}
     </main>
