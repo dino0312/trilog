@@ -200,19 +200,39 @@
 
 列出本人所有成績，含 `pending` 狀態（顯示「待審核」）。
 
-**編輯功能**（RecordActions）：
-- 僅限 `source_credibility = 'self_reported'` 的成績可編輯 / 刪除
-- 點「編輯」開啟 modal，預填現有數值，送出呼叫 `updateResult` Server Action
-- 點「刪除」開啟確認 modal，確認後呼叫 `deleteResult` Server Action
-- 官方成績（`official`）和已公證成績（`certificate`）不顯示操作按鈕
+**自填成績操作**（RecordActions，僅 `source_credibility = 'self_reported'`）：
+- 點「編輯」→ modal 預填現有數值，送出呼叫 `updateResult` Server Action
+- 點「刪除」→ 確認 modal，確認後呼叫 `deleteResult` Server Action
+
+**官方成績操作**（21.4，`source_credibility = 'official' + claim_status = 'claimed'`）：
+- 顯示「解除關聯」按鈕（UnlinkButton），需二次確認
+- 確認後呼叫 `unlink_result()` RPC → `athlete_id = null`，`claim_status = 'unlinked'`
+- 解除後成績回到公共狀態，`athlete_name_snapshot` 保留作為公共紀錄
+
+**認領狀態顯示**：
+- `claim_status = 'pending'` → 顯示「⏳ 待審核」
+- `claim_status = 'claimed'` + 非自填 → 顯示「✓ 已認領」
 
 ### 4.2 新增成績（`/records/new`）
 
 選手自填成績表單。動態載入賽事選單（`GET /api/races`）。成功後 redirect → `/records`。
 
+**21.3 首次成績登錄引導**（Profile 補充流程）：
+
+| 條件 | 行為 |
+|------|------|
+| Profile 完整（nickname + gender + birth_year + nationality 均已填）| 正常表單，無額外步驟 |
+| Profile 不完整 + 勾選「公開成績」 | 表單底部出現藍色「完成個人資料以進入排行榜」區塊，只顯示尚未填寫的欄位 |
+| Profile 不完整 + 取消勾選「公開成績」 | 區塊即時隱藏，私人成績直接儲存無需補填 |
+
+- 僅顯示缺少的欄位（nickname / gender / birth_year / nationality），已填的不重複詢問
+- 送出時 `createResult` server action 先更新 athletes 表，再驗證完整性，不完整則阻擋
+- 此引導僅在 profile 不完整時觸發；Profile 頁面補完後，之後新增成績不再出現
+
 ### 4.3 個人資料（`/profile`）
 
-編輯 `nickname`、`gender`、`birth_year`、`nationality`。未填 `nickname` 的選手不上排行榜。
+編輯 `nickname`、`gender`、`birth_year`、`nationality`、`bio`。  
+未填 `nickname` 的選手不進入排行榜（成績可私人保存）。
 
 ---
 
