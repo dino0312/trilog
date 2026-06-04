@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { RaceEditForm } from './RaceEditForm'
 import { EditionFormPanel } from './EditionFormPanel'
+import { EditionRow } from './EditionActions'
 
 export const metadata: Metadata = { title: '賽事詳情 · Tri·log' }
 
@@ -90,34 +91,17 @@ export default async function RaceDetailPage({ params }: { params: Promise<{ id:
                         <th className="px-4 py-2 text-left">距離</th>
                         <th className="px-4 py-2 text-left">游泳</th>
                         <th className="px-4 py-2 text-right">完賽／出發</th>
-                        <th className="px-4 py-2 text-left">備註</th>
+                        <th className="px-4 py-2 text-right w-20"></th>
                       </tr>
                     </thead>
                     <tbody>
                       {byYear[year].map(e => (
-                        <tr key={e.id} className="border-b border-border last:border-0">
-                          <td className="px-4 py-3">
-                            <span className="text-accent font-medium">{DISTANCE_LABEL[e.distance_category] ?? e.distance_category}</span>
-                            <p className="text-xs text-ink-4">
-                              {[
-                                e.swim_distance_m  ? `${e.swim_distance_m}m`  : null,
-                                e.bike_distance_km ? `${e.bike_distance_km}km` : null,
-                                e.run_distance_km  ? `${e.run_distance_km}km`  : null,
-                              ].filter(Boolean).join(' / ')}
-                            </p>
-                          </td>
-                          <td className="px-4 py-3 text-xs text-ink-3">
-                            {e.swim_type ? SWIM_LABEL[e.swim_type] : '—'}
-                          </td>
-                          <td className="px-4 py-3 text-right text-xs text-ink-3">
-                            {e.finisher_count != null
-                              ? `${e.finisher_count} / ${e.total_starters ?? '?'}`
-                              : '—'}
-                          </td>
-                          <td className="px-4 py-3 text-xs text-ink-4 max-w-[180px] truncate">
-                            {e.notes || '—'}
-                          </td>
-                        </tr>
+                        <EditionRow
+                          key={e.id}
+                          edition={e}
+                          raceId={race.id}
+                          distanceLabel={DISTANCE_LABEL[e.distance_category] ?? e.distance_category}
+                        />
                       ))}
                     </tbody>
                   </table>
