@@ -21,6 +21,8 @@ Tri·log 是鐵人三項選手的**跨賽事成績記錄與排行榜平台**。
 | API 端點設計、請求格式 | `docs/api.md` |
 | 技術選型理由、架構決策 | `docs/decisions.md` |
 | 系統架構圖、資料流 | `docs/architecture.md` |
+| UI 功能規格、頁面行為 | `docs/features.md` |
+| 產品規格書（最新版） | `docs/trilog_spec_v13.docx`（v1.2，2026年6月）|
 
 ---
 
@@ -44,14 +46,21 @@ Tri·log 是鐵人三項選手的**跨賽事成績記錄與排行榜平台**。
 src/
   app/
     (main)/          主應用 Route Group，有 Nav Layout
-      leaderboard/   公開排行榜
+      leaderboard/   最速榜（best-per-athlete，?distance=full 預設）
+      rankings/      排行榜（distance 必選，?distance=full 預設）
+      unclaimed/     未認領成績（標記 + 認領）
+      results/[id]/  成績詳情頁
       records/       我的成績（需登入）
         new/         新增成績
       profile/       個人資料（需登入）
+    (admin)/         管理區 Route Group（role ≥ assistant）
+      admin/         審核中心
+        races/       賽事管理
+        results/     官方成績輸入工具
     (auth)/          認證 Route Group，全螢幕置中 Layout
       login/
       register/
-    api/             Route Handlers（待建立）
+    api/             Route Handlers
     globals.css      設計 token + Tailwind v4 主題橋接
     layout.tsx       根 Layout
     page.tsx         / → redirect /leaderboard
