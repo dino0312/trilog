@@ -34,29 +34,7 @@ export function TagButton({ resultId, tagCount, hasTagged, isLoggedIn, claimStat
 
   if (!canTag) return null
 
-  // 已標記 → 顯示已標記狀態 + 撤銷
-  if (hasTagged) {
-    return (
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-good font-medium">✓ 已通知</span>
-          <form action={removeAction}>
-            <input type="hidden" name="result_id" value={resultId} />
-            <button
-              type="submit"
-              disabled={removePending}
-              className="text-xs text-ink-4 hover:text-ink-3 transition underline"
-            >
-              撤銷
-            </button>
-          </form>
-        </div>
-        {removeState.error && <p className="text-xs text-red">{removeState.error}</p>}
-      </div>
-    )
-  }
-
-  // 分享彈出
+  // 分享彈出：優先於「已通知」判斷，避免 revalidatePath 搶先更新 prop
   if (showShare && addState.shareText) {
     return (
       <div className="flex flex-col gap-2 p-3 rounded-lg border border-border bg-bg-elev text-sm">
@@ -85,6 +63,28 @@ export function TagButton({ resultId, tagCount, hasTagged, isLoggedIn, claimStat
             關閉
           </button>
         </div>
+      </div>
+    )
+  }
+
+  // 已標記（分享面板關閉後）→ 顯示已通知狀態 + 撤銷
+  if (hasTagged) {
+    return (
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-good font-medium">✓ 已通知</span>
+          <form action={removeAction}>
+            <input type="hidden" name="result_id" value={resultId} />
+            <button
+              type="submit"
+              disabled={removePending}
+              className="text-xs text-ink-4 hover:text-ink-3 transition underline"
+            >
+              撤銷
+            </button>
+          </form>
+        </div>
+        {removeState.error && <p className="text-xs text-red">{removeState.error}</p>}
       </div>
     )
   }

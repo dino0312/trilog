@@ -22,6 +22,10 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  const { data: profile } = user
+    ? await supabase.from('athletes').select('nickname').eq('id', user.id).single()
+    : { data: null }
+
   const { data: result } = await supabase
     .from('results')
     .select(`
@@ -120,7 +124,15 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
         <div className="rounded-xl border border-border bg-bg-card p-5 mb-4">
           <h2 className="text-sm font-semibold text-ink mb-3">這是你的成績嗎？</h2>
           <div className="flex flex-col gap-3">
-            <ClaimButton resultId={result.id} />
+            <ClaimButton
+              resultId={result.id}
+              visible={
+                !!profile?.nickname &&
+                !!result.athlete_name_snapshot &&
+                result.athlete_name_snapshot.trim().toLowerCase().replace(/\s+/g, '') ===
+                profile.nickname.trim().toLowerCase().replace(/\s+/g, '')
+              }
+            />
             <div className="border-t border-border pt-3">
               <p className="text-xs text-ink-4 mb-2">認識這位選手？幫忙通知他來認領</p>
               <TagButton

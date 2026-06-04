@@ -49,13 +49,21 @@ export default async function UnclaimedPage({ searchParams }: { searchParams: Se
     return list
   })()
 
-  // 已登入者：取出自己已標記的 result_id
+  // 已登入者：取出 nickname + 已標記的 result_id
   let myTaggedIds = new Set<string>()
+  let myNickname = ''
   if (user) {
-    const { data: myTags } = await supabase
-      .from('claim_tags').select('result_id').eq('tagged_by', user.id)
+    const [{ data: myTags }, { data: profile }] = await Promise.all([
+      supabase.from('claim_tags').select('result_id').eq('tagged_by', user.id),
+      supabase.from('athletes').select('nickname').eq('id', user.id).single(),
+    ])
     myTaggedIds = new Set((myTags ?? []).map(t => t.result_id))
+    myNickname  = profile?.nickname ?? ''
   }
+
+  const normalize = (s: string) => s.trim().toLowerCase().replace(/\s+/g, '')
+  const nameMatches = (snapshot: string | null) =>
+    !!myNickname && !!snapshot && normalize(snapshot) === normalize(myNickname)
 
   return (
     <main className="flex-1 p-6 max-w-4xl mx-auto w-full">
@@ -133,7 +141,7 @@ export default async function UnclaimedPage({ searchParams }: { searchParams: Se
                 )}
 
                 <div className="mt-3 flex items-center gap-4 flex-wrap">
-                  <ClaimButton resultId={r.id} />
+                  <ClaimButton resultId={r.id} visible={nameMatches(r.athlete_name_snapshot)} />
                   <TagButton
                     resultId={r.id}
                     tagCount={r.claim_tag_count ?? 0}

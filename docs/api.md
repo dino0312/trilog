@@ -293,3 +293,41 @@ API 端點本身不依賴 middleware 做授權，各端點自行呼叫 `supabase
 | `POST /api/athletes/search` | 模糊搜尋選手名稱（Phase 2：Email 通知）|
 | `GET /api/races/:slug/stats` | 賽事歷年成績分佈統計 |
 | `POST /api/imports/gpx` | GPX 裝置檔案解析（Phase 3）|
+
+---
+
+## 接力（Relay）端點
+
+### `POST /api/results/relay`
+**授權**：需登入  
+**說明**：新增接力成績，同時建立 TEAM 與 TEAM_MEMBER 記錄  
+**Request body**：
+```json
+{
+  "race_edition_id": "uuid",
+  "total_seconds": 21600,
+  "is_public": true,
+  "team_name": "隊名（選填）",
+  "gender_category": "male | female | mixed",
+  "t1_seconds": 120,
+  "t2_seconds": 90,
+  "members": [
+    { "name": "張三", "disciplines": ["swim"], "split_seconds": 2400, "is_me": true },
+    { "name": "李四", "disciplines": ["bike", "run"], "split_seconds": 18990, "is_me": false }
+  ]
+}
+```
+**Response**：`{ result_id, team_id }`
+
+### `GET /api/teams/:id`
+**授權**：公開  
+**說明**：取得隊伍詳細資料（含成員、分項時間、換區時間）  
+
+### `POST /api/teams/:id/members/:memberId/claim`
+**授權**：需登入  
+**說明**：成員認領自己的接力分項成績，更新 `claim_status` 為 `pending`
+
+### `GET /api/leaderboard/relay`
+**授權**：公開  
+**Query params**：`?distance=full&gender_category=male&race_id=uuid`  
+**說明**：接力排行榜，回傳 `{ entries, members }` 兩層結構

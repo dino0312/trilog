@@ -158,3 +158,109 @@ export async function deleteResult(_prev: ResultState, formData: FormData): Prom
   revalidatePath('/records')
   return { error: null }
 }
+
+// ── 接力成績 ─────────────────────────────────────────────────
+
+export type RelayMember = {
+  name:          string
+  disciplines:   string[]
+  split_seconds: number | null
+  is_me:         boolean
+}
+
+export async function createRelayResult(_prev: ResultState, formData: FormData): Promise<ResultState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: '請先登入' }
+
+  const race_edition_id = formData.get('race_edition_id') as string
+  const total_seconds   = parseTime(formData.get('total') as string)
+  const gender_category = formData.get('gender_category') as string
+  const team_name       = (formData.get('team_name') as string) || null
+  const t1_seconds      = parseTime(formData.get('t1') as string)
+  const t2_seconds      = parseTime(formData.get('t2') as string)
+  const is_public       = formData.getAll('is_public').includes('true')
+  const notes           = (formData.get('notes') as string) || null
+  const membersJson     = formData.get('members') as string
+
+  if (!race_edition_id) return { error: '請選擇賽事' }
+  if (!total_seconds)   return { error: '請輸入正確的完賽時間（HH:MM:SS）' }
+  if (!gender_category) return { error: '請選擇組別' }
+
+  let members: RelayMember[]
+  try {
+    members = JSON.parse(membersJson)
+  } catch {
+    return { error: '成員資料格式錯誤' }
+  }
+
+  if (!members.length)                            return { error: '至少需要一位成員' }
+  if (members.some(m => !m.name.trim()))          return { error: '每位成員都需要填寫姓名' }
+  if (members.some(m => !m.disciplines.length))   return { error: '每位成員都需要選擇負責的項目' }
+
+  const { data: result, error: resultError } = await supabase
+    .from('results')
+    .insert({
+      race_edition_id,
+      athlete_id:         null,
+      result_type:        'relay',
+      source_credibility: 'self_reported',
+      claim_status:       'unclaimed',
+      total_seconds,
+      is_public,
+      notes,
+      claimed_at: new Date().toISOString(),
+    })
+    .select('id')
+    .single()
+
+  if (resultError) return { error: resultError.message }
+
+  const { data: team, error: teamError } = await supabase
+    .from('teams')
+    .insert({
+      result_id:       result.id,
+      team_name,
+      gender_category: gender_category as 'male' | 'female' | 'mixed',
+      t1_seconds,
+      t2_seconds,
+    })
+    .select('id')
+    .single()
+
+  if (teamError) {
+    await supabase.from('results').delete().eq('id', result.id)
+    return { error: teamError.message }
+  }
+
+  const memberRows = members.map((m, idx) => ({
+    team_id:               team.id,
+    athlete_id:            m.is_me ? user.id : null,
+    athlete_name_snapshot: m.name.trim(),
+    disciplines:           m.disciplines,
+    split_seconds:         m.split_seconds,
+    source_credibility:    'self_reported' as const,
+    claim_status:          m.is_me ? 'claimed' as const : 'unclaimed' as const,
+    sort_order:            idx,
+    claimed_at:            m.is_me ? new Date().toISOString() : null,
+  }))
+
+  const { error: membersError } = await supabase
+    .from('team_members')
+    .insert(memberRows)
+
+  if (membersError) {
+    await supabase.from('results').delete().eq('id', result.id)
+    return { error: membersError.message }
+  }
+
+  if (members.some(m => m.is_me)) {
+    await supabase
+      .from('results')
+      .update({ claim_status: 'claimed' })
+      .eq('id', result.id)
+  }
+
+  revalidatePath('/records')
+  redirect('/records')
+}

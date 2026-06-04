@@ -6,6 +6,7 @@ import { AdminDropdown } from './AdminDropdown'
 const NAV_LINKS = [
   { href: '/leaderboard', label: '最速榜' },
   { href: '/rankings',    label: '排行榜' },
+  { href: '/relay',       label: '接力榜' },
   { href: '/unclaimed',   label: '未認領' },
 ]
 

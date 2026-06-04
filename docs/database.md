@@ -126,7 +126,8 @@ relay 成績的分項欄位由 CHECK constraint 強制為 null：`relay_splits_m
 
 **RLS 摘要**：
 - 讀取：`is_public = true` OR `claim_status IN ('unclaimed','unlinked')` OR `athlete_id = auth.uid()`
-- INSERT：已登入 + solo + self_reported + athlete_id = 自己
+- INSERT（solo）：已登入 + `result_type='solo'` + self_reported + `athlete_id = auth.uid()`
+- INSERT（relay）：已登入 + `result_type='relay'` + self_reported + `athlete_id IS NULL`（migration 20260604000005）
 - 本人 UPDATE：自己的非 official 成績
 - Assistant UPDATE：公證/認領狀態更新
 - 本人 DELETE：自己的 self_reported 成績

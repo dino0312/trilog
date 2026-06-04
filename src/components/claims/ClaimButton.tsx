@@ -5,8 +5,10 @@ import { claimResult, type ClaimState } from '@/app/actions/claims'
 
 const initial: ClaimState = { error: null, success: false }
 
-export function ClaimButton({ resultId }: { resultId: string }) {
+export function ClaimButton({ resultId, visible = true }: { resultId: string; visible?: boolean }) {
   const [state, action, pending] = useActionState(claimResult, initial)
+
+  if (!visible) return null
 
   if (state.success) {
     return <p className="text-xs text-good font-medium">✓ 申請已提交</p>
