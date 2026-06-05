@@ -84,7 +84,7 @@ export default async function RacesPage() {
 
   // 依群組分組（IRONMAN_TAIWAN + IRONMAN_70_3 → IRONMAN）
   const groups: Record<string, typeof enriched> = {}
-  const ORDER = ['IRONMAN', 'CHALLENGE', 'PUYUMA', 'FORCE', 'CTTA_NATIONALS', 'LOCAL_EVENT']
+  const ORDER = ['CHALLENGE', 'IRONMAN', 'PUYUMA', 'FORCE', 'CTTA_NATIONALS', 'LOCAL_EVENT']
   for (const race of enriched) {
     const key = SERIES_GROUP[race.series ?? ''] ?? 'LOCAL_EVENT'
     if (!groups[key]) groups[key] = []
