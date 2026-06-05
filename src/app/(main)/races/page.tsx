@@ -53,7 +53,7 @@ export default async function RacesPage() {
     .from('races')
     .select(`
       id, name, name_zh, slug, series, status,
-      county, city, website,
+      country, county, city, website,
       race_editions (
         year, distance_category, race_date
       )
@@ -95,6 +95,16 @@ export default async function RacesPage() {
     ...ORDER.filter(k => groups[k]),
     ...Object.keys(groups).filter(k => !ORDER.includes(k)),
   ]
+
+  // 各群組內：台灣（country = 'TW'）優先，其次依名稱排
+  for (const key of sortedKeys) {
+    groups[key].sort((a, b) => {
+      const aTW = a.country === 'TW' ? 0 : 1
+      const bTW = b.country === 'TW' ? 0 : 1
+      if (aTW !== bTW) return aTW - bTW
+      return (a.name_zh ?? a.name).localeCompare(b.name_zh ?? b.name, 'zh-Hant')
+    })
+  }
 
   return (
     <main className="flex-1 p-6 max-w-4xl mx-auto w-full">
