@@ -16,25 +16,34 @@ const DISTANCE_ORDER: Record<string, number> = {
   full: 0, '70.3': 1, olympic: 2, sprint: 3,
 }
 
-/* 系列標籤 */
-const SERIES_LABEL: Record<string, string> = {
-  CHALLENGE:       'Challenge',
-  IRONMAN_TAIWAN:  'IRONMAN',
-  IRONMAN_70_3:    'IRONMAN 70.3',
-  PUYUMA:          '普悠瑪',
-  CTTA_NATIONALS:  '全國錦標賽',
-  FORCE:           'FORCE',
-  LOCAL_EVENT:     '地方賽事',
+/* DB series → 顯示群組 key（IRONMAN_TAIWAN / IRONMAN_70_3 合併為 IRONMAN）*/
+const SERIES_GROUP: Record<string, string> = {
+  IRONMAN_TAIWAN: 'IRONMAN',
+  IRONMAN_70_3:   'IRONMAN',
+  CHALLENGE:      'CHALLENGE',
+  PUYUMA:         'PUYUMA',
+  CTTA_NATIONALS: 'CTTA_NATIONALS',
+  FORCE:          'FORCE',
+  LOCAL_EVENT:    'LOCAL_EVENT',
 }
 
-const SERIES_COLOR: Record<string, string> = {
-  CHALLENGE:       'border-[#22C9C9]/40 text-[#22C9C9]',
-  IRONMAN_TAIWAN:  'border-[#FF6B3D]/40 text-[#FF6B3D]',
-  IRONMAN_70_3:    'border-[#FF6B3D]/30 text-[#FF8B6D]',
-  PUYUMA:          'border-[#A8E063]/40 text-[#A8E063]',
-  CTTA_NATIONALS:  'border-border-strong text-ink-3',
-  FORCE:           'border-[#F5C842]/40 text-[#F5C842]',
-  LOCAL_EVENT:     'border-border-strong text-ink-4',
+/* 群組顯示名稱 */
+const GROUP_LABEL: Record<string, string> = {
+  IRONMAN:        'IRONMAN',
+  CHALLENGE:      'Challenge',
+  PUYUMA:         '普悠瑪',
+  CTTA_NATIONALS: '全國錦標賽',
+  FORCE:          'FORCE',
+  LOCAL_EVENT:    '地方賽事',
+}
+
+const GROUP_COLOR: Record<string, string> = {
+  IRONMAN:        'border-[#FF6B3D]/40 text-[#FF6B3D]',
+  CHALLENGE:      'border-[#22C9C9]/40 text-[#22C9C9]',
+  PUYUMA:         'border-[#A8E063]/40 text-[#A8E063]',
+  CTTA_NATIONALS: 'border-border-strong text-ink-3',
+  FORCE:          'border-[#F5C842]/40 text-[#F5C842]',
+  LOCAL_EVENT:    'border-border-strong text-ink-4',
 }
 
 export default async function RacesPage() {
@@ -73,11 +82,11 @@ export default async function RacesPage() {
     return { ...race, latestYear, distances, editionYears }
   })
 
-  // 依系列分組
+  // 依群組分組（IRONMAN_TAIWAN + IRONMAN_70_3 → IRONMAN）
   const groups: Record<string, typeof enriched> = {}
-  const ORDER = ['IRONMAN_TAIWAN', 'IRONMAN_70_3', 'CHALLENGE', 'PUYUMA', 'FORCE', 'CTTA_NATIONALS', 'LOCAL_EVENT']
+  const ORDER = ['IRONMAN', 'CHALLENGE', 'PUYUMA', 'FORCE', 'CTTA_NATIONALS', 'LOCAL_EVENT']
   for (const race of enriched) {
-    const key = race.series ?? 'LOCAL_EVENT'
+    const key = SERIES_GROUP[race.series ?? ''] ?? 'LOCAL_EVENT'
     if (!groups[key]) groups[key] = []
     groups[key].push(race)
   }
@@ -101,10 +110,10 @@ export default async function RacesPage() {
           <section key={seriesKey}>
             {/* 系列標頭 */}
             <div className="flex items-center gap-3 mb-3">
-              <span className={`text-xs px-2.5 py-0.5 rounded-full border font-mono tracking-wide ${SERIES_COLOR[seriesKey] ?? 'border-border text-ink-4'}`}>
-                {SERIES_LABEL[seriesKey] ?? seriesKey}
+              <span className={`text-xs px-2.5 py-0.5 rounded-full border font-mono tracking-wide ${GROUP_COLOR[seriesKey] ?? 'border-border text-ink-4'}`}>
+                {GROUP_LABEL[seriesKey] ?? seriesKey}
               </span>
-              <span className="text-xs text-ink-4">{groups[seriesKey].length} 個系列</span>
+              <span className="text-xs text-ink-4">{groups[seriesKey].length} 個賽事</span>
             </div>
 
             {/* 賽事卡片 */}
