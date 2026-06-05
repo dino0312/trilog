@@ -83,6 +83,12 @@ html, body {
 .tab-num { font-variant-numeric: tabular-nums; }
 .mono    { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
+/* ── Dropdown 展開動畫 ── */
+@keyframes dropdown-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* ── Tri·log Logo 動態波浪 ── */
 @keyframes trilog-wave-run {
   from { transform: translateX(0); }
