@@ -83,32 +83,44 @@ export type Database = {
       // ── races ────────────────────────────────────────────
       races: {
         Row: {
-          id:         string
-          name:       string
-          slug:       string
-          status:     RaceStatus
-          country:    string | null
-          city:       string | null
-          lat:        number | null
-          lng:        number | null
-          organizer:  string | null
-          website:    string | null
-          created_by: string | null
-          created_at: string
-          updated_at: string
+          id:           string
+          name:         string
+          name_zh:      string | null
+          name_en:      string | null
+          slug:         string
+          series:       string | null
+          status:       RaceStatus
+          country:      string | null
+          county:       string | null
+          city:         string | null
+          lat:          number | null
+          lng:          number | null
+          organizer:    string | null
+          organizer_co: string[] | null
+          operator:     string | null
+          website:      string | null
+          created_by:   string | null
+          created_at:   string
+          updated_at:   string
         }
         Insert: {
-          id?:         string
-          name:        string
-          slug:        string
-          status?:     RaceStatus
-          country?:    string | null
-          city?:       string | null
-          lat?:        number | null
-          lng?:        number | null
-          organizer?:  string | null
-          website?:    string | null
-          created_by?: string | null
+          id?:           string
+          name:          string
+          name_zh?:      string | null
+          name_en?:      string | null
+          slug:          string
+          series?:       string | null
+          status?:       RaceStatus
+          country?:      string | null
+          county?:       string | null
+          city?:         string | null
+          lat?:          number | null
+          lng?:          number | null
+          organizer?:    string | null
+          organizer_co?: string[] | null
+          operator?:     string | null
+          website?:      string | null
+          created_by?:   string | null
         }
         Update: Partial<Database['public']['Tables']['races']['Insert']>
         Relationships: []
@@ -134,6 +146,8 @@ export type Database = {
           finisher_count:     number | null
           dnf_count:          number | null
           total_starters:     number | null
+          venue:              string | null
+          registration_url:   string | null
           notes:              string | null
           created_at:         string
           updated_at:         string
@@ -144,6 +158,8 @@ export type Database = {
           year:                number
           race_date:           string
           race_date_end?:      string | null
+          venue?:              string | null
+          registration_url?:   string | null
           distance_category:   DistanceCategory
           swim_distance_m?:    number | null
           bike_distance_km?:   number | null
