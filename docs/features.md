@@ -286,7 +286,7 @@ Modal 以彈出形式覆蓋當前頁面，不跳頁，保留頁面狀態。
 ### 5.2 登入頁（`/login`）
 
 **用途**：直接連結進入（如 Email 通知）。  
-**版面**：左側最速榜主視覺（`LeaderboardPreview`）+ 右側 Logo + 表單（桌機版）；手機版僅顯示右側。  
+**版面**：全螢幕置中，上方大 `TrilogLogo`（`size="lg"`，1.8s 動態波浪）+ 下方表單卡片。  
 Email + password 登入。登入成功後導向 `/leaderboard`。已登入者由 middleware 擋回。
 
 ### 5.3 註冊頁（`/register`）
@@ -301,7 +301,7 @@ Email + password 登入。登入成功後導向 `/leaderboard`。已登入者由
 |-------------|------------|----------|
 | `(main)` | Nav + 全頁背景 | leaderboard, rankings, relay, unclaimed, records, records/new, records/relay/new, results/[id], teams/[id], profile |
 | `(admin)` | Nav + 全頁背景（獨立） | /admin, /admin/races, /admin/races/[id], /admin/results |
-| `(auth)` | 左側最速榜主視覺 + 右側表單（桌機）；手機版僅右側 | login, register |
+| `(auth)` | 全螢幕置中，大 Logo + 表單 | login, register |
 
 `(admin)` 與 `(main)` 刻意獨立，未來各自調整 layout 不互相影響。
 
