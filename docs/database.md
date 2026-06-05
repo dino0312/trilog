@@ -61,6 +61,13 @@
 | 欄位 | 型別 | 語意 |
 |------|------|------|
 | `slug` | text UNIQUE | URL 識別碼（如 'ironman-taiwan'），一旦公開不可改 |
+| `name_zh` | text \| null | 中文賽事名稱 |
+| `name_en` | text \| null | 英文賽事名稱 |
+| `series` | text \| null | 系列代碼，如 `CHALLENGE` / `IRONMAN_70_3` / `FORCE` / `LOCAL_EVENT` |
+| `county` | text \| null | 縣市，如 '臺東縣' |
+| `organizer` | text \| null | 主辦單位 |
+| `organizer_co` | text[] \| null | 協辦單位（陣列） |
+| `operator` | text \| null | 執行 / 承辦單位 |
 | `lat` / `lng` | numeric | GPS 座標，供 Open-Meteo 天氣 API 查詢 |
 | `status` | text | 'active' / 'inactive' / 'cancelled'（CHECK）|
 
@@ -80,6 +87,8 @@
 |------|------|------|
 | `race_date` | date | 開始日期 |
 | `race_date_end` | date \| null | 結束日期（多日賽事用，單日賽事為 null）|
+| `venue` | text \| null | 場地名稱，如 '臺東活水湖' |
+| `registration_url` | text \| null | 報名頁面連結 |
 | `distance_category` | text | `'sprint'`（Sprint）/ `'olympic'`（51.5）/ `'70.3'`（113）/ `'full'`（226）（CHECK）|
 | `swim_distance_m` | int \| null | 游泳距離（公尺），預設：Sprint 750 / 51.5 1500 / 113 1900 / 226 3800 |
 | `bike_distance_km` | numeric \| null | 騎車距離（公里），預設：Sprint 20 / 51.5 40 / 113 90 / 226 180 |
@@ -335,6 +344,12 @@ unclaimed ──────────→ pending
 | 007 | race_editors.sql | race_editors 表 | 002、003 |
 | 008 | indexes.sql | 所有索引 | 002–007 |
 | 009 | views_and_functions.sql | Views + RPC 函式 | 008 |
+| — | results_curated_gender.sql | results 新增 curated_gender 欄位 | 004 |
+| — | edition_unique_by_distance.sql | race_editions UNIQUE constraint 改為 (race_id, year, distance_category) | 003 |
+| — | edition_date_range.sql | race_editions 新增 race_date_end 欄位 | 003 |
+| — | results_assistant_insert.sql | results INSERT policy 調整 | 004 |
+| — | relay_result_insert_policy.sql | relay results INSERT policy | 006 |
+| — | races_extended_columns.sql | races 新增 name_zh/name_en/series/county/organizer_co/operator；race_editions 新增 venue/registration_url | 003 |
 
 **新增 migration 時的命名規則**：`YYYYMMDDHHMMSS_description.sql`，確保時間戳唯一。
 

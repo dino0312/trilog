@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import { Analytics } from '@vercel/analytics/next'
+import { AuthModalProvider } from '@/context/auth-modal'
+import { AuthModal } from '@/components/auth/AuthModal'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -18,7 +20,11 @@ export default function RootLayout({
   return (
     <html lang="zh-Hant" className="h-full">
       <body className="h-full">
-        {children}
+        <AuthModalProvider>
+          {children}
+          {/* Auth Modal 掛在根層，任何頁面皆可觸發 */}
+          <AuthModal />
+        </AuthModalProvider>
         <Analytics />
       </body>
     </html>

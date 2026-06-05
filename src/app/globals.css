@@ -82,3 +82,15 @@ html, body {
 /* Utilities */
 .tab-num { font-variant-numeric: tabular-nums; }
 .mono    { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* ── Tri·log Logo 動態波浪 ── */
+@keyframes trilog-wave-run {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-18px); }
+}
+.trilog-wave {
+  animation: trilog-wave-run var(--trilog-wave-duration, 3s) linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .trilog-wave { animation: none; }
+}

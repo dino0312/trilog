@@ -22,7 +22,7 @@ Tri·log 是鐵人三項選手的**跨賽事成績記錄與排行榜平台**。
 | 技術選型理由、架構決策 | `docs/decisions.md` |
 | 系統架構圖、資料流 | `docs/architecture.md` |
 | UI 功能規格、頁面行為 | `docs/features.md` |
-| 產品規格書（最新版） | `docs/trilog_spec_v13.docx`（v1.2，2026年6月）|
+| 產品規格書（最新版） | `docs/trilog_spec_v23.docx`（v1.4，2026年6月）|
 
 ---
 
@@ -73,6 +73,8 @@ src/
       cn.ts          clsx + tailwind-merge
       time.ts        秒數 ↔ HH:MM:SS 轉換
   middleware.ts      路由守衛入口（⚠️ deprecated，見第 5 節）
+  context/
+    auth-modal.tsx   Auth Modal 全域狀態（React Context + useAuthModal hook）
   types/
     database.ts      Supabase DB 型別（手動維護）
     index.ts         應用層業務型別
