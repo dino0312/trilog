@@ -376,3 +376,34 @@ Solo 成績與接力成績分兩個區塊顯示：
 | `run`  | `text-run`（紅 #ff685e） | 奔跑人形（頭 + 四肢） |
 
 **設計**：`viewBox="0 0 24 24"`，線條風格（`stroke`），`fill="none"`，顏色完全由 `currentColor` 控制，可在任何背景上使用。
+
+---
+
+## 9. 測試記錄
+
+### 9.1 Spec v1.5 Ch.30-32 驗證（2026-06-05）
+
+**測試環境**：`npm run dev`（localhost:3000），Preview browser 驅動  
+**帳號**：dino.ko@gmail.com（role: assistant）
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | Nav active state — `/leaderboard` | ✅ PASS | 橘色底線（#FF6B3D）正確標示，`aria-current="page"` 存在 |
+| 2 | Nav active state — 切換頁面 | ✅ PASS | 點擊「未認領」底線正確移動 |
+| 3 | PageContextStrip — `/leaderboard` | ✅ PASS | 顯示「最速榜 · 台灣選手 · 個人最佳 · 跨賽事」 |
+| 4 | PageContextStrip — `/unclaimed` | ✅ PASS | 顯示「未認領成績 · 搜尋你的名字，認領屬於你的成績」 |
+| 5 | PageContextStrip — `/records` | ✅ PASS（修正後）| 原本缺少對應，修正後顯示「我的紀錄 · 個人成績歷史」 |
+| 6 | Auth Modal — 未登入點「登入」 | ✅ PASS | Modal 彈出，背景頁面不跳離 |
+| 7 | `/login` 頁 Logo | ✅ PASS | `TrilogLogo size="lg" context="login"` SVG 三邊 + 動態波浪正確顯示 |
+| 8 | Avatar — 已登入顯示姓名縮寫 | ✅ PASS | 顯示「柯」（nickname 第一字） |
+| 9 | Avatar 下拉選單展開 | ✅ PASS | 顯示「柯敏龍 / dino.ko@gmail.com」+ 我的紀錄 / 個人資料 / 管理後台 / 登出 |
+| 10 | `/my/profile` 頁面載入 | ✅ PASS | 進榜進度條 4/4，欄位正確顯示 |
+| 11 | `/my/profile` inline 編輯 | ✅ PASS | 點擊切換為 input，Escape 取消回復原值 |
+| 12 | `/profile` → `/my/profile` redirect | ✅ PASS | 已登入時正確跳轉 |
+| 13 | `/my/results` → `/records` redirect | ✅ PASS | 正確導向 |
+
+**測試中發現並修正**：
+- `/records` 缺少 PageContextStrip mapping → 已補上，commit `21f00b6`
+
+**待建立**：
+- ⚠️ `/races` 頁面尚未建立，Nav「賽事」連結目前 404
