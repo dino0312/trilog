@@ -64,6 +64,11 @@ export function RaceForm({ onSuccess }: { onSuccess?: () => void }) {
         <Input label="官方網站" id="race-website" name="website" placeholder="https://..." />
       </div>
 
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Input label="緯度 Latitude" id="race-lat" name="lat" type="number" step="any" placeholder="22.7486" />
+        <Input label="經度 Longitude" id="race-lng" name="lng" type="number" step="any" placeholder="121.1418" />
+      </div>
+
       {state.error && (
         <p className="text-sm text-red">{state.error}</p>
       )}

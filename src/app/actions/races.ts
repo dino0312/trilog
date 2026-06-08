@@ -34,6 +34,8 @@ export async function createRace(_prev: RaceActionState, formData: FormData): Pr
     city:       (formData.get('city')      as string) || null,
     organizer:  (formData.get('organizer') as string) || null,
     website:    (formData.get('website')   as string) || null,
+    lat:        parseFloatOrNull(formData.get('lat') as string),
+    lng:        parseFloatOrNull(formData.get('lng') as string),
     created_by: user.id,
     status:     'pending_review',
   })
