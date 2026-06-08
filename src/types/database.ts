@@ -156,6 +156,7 @@ export type Database = {
           total_starters:     number | null
           venue:              string | null
           registration_url:   string | null
+          results_url:        string | null
           notes:              string | null
           created_at:         string
           updated_at:         string
@@ -168,6 +169,7 @@ export type Database = {
           race_date_end?:      string | null
           venue?:              string | null
           registration_url?:   string | null
+          results_url?:        string | null
           distance_category:   DistanceCategory
           swim_distance_m?:    number | null
           bike_distance_km?:   number | null

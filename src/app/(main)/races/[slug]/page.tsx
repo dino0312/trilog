@@ -141,15 +141,17 @@ export default async function RaceDetailPage({ params }: { params: Promise<{ slu
                 <div key={year} className={`px-5 py-4 flex items-center gap-4 ${
                   i < yearGroups.length - 1 ? 'border-b border-border' : ''
                 }`}>
-                  {/* 年份 */}
-                  <span className="font-mono font-bold text-lg text-ink w-14 flex-shrink-0">{year}</span>
+                  {/* 年份（連到屆次細節頁） */}
+                  <Link href={`/races/${race.slug}/${year}`} className="font-mono font-bold text-lg text-ink w-14 flex-shrink-0 hover:text-accent transition">
+                    {year}
+                  </Link>
 
-                  {/* 距離 tags */}
+                  {/* 距離 tags（也可點擊進屆次頁） */}
                   <div className="flex items-center gap-1.5 flex-wrap flex-1">
                     {distances.map(d => (
-                      <span key={d} className="text-xs font-mono px-2 py-0.5 rounded bg-bg-elev text-ink-3">
+                      <Link key={d} href={`/races/${race.slug}/${year}`} className="text-xs font-mono px-2 py-0.5 rounded bg-bg-elev text-ink-3 hover:text-ink hover:bg-bg-card transition">
                         {DISTANCE_LABEL[d] ?? d}
-                      </span>
+                      </Link>
                     ))}
                     {race_date && (
                       <span className="text-xs text-ink-4 ml-1">
