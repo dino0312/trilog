@@ -44,6 +44,71 @@
 
 ## 記錄
 
+### [2026-06-08] 賽事互動（想參加 / 參加過）
+
+**狀態**：✅ 完成
+
+**完成內容**：
+- Migration `20260608000007_race_interest.sql`：初版以 race_id 為 FK（已廢棄）
+- Migration `20260608000008_race_interest_v2.sql`：重建，改以 `race_edition_id` 為 FK，UNIQUE(athlete_id, race_edition_id, interest_type)，RLS：public read / insert own / delete own
+- Server Action `toggleRaceInterest`（`actions/race-interest.ts`）：toggle 語意
+- `RaceInterestButtons` client 元件（`components/races/RaceInterestButtons.tsx`）：未登入開 Auth Modal，已登入可 toggle
+- `/races` 頁面重構：每張賽事卡片展開屆次列表（年份 + 距離），每屆次一列帶互動按鈕
+- `database.ts` 補上 `race_interest` 型別（race_edition_id 版）
+- `auth-modal.tsx` 新增 `race_wishlist` / `race_attended` intent
+
+**技術決策**：
+- 互動以屆次（race_edition）為單位，而非系列賽（race），符合「我參加過 Challenge Taiwan 2024 226」的語意
+- Toggle 由 Server Action 處理，revalidatePath 確保一致性
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | 登入狀態點屆次「想參加」 | ✅ PASS | 按鈕變 `✓ 想參加` active 狀態 |
+| 2 | 屆次層級正確分層 | ✅ PASS | 年份 + 距離各自有獨立按鈕 |
+| 3 | 未登入點擊 | ⚠️ 待驗證 | 需登出測試 Auth Modal |
+
+**異動檔案**：
+- `supabase/migrations/20260608000007_race_interest.sql`（新增，已廢棄）
+- `supabase/migrations/20260608000008_race_interest_v2.sql`（新增）
+- `src/app/actions/race-interest.ts`（新增）
+- `src/components/races/RaceInterestButtons.tsx`（新增）
+- `src/app/(main)/races/page.tsx`
+- `src/types/database.ts`
+- `src/context/auth-modal.tsx`
+
+---
+
+### [2026-06-08] 後台賽事刪除功能
+
+**狀態**：✅ 完成
+
+**完成內容**：
+- 新增 `deleteRace` Server Action（`actions/races.ts`）：驗證 `is_assistant_or_above`，先查關聯成績數量，有成績則回傳錯誤，無成績則刪除（屆次因 CASCADE 自動刪除），成功後 `redirect('/admin/races')`
+- 新增 `DeleteRaceButton` 客戶端元件（`/admin/races/[id]/DeleteRaceButton.tsx`）：二次確認流程，顯示錯誤訊息
+- 將刪除按鈕嵌入賽事詳情頁 breadcrumb 右側
+
+**技術決策**：
+- 刪除成功後改用 Server Action 內的 `redirect()` 而非客戶端 `router.push`，避免 revalidatePath 觸發後詳情頁嘗試重新 render 已不存在的資料，造成 404
+- `redirect()` 在 Server Action 中拋出特殊 exception，Next.js 直接接管導航，不經過 `useActionState` 的 error 路徑
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | 未登入訪問 `/admin/races` | ✅ PASS | redirect 至 /login |
+| 2 | 有成績的賽事點刪除 | ⚠️ 待驗證 | 需後台登入環境 |
+| 3 | 無成績的賽事點刪除 | ⚠️ 待驗證 | 需後台登入環境 |
+| 4 | 刪除後導向 `/admin/races` | ⚠️ 待驗證 | 404 問題已修正 |
+
+**異動檔案**：
+- `src/app/actions/races.ts`
+- `src/app/(admin)/admin/races/[id]/DeleteRaceButton.tsx`（新增）
+- `src/app/(admin)/admin/races/[id]/page.tsx`
+
+---
+
 ### [2026-06-08] 最速榜頁面視覺精簡
 
 **狀態**：✅ 完成

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { RaceInterestButtons } from '@/components/races/RaceInterestButtons'
 
 export const metadata: Metadata = { title: '賽事資料庫' }
 
@@ -48,6 +49,20 @@ const GROUP_COLOR: Record<string, string> = {
 
 export default async function RacesPage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const isLoggedIn = !!user
+
+  // 登入者的 race_interest 清單（以 race_edition_id 為 key）
+  let wishlistSet = new Set<string>()
+  let attendedSet = new Set<string>()
+  if (user) {
+    const { data } = await supabase
+      .from('race_interest')
+      .select('race_edition_id, interest_type')
+      .eq('athlete_id', user.id)
+    wishlistSet = new Set((data ?? []).filter(i => i.interest_type === 'wishlist').map(i => i.race_edition_id))
+    attendedSet = new Set((data ?? []).filter(i => i.interest_type === 'attended').map(i => i.race_edition_id))
+  }
 
   const { data: races } = await supabase
     .from('races')
@@ -55,7 +70,7 @@ export default async function RacesPage() {
       id, name, name_zh, slug, series, status,
       country, county, city, website,
       race_editions (
-        year, distance_category, race_date
+        id, year, distance_category, race_date
       )
     `)
     .eq('status', 'active')
@@ -63,23 +78,20 @@ export default async function RacesPage() {
 
   if (!races) return null
 
-  // 整理每個 race：最近年份、涵蓋距離（去重排序）
+  // 整理每個 race：最近年份、屆次清單（依年份降序）
   const enriched = races.map(race => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const editions = ((race as any).race_editions ?? []) as {
-      year: number; distance_category: string; race_date: string
+      id: string; year: number; distance_category: string; race_date: string
     }[]
 
     const latestYear = editions.length
       ? Math.max(...editions.map(e => e.year))
       : null
 
-    const distances = [...new Set(editions.map(e => e.distance_category))]
-      .sort((a, b) => (DISTANCE_ORDER[a] ?? 9) - (DISTANCE_ORDER[b] ?? 9))
+    const sortedEditions = [...editions].sort((a, b) => b.year - a.year)
 
-    const editionYears = [...new Set(editions.map(e => e.year))].sort((a, b) => b - a)
-
-    return { ...race, latestYear, distances, editionYears }
+    return { ...race, latestYear, editions: sortedEditions }
   })
 
   // 依群組分組（IRONMAN_TAIWAN + IRONMAN_70_3 → IRONMAN）
@@ -111,7 +123,7 @@ export default async function RacesPage() {
 
       <div className="mb-6 flex items-center justify-between">
         <p className="text-sm text-ink-4">
-          {races.length} 個賽事系列 · {enriched.reduce((s, r) => s + r.editionYears.length, 0)} 個屆次
+          {races.length} 個賽事系列 · {enriched.reduce((s, r) => s + r.editions.length, 0)} 個屆次
         </p>
       </div>
 
@@ -152,23 +164,9 @@ export default async function RacesPage() {
                         {[race.county, race.city].filter(Boolean).join(' ')}
                       </p>
 
-                      {/* 距離 + 屆次年份 */}
-                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                        {race.distances.map(d => (
-                          <span key={d} className="text-xs font-mono px-1.5 py-0.5 rounded bg-bg-elev text-ink-3">
-                            {DISTANCE_LABEL[d] ?? d}
-                          </span>
-                        ))}
-                        {race.editionYears.slice(0, 5).map(y => (
-                          <span key={y} className="text-xs font-mono text-ink-4">{y}</span>
-                        ))}
-                        {race.editionYears.length > 5 && (
-                          <span className="text-xs text-ink-4">+{race.editionYears.length - 5}</span>
-                        )}
-                      </div>
                     </div>
 
-                    {/* 最近年份 */}
+                    {/* 最近年份 + 官網 */}
                     <div className="flex-shrink-0 text-right">
                       {race.latestYear && (
                         <span className="text-2xl font-mono font-bold text-ink-4">
@@ -187,6 +185,28 @@ export default async function RacesPage() {
                       )}
                     </div>
                   </div>
+
+                  {/* 屆次列表（每屆次一列，含互動按鈕） */}
+                  {race.editions.length > 0 && (
+                    <div className="mt-3 border-t border-border/50 pt-2.5 flex flex-col gap-1.5">
+                      {race.editions.map(edition => (
+                        <div key={edition.id} className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono text-ink-3 w-10">{edition.year}</span>
+                            <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-bg-elev text-ink-4">
+                              {DISTANCE_LABEL[edition.distance_category] ?? edition.distance_category}
+                            </span>
+                          </div>
+                          <RaceInterestButtons
+                            editionId={edition.id}
+                            isLoggedIn={isLoggedIn}
+                            initialWishlist={wishlistSet.has(edition.id)}
+                            initialAttended={attendedSet.has(edition.id)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

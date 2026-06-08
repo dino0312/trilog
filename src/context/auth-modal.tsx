@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, type ReactNode } from 'react'
 
-export type AuthModalIntent = 'login' | 'new_result' | 'claim' | 'follow' | null
+export type AuthModalIntent = 'login' | 'new_result' | 'claim' | 'follow' | 'race_wishlist' | 'race_attended' | null
 
 interface AuthModalState {
   isOpen:        boolean

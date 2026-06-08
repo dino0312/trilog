@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { RaceEditForm } from './RaceEditForm'
 import { EditionFormPanel } from './EditionFormPanel'
 import { YearEditionBlock } from './YearEditionBlock'
+import { DeleteRaceButton } from './DeleteRaceButton'
 
 export const metadata: Metadata = { title: '賽事詳情 · Tri·log' }
 
@@ -37,6 +38,9 @@ export default async function RaceDetailPage({ params }: { params: Promise<{ id:
         <Link href="/admin/races" className="hover:text-accent transition">賽事管理</Link>
         <span>/</span>
         <span className="text-ink">{race.name}</span>
+        <div className="ml-auto">
+          <DeleteRaceButton raceId={race.id} raceName={race.name} />
+        </div>
       </div>
 
       {/* 系列賽基本資料 */}

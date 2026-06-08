@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import type { DistanceCategory, SwimType, RaceStatus } from '@/types/database'
 
@@ -322,6 +323,45 @@ export async function deleteEdition(_prev: RaceActionState, formData: FormData):
 
   revalidatePath(`/admin/races/${race_id}`)
   return { error: null, success: true }
+}
+
+export async function deleteRace(_prev: RaceActionState, formData: FormData): Promise<RaceActionState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: '未登入', success: false }
+
+  const { data: isAssistant } = await supabase.rpc('is_assistant_or_above')
+  if (!isAssistant) return { error: '權限不足', success: false }
+
+  const id = formData.get('race_id') as string
+
+  // 先取得此賽事所有屆次 id，再確認是否有成績
+  const { data: editions } = await supabase
+    .from('race_editions')
+    .select('id')
+    .eq('race_id', id)
+
+  const editionIds = (editions ?? []).map(e => e.id)
+
+  if (editionIds.length > 0) {
+    const { count } = await supabase
+      .from('results')
+      .select('id', { count: 'exact', head: true })
+      .in('race_edition_id', editionIds)
+
+    if ((count ?? 0) > 0) {
+      return {
+        error: `此賽事仍有 ${count} 筆成績紀錄，請先刪除所有成績後再刪除賽事。`,
+        success: false,
+      }
+    }
+  }
+
+  const { error } = await supabase.from('races').delete().eq('id', id)
+  if (error) return { error: error.message, success: false }
+
+  revalidatePath('/admin/races')
+  redirect('/admin/races')
 }
 
 // ── Helpers ───────────────────────────────────────────────────
