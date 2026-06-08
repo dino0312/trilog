@@ -175,6 +175,20 @@ export function EditionForm({ raceId, onSuccess }: Props) {
         </div>
       </div>
 
+      {/* 報名 + 成績查詢 */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-ink-2">報名網頁 URL</label>
+          <input name="registration_url" type="url" placeholder="https://..."
+            className="w-full rounded-lg border border-border-strong bg-bg-elev px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-ink-2">成績查詢 URL</label>
+          <input name="results_url" type="url" placeholder="https://..."
+            className="w-full rounded-lg border border-border-strong bg-bg-elev px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" />
+        </div>
+      </div>
+
       {/* 備註 */}
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-ink-2">備註</label>

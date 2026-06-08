@@ -155,6 +155,8 @@ export async function createEdition(_prev: RaceActionState, formData: FormData):
       finisher_count:   parseIntOrNull(formData.get('finisher_count') as string),
       dnf_count:        parseIntOrNull(formData.get('dnf_count')      as string),
       total_starters:   parseIntOrNull(formData.get('total_starters') as string),
+      registration_url: (formData.get('registration_url') as string) || null,
+      results_url:      (formData.get('results_url')      as string) || null,
       notes:            (formData.get('notes') as string) || null,
     })
     if (error) {
@@ -217,11 +219,13 @@ export async function updateYearEdition(_prev: RaceActionState, formData: FormDa
   const shared = {
     race_date,
     race_date_end,
-    swim_type:      swimType,
-    finisher_count: parseIntOrNull(formData.get('finisher_count') as string),
-    dnf_count:      parseIntOrNull(formData.get('dnf_count')      as string),
-    total_starters: parseIntOrNull(formData.get('total_starters') as string),
-    notes:          (formData.get('notes') as string) || null,
+    swim_type:        swimType,
+    finisher_count:   parseIntOrNull(formData.get('finisher_count') as string),
+    dnf_count:        parseIntOrNull(formData.get('dnf_count')      as string),
+    total_starters:   parseIntOrNull(formData.get('total_starters') as string),
+    registration_url: (formData.get('registration_url') as string) || null,
+    results_url:      (formData.get('results_url')      as string) || null,
+    notes:            (formData.get('notes') as string) || null,
   }
 
   // 取得目前 DB 中這個年份的所有距離

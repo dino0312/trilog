@@ -16,6 +16,8 @@ export type Edition = {
   finisher_count: number | null
   dnf_count: number | null
   total_starters: number | null
+  registration_url: string | null
+  results_url: string | null
   notes: string | null
 }
 
@@ -180,6 +182,22 @@ function EditYearForm({ editions, raceId, year, onClose }: {
           </div>
         </div>
 
+        {/* 報名 + 成績查詢 */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-ink-3">報名網頁 URL</label>
+            <input name="registration_url" type="url" defaultValue={base.registration_url ?? ''}
+              placeholder="https://..."
+              className="rounded-lg border border-border-strong bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-accent" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-ink-3">成績查詢 URL</label>
+            <input name="results_url" type="url" defaultValue={base.results_url ?? ''}
+              placeholder="https://..."
+              className="rounded-lg border border-border-strong bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-accent" />
+          </div>
+        </div>
+
         {/* 備註 */}
         <div className="flex flex-col gap-1">
           <label className="text-xs text-ink-3">備註</label>
@@ -295,6 +313,7 @@ export function YearEditionBlock({ year, editions, raceId }: {
               <th className="px-4 py-2 text-left">騎車</th>
               <th className="px-4 py-2 text-left">跑步</th>
               <th className="px-4 py-2 text-left">游泳環境</th>
+              <th className="px-4 py-2 text-left">連結</th>
               <th className="px-4 py-2 text-right">完賽／出發</th>
             </tr>
           </thead>
@@ -308,6 +327,11 @@ export function YearEditionBlock({ year, editions, raceId }: {
                 <td className="px-4 py-2.5 text-xs text-ink-3">{e.bike_distance_km ? `${e.bike_distance_km}km` : '—'}</td>
                 <td className="px-4 py-2.5 text-xs text-ink-3">{e.run_distance_km ? `${e.run_distance_km}km` : '—'}</td>
                 <td className="px-4 py-2.5 text-xs text-ink-3">{e.swim_type ? SWIM_LABEL[e.swim_type] : '—'}</td>
+                <td className="px-4 py-2.5 text-xs text-ink-3">
+                  {e.registration_url && <a href={e.registration_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline mr-2">報名</a>}
+                  {e.results_url && <a href={e.results_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">成績</a>}
+                  {!e.registration_url && !e.results_url && '—'}
+                </td>
                 <td className="px-4 py-2.5 text-right text-xs text-ink-3">
                   {e.finisher_count != null ? `${e.finisher_count} / ${e.total_starters ?? '?'}` : '—'}
                 </td>
