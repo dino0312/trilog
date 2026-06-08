@@ -44,39 +44,51 @@
 
 ## 記錄
 
-### [2026-06-08] 賽事互動（想參加 / 參加過）
+### [2026-06-08] 賽事互動 v3：年份層級分組 + 賽事詳情頁
 
 **狀態**：✅ 完成
 
 **完成內容**：
-- Migration `20260608000007_race_interest.sql`：初版以 race_id 為 FK（已廢棄）
-- Migration `20260608000008_race_interest_v2.sql`：重建，改以 `race_edition_id` 為 FK，UNIQUE(athlete_id, race_edition_id, interest_type)，RLS：public read / insert own / delete own
-- Server Action `toggleRaceInterest`（`actions/race-interest.ts`）：toggle 語意
-- `RaceInterestButtons` client 元件（`components/races/RaceInterestButtons.tsx`）：未登入開 Auth Modal，已登入可 toggle
-- `/races` 頁面重構：每張賽事卡片展開屆次列表（年份 + 距離），每屆次一列帶互動按鈕
-- `database.ts` 補上 `race_interest` 型別（race_edition_id 版）
-- `auth-modal.tsx` 新增 `race_wishlist` / `race_attended` intent
+- Migration `20260608000009_race_interest_by_year.sql`：重建 `race_interest`，改以 `(race_id, year)` 為互動單位（移除 race_edition_id 綁定），同步修正 `race_editions` UNIQUE constraint → `(race_id, year, distance_category)`
+- `/races` 頁面重構：同年多距離合併為一列（距離 tags），大幅縮短列表長度；互動按鈕以年份為單位
+- Server Action `toggleRaceInterest` 改用 `race_id + year`（不綁特定距離）
+- `RaceInterestButtons` props 改為 `raceId + year`
+- 互動計數：`wishlistCount` / `attendedCount` 由 server 端計算後傳入，客戶端樂觀更新（`delta`）
+- 新增 `/races/[slug]` 賽事詳情頁：顯示賽事基本資料（名稱、地點、主辦、狀態、官網）、歷屆紀錄列表（年份 + 距離 + 日期 + 完賽人數 + 互動按鈕）
+- `database.ts` 更新 `race_interest` 型別（race_id + year）
 
 **技術決策**：
-- 互動以屆次（race_edition）為單位，而非系列賽（race），符合「我參加過 Challenge Taiwan 2024 226」的語意
-- Toggle 由 Server Action 處理，revalidatePath 確保一致性
+- 互動粒度定為年份層級 `(race_id, year)`，而非距離層級：同年多距離通常同一選手只會選一種參加，年份已足夠表達「我參加過 Challenge Taiwan 2024」的語意
+- 樂觀計數：`delta = state.active !== initialActive ? (state.active ? 1 : -1) : 0`，只在狀態真正改變時調整，重複點擊不重複計算
 
 **驗證紀錄**：
 
 | # | 測試項目 | 結果 | 說明 |
 |---|---------|------|------|
-| 1 | 登入狀態點屆次「想參加」 | ✅ PASS | 按鈕變 `✓ 想參加` active 狀態 |
-| 2 | 屆次層級正確分層 | ✅ PASS | 年份 + 距離各自有獨立按鈕 |
-| 3 | 未登入點擊 | ⚠️ 待驗證 | 需登出測試 Auth Modal |
+| 1 | `/races` 年份分組顯示 | ✅ PASS | 同年多距離合併為 tags，列表長度正常 |
+| 2 | 點「想參加」→ active + 計數 +1 | ✅ PASS | 顯示 `✓ 想參加 1` |
+| 3 | `/races/challenge-taiwan` 詳情頁 | ✅ PASS | 9 屆歷史、距離 tags、日期、互動按鈕 |
+| 4 | breadcrumb 連結 | ✅ PASS | 賽事 → race name |
+| 5 | 未登入點擊 | ⚠️ 待驗證 | 應開 Auth Modal |
 
 **異動檔案**：
-- `supabase/migrations/20260608000007_race_interest.sql`（新增，已廢棄）
-- `supabase/migrations/20260608000008_race_interest_v2.sql`（新增）
-- `src/app/actions/race-interest.ts`（新增）
-- `src/components/races/RaceInterestButtons.tsx`（新增）
-- `src/app/(main)/races/page.tsx`
+- `supabase/migrations/20260608000009_race_interest_by_year.sql`（新增）
+- `src/app/actions/race-interest.ts`（重寫）
+- `src/components/races/RaceInterestButtons.tsx`（重寫）
+- `src/app/(main)/races/page.tsx`（重構）
+- `src/app/(main)/races/[slug]/page.tsx`（新增）
 - `src/types/database.ts`
-- `src/context/auth-modal.tsx`
+
+---
+
+### [2026-06-08] 賽事互動 v1/v2（已由 v3 取代）
+
+**狀態**：⚠️ 已取代
+
+**完成內容**：
+- Migration `20260608000007_race_interest.sql`：初版以 race_id 為 FK（已廢棄）
+- Migration `20260608000008_race_interest_v2.sql`：改以 `race_edition_id` 為 FK（已廢棄）
+- Server Action、RaceInterestButtons、auth-modal intent 均在 v3 完整重寫
 
 ---
 

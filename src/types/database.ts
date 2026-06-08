@@ -360,18 +360,20 @@ export type Database = {
       // ── race_interest ─────────────────────────────────────
       race_interest: {
         Row: {
-          id:              string
-          athlete_id:      string
-          race_edition_id: string
-          interest_type:   'wishlist' | 'attended'
-          created_at:      string
+          id:            string
+          athlete_id:    string
+          race_id:       string
+          year:          number
+          interest_type: 'wishlist' | 'attended'
+          created_at:    string
         }
         Insert: {
-          id?:             string
-          athlete_id:      string
-          race_edition_id: string
-          interest_type:   'wishlist' | 'attended'
-          created_at?:     string
+          id?:           string
+          athlete_id:    string
+          race_id:       string
+          year:          number
+          interest_type: 'wishlist' | 'attended'
+          created_at?:   string
         }
         Update: Partial<Database['public']['Tables']['race_interest']['Insert']>
         Relationships: []
