@@ -16,6 +16,8 @@ type Race = {
   city: string | null
   organizer: string | null
   website: string | null
+  lat: number | null
+  lng: number | null
 }
 
 export function RaceEditForm({ race }: { race: Race }) {
@@ -52,6 +54,13 @@ export function RaceEditForm({ race }: { race: Race }) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Input label="主辦單位" id="re-organizer" name="organizer" defaultValue={race.organizer ?? ''} />
         <Input label="官方網站" id="re-website" name="website" defaultValue={race.website ?? ''} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Input label="緯度 Latitude" id="re-lat" name="lat" type="number" step="any"
+               defaultValue={race.lat ?? ''} placeholder="22.7486" />
+        <Input label="經度 Longitude" id="re-lng" name="lng" type="number" step="any"
+               defaultValue={race.lng ?? ''} placeholder="121.1418" />
       </div>
 
       {state.error && <p className="text-sm text-red">{state.error}</p>}

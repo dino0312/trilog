@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useActionState, useEffect } from 'react'
-import { updateYearEdition, deleteYearEditions, type RaceActionState } from '@/app/actions/races'
+import { updateYearEdition, deleteYearEditions, fetchEditionWeather, type RaceActionState, type WeatherFetchState } from '@/app/actions/races'
 
 export type Edition = {
   id: string
@@ -13,6 +13,10 @@ export type Edition = {
   bike_distance_km: number | null
   run_distance_km: number | null
   swim_type: string | null
+  is_wetsuit_allowed: boolean | null
+  water_temp_c: number | null
+  weather_data: Record<string, unknown> | null
+  weather_source: string | null
   finisher_count: number | null
   dnf_count: number | null
   total_starters: number | null
@@ -153,8 +157,8 @@ function EditYearForm({ editions, raceId, year, onClose }: {
           </div>
         )}
 
-        {/* 游泳環境 + 人數 */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {/* 游泳環境 + 防寒衣 + 水溫 */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div className="flex flex-col gap-1">
             <label className="text-xs text-ink-3">游泳環境</label>
             <select name="swim_type" defaultValue={base.swim_type ?? ''}
@@ -167,19 +171,37 @@ function EditYearForm({ editions, raceId, year, onClose }: {
               <option value="other">其他</option>
             </select>
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { name: 'finisher_count', label: '完賽', val: base.finisher_count },
-              { name: 'dnf_count',      label: 'DNF',  val: base.dnf_count },
-              { name: 'total_starters', label: '出發',  val: base.total_starters },
-            ].map(f => (
-              <div key={f.name} className="flex flex-col gap-1">
-                <label className="text-xs text-ink-3">{f.label}</label>
-                <input name={f.name} type="number" min="0" defaultValue={f.val ?? ''}
-                  className="rounded border border-border-strong bg-bg px-2 py-1.5 text-sm text-ink outline-none focus:border-accent" />
-              </div>
-            ))}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-ink-3">防寒衣</label>
+            <select name="is_wetsuit_allowed" defaultValue={
+              base.is_wetsuit_allowed === true ? 'true' : base.is_wetsuit_allowed === false ? 'false' : ''
+            } className="rounded-lg border border-border-strong bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-accent">
+              <option value="">（未指定）</option>
+              <option value="true">允許</option>
+              <option value="false">禁止</option>
+            </select>
           </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-ink-3">水溫（°C）</label>
+            <input name="water_temp_c" type="number" step="0.1" defaultValue={base.water_temp_c ?? ''}
+              placeholder="—"
+              className="rounded-lg border border-border-strong bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-accent" />
+          </div>
+        </div>
+
+        {/* 完賽人數 */}
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { name: 'finisher_count', label: '完賽', val: base.finisher_count },
+            { name: 'dnf_count',      label: 'DNF',  val: base.dnf_count },
+            { name: 'total_starters', label: '出發',  val: base.total_starters },
+          ].map(f => (
+            <div key={f.name} className="flex flex-col gap-1">
+              <label className="text-xs text-ink-3">{f.label}</label>
+              <input name={f.name} type="number" min="0" defaultValue={f.val ?? ''}
+                className="rounded border border-border-strong bg-bg px-2 py-1.5 text-sm text-ink outline-none focus:border-accent" />
+            </div>
+          ))}
         </div>
 
         {/* 報名 + 成績查詢 */}
@@ -217,6 +239,55 @@ function EditYearForm({ editions, raceId, year, onClose }: {
             {pending ? '儲存中…' : '儲存'}
           </button>
         </div>
+      </form>
+    </div>
+  )
+}
+
+// ── 天氣列（抓取 + 顯示） ─────────────────────────────────────
+const WEATHER_INIT: WeatherFetchState = { error: null, success: false }
+
+function WindDir({ deg }: { deg: string }) {
+  const map: Record<string, string> = { N:'北', NE:'東北', E:'東', SE:'東南', S:'南', SW:'西南', W:'西', NW:'西北' }
+  return <>{map[deg] ?? deg}</>
+}
+
+function WeatherBar({ editions, raceId }: { editions: Edition[]; raceId: string }) {
+  const [state, action, pending] = useActionState(fetchEditionWeather, WEATHER_INIT)
+  const base = editions[0]
+  const wx = base.weather_data as {
+    temp_c?: number; humidity_pct?: number; wind_speed_ms?: number
+    wind_direction?: string; precipitation_mm?: number
+  } | null
+
+  return (
+    <div className="border-t border-border/50 px-4 py-2.5 flex items-center gap-3 flex-wrap">
+      {/* 現有天氣資料 */}
+      {wx ? (
+        <span className="text-xs text-ink-3 flex items-center gap-2">
+          <span className="text-ink-4">天氣</span>
+          {wx.temp_c != null && <span>{wx.temp_c}°C</span>}
+          {wx.humidity_pct != null && <span>濕度 {wx.humidity_pct}%</span>}
+          {wx.wind_speed_ms != null && (
+            <span>風 {wx.wind_speed_ms} m/s{wx.wind_direction ? <> <WindDir deg={wx.wind_direction} /></> : ''}</span>
+          )}
+          {wx.precipitation_mm != null && <span>雨 {wx.precipitation_mm} mm</span>}
+          {base.weather_source && <span className="text-ink-4/60">({base.weather_source})</span>}
+        </span>
+      ) : (
+        <span className="text-xs text-ink-4">尚無天氣資料</span>
+      )}
+
+      {/* 抓取按鈕 */}
+      <form action={action} className="ml-auto flex items-center gap-2">
+        <input type="hidden" name="edition_id" value={base.id} />
+        <input type="hidden" name="race_id" value={raceId} />
+        {state.error && <span className="text-xs text-red">{state.error}</span>}
+        {state.success && state.message && <span className="text-xs text-good">{state.message}</span>}
+        <button type="submit" disabled={pending}
+          className="px-2.5 py-1 rounded text-xs border border-border text-ink-3 hover:border-border-strong hover:text-ink transition disabled:opacity-50">
+          {pending ? '抓取中…' : wx ? '重新抓取天氣' : '抓取天氣'}
+        </button>
       </form>
     </div>
   )
@@ -305,40 +376,50 @@ export function YearEditionBlock({ year, editions, raceId }: {
 
       {/* 距離列表（唯讀） */}
       {mode === 'view' && (
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-ink-3 text-xs">
-              <th className="px-4 py-2 text-left">距離</th>
-              <th className="px-4 py-2 text-left">游泳</th>
-              <th className="px-4 py-2 text-left">騎車</th>
-              <th className="px-4 py-2 text-left">跑步</th>
-              <th className="px-4 py-2 text-left">游泳環境</th>
-              <th className="px-4 py-2 text-left">連結</th>
-              <th className="px-4 py-2 text-right">完賽／出發</th>
-            </tr>
-          </thead>
-          <tbody>
-            {editions.map(e => (
-              <tr key={e.id} className="border-b border-border last:border-0">
-                <td className="px-4 py-2.5">
-                  <span className="font-medium text-accent">{DISTANCE_LABEL[e.distance_category] ?? e.distance_category}</span>
-                </td>
-                <td className="px-4 py-2.5 text-xs text-ink-3">{e.swim_distance_m ? `${e.swim_distance_m}m` : '—'}</td>
-                <td className="px-4 py-2.5 text-xs text-ink-3">{e.bike_distance_km ? `${e.bike_distance_km}km` : '—'}</td>
-                <td className="px-4 py-2.5 text-xs text-ink-3">{e.run_distance_km ? `${e.run_distance_km}km` : '—'}</td>
-                <td className="px-4 py-2.5 text-xs text-ink-3">{e.swim_type ? SWIM_LABEL[e.swim_type] : '—'}</td>
-                <td className="px-4 py-2.5 text-xs text-ink-3">
-                  {e.registration_url && <a href={e.registration_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline mr-2">報名</a>}
-                  {e.results_url && <a href={e.results_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">成績</a>}
-                  {!e.registration_url && !e.results_url && '—'}
-                </td>
-                <td className="px-4 py-2.5 text-right text-xs text-ink-3">
-                  {e.finisher_count != null ? `${e.finisher_count} / ${e.total_starters ?? '?'}` : '—'}
-                </td>
+        <>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-ink-3 text-xs">
+                <th className="px-4 py-2 text-left">距離</th>
+                <th className="px-4 py-2 text-left">游泳</th>
+                <th className="px-4 py-2 text-left">騎車</th>
+                <th className="px-4 py-2 text-left">跑步</th>
+                <th className="px-4 py-2 text-left">游泳環境</th>
+                <th className="px-4 py-2 text-left">連結</th>
+                <th className="px-4 py-2 text-right">完賽／出發</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {editions.map(e => (
+                <tr key={e.id} className="border-b border-border last:border-0">
+                  <td className="px-4 py-2.5">
+                    <span className="font-medium text-accent">{DISTANCE_LABEL[e.distance_category] ?? e.distance_category}</span>
+                  </td>
+                  <td className="px-4 py-2.5 text-xs text-ink-3">{e.swim_distance_m ? `${e.swim_distance_m}m` : '—'}</td>
+                  <td className="px-4 py-2.5 text-xs text-ink-3">{e.bike_distance_km ? `${e.bike_distance_km}km` : '—'}</td>
+                  <td className="px-4 py-2.5 text-xs text-ink-3">{e.run_distance_km ? `${e.run_distance_km}km` : '—'}</td>
+                  <td className="px-4 py-2.5 text-xs text-ink-3">
+                    {[
+                      e.swim_type ? SWIM_LABEL[e.swim_type] : null,
+                      e.water_temp_c != null ? `${e.water_temp_c}°C` : null,
+                      e.is_wetsuit_allowed === true ? '✓ 防寒衣' : e.is_wetsuit_allowed === false ? '✗ 防寒衣' : null,
+                    ].filter(Boolean).join('・') || '—'}
+                  </td>
+                  <td className="px-4 py-2.5 text-xs text-ink-3">
+                    {e.registration_url && <a href={e.registration_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline mr-2">報名</a>}
+                    {e.results_url && <a href={e.results_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">成績</a>}
+                    {!e.registration_url && !e.results_url && '—'}
+                  </td>
+                  <td className="px-4 py-2.5 text-right text-xs text-ink-3">
+                    {e.finisher_count != null ? `${e.finisher_count} / ${e.total_starters ?? '?'}` : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {/* 天氣列 */}
+          <WeatherBar editions={editions} raceId={raceId} />
+        </>
       )}
 
       {mode === 'edit' && (

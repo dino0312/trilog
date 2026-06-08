@@ -19,7 +19,7 @@ export default async function RaceDetailPage({ params }: { params: Promise<{ id:
 
   const { data: race } = await supabase
     .from('races')
-    .select('id, name, slug, status, country, city, organizer, website')
+    .select('id, name, slug, status, country, city, organizer, website, lat, lng')
     .eq('id', id)
     .single()
 
@@ -27,7 +27,7 @@ export default async function RaceDetailPage({ params }: { params: Promise<{ id:
 
   const { data: editions } = await supabase
     .from('race_editions')
-    .select('id, year, race_date, race_date_end, distance_category, swim_distance_m, bike_distance_km, run_distance_km, swim_type, finisher_count, dnf_count, total_starters, registration_url, results_url, notes')
+    .select('id, year, race_date, race_date_end, distance_category, swim_distance_m, bike_distance_km, run_distance_km, swim_type, is_wetsuit_allowed, water_temp_c, weather_data, weather_source, finisher_count, dnf_count, total_starters, registration_url, results_url, notes')
     .eq('race_id', id)
     .order('race_date', { ascending: false })
 

@@ -103,6 +103,8 @@ export async function updateRace(_prev: RaceActionState, formData: FormData): Pr
     city:      (formData.get('city')      as string) || null,
     organizer: (formData.get('organizer') as string) || null,
     website:   (formData.get('website')   as string) || null,
+    lat:       parseFloatOrNull(formData.get('lat') as string),
+    lng:       parseFloatOrNull(formData.get('lng') as string),
   }).eq('id', id)
 
   if (error) return { error: error.message, success: false }
@@ -131,6 +133,8 @@ export async function createEdition(_prev: RaceActionState, formData: FormData):
   const race_date_end      = (formData.get('race_date_end') as string) || null
   const distance_categories = formData.getAll('distance_category') as DistanceCategory[]
   const swimType           = (formData.get('swim_type') as SwimType) || null
+  const wetsuitRaw         = formData.get('is_wetsuit_allowed') as string
+  const isWetsuitAllowed   = wetsuitRaw === 'true' ? true : wetsuitRaw === 'false' ? false : null
   const year               = parseInt(race_date.slice(0, 4))
 
   if (!distance_categories.length) return { error: '請至少勾選一個距離組別', success: false }
@@ -151,13 +155,15 @@ export async function createEdition(_prev: RaceActionState, formData: FormData):
       swim_distance_m:  swim,
       bike_distance_km: bike,
       run_distance_km:  run,
-      swim_type:        swimType,
-      finisher_count:   parseIntOrNull(formData.get('finisher_count') as string),
-      dnf_count:        parseIntOrNull(formData.get('dnf_count')      as string),
-      total_starters:   parseIntOrNull(formData.get('total_starters') as string),
-      registration_url: (formData.get('registration_url') as string) || null,
-      results_url:      (formData.get('results_url')      as string) || null,
-      notes:            (formData.get('notes') as string) || null,
+      swim_type:          swimType,
+      is_wetsuit_allowed: isWetsuitAllowed,
+      water_temp_c:       parseFloatOrNull(formData.get('water_temp_c') as string),
+      finisher_count:     parseIntOrNull(formData.get('finisher_count') as string),
+      dnf_count:          parseIntOrNull(formData.get('dnf_count')      as string),
+      total_starters:     parseIntOrNull(formData.get('total_starters') as string),
+      registration_url:   (formData.get('registration_url') as string) || null,
+      results_url:        (formData.get('results_url')      as string) || null,
+      notes:              (formData.get('notes') as string) || null,
     })
     if (error) {
       if (error.code === '23505') return { error: `${year} 年 ${distance_category} 的屆次已存在。`, success: false }
@@ -216,16 +222,19 @@ export async function updateYearEdition(_prev: RaceActionState, formData: FormDa
 
   if (!distance_categories.length) return { error: '請至少勾選一個距離組別', success: false }
 
+  const wetsuitRaw = formData.get('is_wetsuit_allowed') as string
   const shared = {
     race_date,
     race_date_end,
-    swim_type:        swimType,
-    finisher_count:   parseIntOrNull(formData.get('finisher_count') as string),
-    dnf_count:        parseIntOrNull(formData.get('dnf_count')      as string),
-    total_starters:   parseIntOrNull(formData.get('total_starters') as string),
-    registration_url: (formData.get('registration_url') as string) || null,
-    results_url:      (formData.get('results_url')      as string) || null,
-    notes:            (formData.get('notes') as string) || null,
+    swim_type:          swimType,
+    is_wetsuit_allowed: wetsuitRaw === 'true' ? true : wetsuitRaw === 'false' ? false : null,
+    water_temp_c:       parseFloatOrNull(formData.get('water_temp_c') as string),
+    finisher_count:     parseIntOrNull(formData.get('finisher_count') as string),
+    dnf_count:          parseIntOrNull(formData.get('dnf_count')      as string),
+    total_starters:     parseIntOrNull(formData.get('total_starters') as string),
+    registration_url:   (formData.get('registration_url') as string) || null,
+    results_url:        (formData.get('results_url')      as string) || null,
+    notes:              (formData.get('notes') as string) || null,
   }
 
   // 取得目前 DB 中這個年份的所有距離
@@ -366,6 +375,102 @@ export async function deleteRace(_prev: RaceActionState, formData: FormData): Pr
 
   revalidatePath('/admin/races')
   redirect('/admin/races')
+}
+
+// ── 天氣資料抓取（Open-Meteo Historical Archive） ──────────────
+
+export type WeatherFetchState = { error: string | null; success: boolean; message?: string }
+
+export async function fetchEditionWeather(
+  _prev: WeatherFetchState,
+  formData: FormData,
+): Promise<WeatherFetchState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: '未登入', success: false }
+
+  const edition_id = formData.get('edition_id') as string
+  const race_id    = formData.get('race_id')    as string
+
+  // 取得屆次 race_date
+  const { data: edition } = await supabase
+    .from('race_editions')
+    .select('race_date')
+    .eq('id', edition_id)
+    .single()
+  if (!edition) return { error: '找不到屆次', success: false }
+
+  // 取得賽事 lat/lng
+  const { data: race } = await supabase
+    .from('races')
+    .select('lat, lng, name')
+    .eq('id', race_id)
+    .single()
+  if (!race) return { error: '找不到賽事', success: false }
+  if (!race.lat || !race.lng) return { error: '賽事尚未設定座標（lat/lng），請先儲存緯度與經度', success: false }
+
+  const dateStr = edition.race_date.slice(0, 10)
+
+  // 呼叫 Open-Meteo Historical Archive API
+  const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${race.lat}&longitude=${race.lng}&start_date=${dateStr}&end_date=${dateStr}&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,precipitation&timezone=Asia%2FTaipei&wind_speed_unit=ms`
+
+  let apiData: {
+    hourly: {
+      temperature_2m: number[]
+      relative_humidity_2m: number[]
+      wind_speed_10m: number[]
+      wind_direction_10m: number[]
+      precipitation: number[]
+    }
+  }
+  try {
+    const res = await fetch(url, { cache: 'no-store' })
+    if (!res.ok) return { error: `Open-Meteo API 錯誤：${res.status}`, success: false }
+    apiData = await res.json()
+  } catch {
+    return { error: '無法連線至 Open-Meteo，請稍後再試', success: false }
+  }
+
+  // 取 06:00–12:00（index 6–12）均值，代表賽事進行時段
+  const h = apiData.hourly
+  const idx = [6, 7, 8, 9, 10, 11, 12]
+  const avg = (arr: number[]) => Math.round((arr.reduce((s, v) => s + v, 0) / arr.length) * 10) / 10
+  const sum = (arr: number[]) => Math.round(arr.reduce((s, v) => s + v, 0) * 10) / 10
+
+  const temps = idx.map(i => h.temperature_2m[i])
+  const hums  = idx.map(i => h.relative_humidity_2m[i])
+  const winds = idx.map(i => h.wind_speed_10m[i])
+  const wdirs = idx.map(i => h.wind_direction_10m[i])
+  const precs = idx.map(i => h.precipitation[i])
+
+  // 風向角度轉方位
+  const avgDir = avg(wdirs)
+  const directions = ['N','NE','E','SE','S','SW','W','NW','N']
+  const windDir = directions[Math.round(avgDir / 45) % 8]
+
+  const weather_data = {
+    temp_c:           avg(temps),
+    humidity_pct:     Math.round(avg(hums)),
+    wind_speed_ms:    avg(winds),
+    wind_direction:   windDir,
+    precipitation_mm: sum(precs),
+  }
+
+  // 更新 race_editions（同年所有距離共用天氣）
+  const { error } = await supabase
+    .from('race_editions')
+    .update({ weather_data, weather_source: 'open-meteo' })
+    .eq('race_id', race_id)
+    .eq('year', parseInt(edition.race_date.slice(0, 4)))
+
+  if (error) return { error: error.message, success: false }
+
+  revalidatePath(`/admin/races/${race_id}`)
+  return {
+    error: null,
+    success: true,
+    message: `${weather_data.temp_c}°C・濕度 ${weather_data.humidity_pct}%・風速 ${weather_data.wind_speed_ms} m/s・降雨 ${weather_data.precipitation_mm} mm`,
+  }
 }
 
 // ── Helpers ───────────────────────────────────────────────────
