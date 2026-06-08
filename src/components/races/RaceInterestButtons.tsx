@@ -97,7 +97,7 @@ export function RaceInterestButtons({
 }) {
   return (
     <div className="flex items-center gap-1.5">
-      {showWishlist && (
+      <span style={{ visibility: showWishlist ? 'visible' : 'hidden' }}>
         <InterestButton
           raceId={raceId}
           year={year}
@@ -109,8 +109,8 @@ export function RaceInterestButtons({
           activeLabel="✓ 想參加"
           activeClass="border-accent/40 text-accent bg-accent/10"
         />
-      )}
-      {showAttended && (
+      </span>
+      <span style={{ visibility: showAttended ? 'visible' : 'hidden' }}>
         <InterestButton
           raceId={raceId}
           year={year}
@@ -122,7 +122,7 @@ export function RaceInterestButtons({
           activeLabel="✓ 參加過"
           activeClass="border-[#FF6B3D]/40 text-[#FF6B3D] bg-[#FF6B3D]/10"
         />
-      )}
+      </span>
     </div>
   )
 }
