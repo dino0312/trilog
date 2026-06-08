@@ -1,14 +1,12 @@
 # docs/features.md — 功能規格
 
-> 說明每個功能「是什麼、誰能用、入口在哪、行為規則」。  
-> 這份文件與程式碼同步維護：每次新增或修改 UI 流程、Nav、權限、admin 功能時必須更新。
+> 說明每個功能「是什麼、誰能用、入口在哪、行為規則」。
+> 這份文件由 **Claude.ai** 在規格確認後同步輸出，Claude Code 不需要自行更新。
+> 實作細節（元件路徑、migration 檔名、測試記錄）請見 `devlog.md`。
 
 ---
 
 ## 1. 導覽列（Nav）
-
-**元件**：`src/components/layout/Nav.tsx`（Server Component）  
-**出現位置**：`(main)` 與 `(admin)` 兩個 route group 的 layout 均包含 Nav
 
 ### 1.1 連結清單
 
@@ -20,128 +18,175 @@
 | 未認領 | `/unclaimed` | 永遠顯示 |
 | 管理（下拉） | 見 1.2 | 已登入且角色 ≥ assistant |
 | 我的紀錄 | `/records` | 已登入 |
-| + 新增成績 | `/records/new` | 已登入 |
-| 首字母頭像 | `/profile` | 已登入 |
-| 登入 | **Auth Modal**（不跳頁） | 未登入 |
-| + 新增成績 | **Auth Modal**（intent: new_result） | 未登入 |
+| ＋ 新增 | 下拉選單（見 1.3）| 永遠顯示 |
+| Avatar | 下拉選單（見 1.4）| 已登入 |
+| 登入 | Auth Modal（不跳頁）| 未登入 |
 
-> **未登入 Nav 行為**：「登入」與「新增成績」均由 `NavAuthButtons`（Client Component）觸發 Auth Modal，**不導向 `/login` 頁面**。  
-> `/login` 頁面保留，供 Email 通知等外部連結直接進入。
+> **未登入 Nav 行為**：「登入」與「新增」均觸發 Auth Modal，不導向 `/login`。`/login` 保留供外部連結直接進入。
 
 ### 1.2 管理下拉選單
 
-**元件**：`src/components/layout/AdminDropdown.tsx`（Client Component）  
-**顯示條件**：已登入且 `is_assistant_or_above()` RPC 回傳 true  
-**行為**：點擊「管理」按鈕展開下拉，點擊選項後導航並關閉選單，點擊選單外側自動關閉
+**顯示條件**：已登入且角色 ≥ assistant
 
 | 選項 | 路徑 |
 |------|------|
 | 審核中心 | `/admin` |
 | 賽事管理 | `/admin/races` |
 
+### 1.3「＋ 新增」下拉選單（第 34 章）
+
+| 選項 | 路徑 | 顯示條件 |
+|------|------|---------|
+| 自己的成績 | `/records/new` | 所有已登入用戶 |
+| 他人成績 | `/records/new?for=other` | 所有已登入用戶 |
+| 新增賽事 | `/races/new` | 限 assistant+（分隔線區隔）|
+
+**未登入**：點擊前兩個選項均觸發 Auth Modal（intent `new_result` / `new_result_for_other`），登入後導向對應路徑。
+
+### 1.4 Avatar 下拉選單（第 30 章）
+
+**顯示條件**：已登入
+
+**Avatar 顯示規則**：
+
+| 狀態 | 顯示 |
+|------|------|
+| 已上傳頭像 | 圓形頭像縮圖 |
+| 未上傳頭像（有 name）| 姓名第一個字 |
+| 未上傳頭像（無 name 且無 nickname）| 人形 icon |
+
+**選單項目**：
+
+| 選項 | 路徑 | 顯示條件 |
+|------|------|---------|
+| 姓名 / Email（標頭，不可點擊）| — | 永遠 |
+| 我的紀錄 | `/records` | 永遠 |
+| 關注名單 (N) | `/my/following` | 永遠；N 為追蹤人數，0 時不顯示 badge |
+| 個人資料 | `/profile` | 永遠 |
+| 管理後台 | `/admin` | assistant+ |
+| 登出 | — | 永遠 |
+
+### 1.5 Nav Active State（第 32 章）
+
+**機制**：當前路徑對應連結顯示 active 狀態（底線 + 白色文字）。
+
+**Page Context Strip**：Nav 正下方的深色條帶，顯示當前頁面標題與副標。
+
+| 路徑 | 標題 | 副標 |
+|------|------|------|
+| /leaderboard | 最速榜 | 台灣選手 · 個人最佳 · 跨賽事 |
+| /rankings | 排行榜 | 依距離篩選 · 完整成績記錄 |
+| /unclaimed | 未認領成績 | 搜尋你的名字，認領屬於你的成績 |
+| /races | 賽事資料庫 | 台灣鐵人三項賽事 · 路線 · 天氣 · 歷史成績 |
+| /records | 我的紀錄 | 個人成績歷史 |
+| /profile | 個人資料 | 帳號設定與公開資訊 |
+| /admin | 管理後台 | 賽事資料 · 公證審核 |
+
 ---
 
 ## 2. 管理區（Admin）
 
-**Route Group**：`src/app/(admin)/`  
-**存取條件**：已登入且角色 ≥ assistant，否則 redirect → `/login` 或 `/leaderboard`  
-**Layout**：獨立於一般用戶的 `(main)` route group，自有 layout，未來調整 admin 版面不影響一般頁面
+**存取條件**：已登入且角色 ≥ assistant，否則 redirect → `/login`
+**Layout**：獨立於 `(main)` route group，自有 layout
 
 ### 2.1 頁面內導航（AdminTabs）
 
-**元件**：`src/app/(admin)/admin/AdminTabs.tsx`（Client Component）  
-管理區內使用 Tab 切換，不透過 Nav 的下拉選單
-
-| Tab | 路徑 | 精確比對 |
-|-----|------|---------|
-| 審核中心 | `/admin` | 是（`pathname === '/admin'`）|
-| 賽事管理 | `/admin/races` | 否（`pathname.startsWith('/admin/races')`）|
-| 官方成績 | `/admin/results` | 否（`pathname.startsWith('/admin/results')`）|
+| Tab | 路徑 |
+|-----|------|
+| 審核中心 | `/admin` |
+| 賽事管理 | `/admin/races` |
+| 官方成績 | `/admin/results` |
+| 賽事審核 | `/admin/races/review` |
+| 會員名單 | `/admin/members` |
 
 ### 2.2 審核中心（`/admin`）
 
-**功能**：
 - 列出所有 `claim_status = 'pending'` 的認領申請
-- 列出最近 50 筆已認領成績，可強制重設（`ResetButton`）
-
-**操作**：
-- 審核通過：呼叫 `approve_claim()` DB Function，`claim_status → claimed`
+- 審核通過：`claim_status → claimed`
 - 審核拒絕：`claim_status → unclaimed`，`athlete_id` 清空
-- 強制重設：將已認領成績強制回到 `unclaimed` 狀態（誤認領處理）
+- 強制重設：已認領成績強制回到 `unclaimed`（誤認領處理）
 
 ### 2.3 官方成績管理（`/admin/results`）
 
-**功能**：新增、瀏覽、刪除官方（策展層）成績
-
-**操作流程**：
-1. 選擇賽事屆次（依賽事 → 年份 → 距離三層選擇）
-2. 填入選手姓名、性別、整體名次、完賽時間（必填）、各分項時間（選填）
-3. 送出後立即更新列表，可連續新增同一屆次的多筆成績
-4. 已認領（`claim_status ≠ 'unclaimed'`）的成績不顯示刪除按鈕
+**操作流程**：選擇賽事屆次（賽事 → 年份 → 距離）→ 填入姓名、性別、時間 → 送出
 
 **業務規則**：
-- 新增成績 `source_credibility = 'official'`，`claim_status = 'unclaimed'`，`athlete_id = null`
+- 新增成績：`source_credibility = 'official'`，`claim_status = 'unclaimed'`，`athlete_id = null`
 - 刪除僅允許 `claim_status = 'unclaimed'` 的成績（RLS 保護）
-- 新增成功後自動刷新 `/leaderboard`、`/unclaimed`
-
----
 
 ### 2.4 賽事管理（`/admin/races`）
-
-**子路由**：
 
 | 路徑 | 功能 |
 |------|------|
 | `/admin/races` | 賽事列表 + 新增賽事 Panel |
 | `/admin/races/[id]` | 賽事詳情 + 屆次列表 + 新增屆次 Panel + 編輯賽事 |
 
-#### 距離標示
+**距離標示**（全站統一）：
 
-全站統一使用以下標示（對應 DB `distance_category` 欄位值）：
-
-| DB 值 | 顯示標示 | 標準距離（游泳 m / 騎車 km / 跑步 km） |
+| DB 值 | 顯示標示 | 標準距離（游泳 m / 騎車 km / 跑步 km）|
 |-------|---------|--------------------------------------|
 | `full` | 226 | 3800 / 180 / 42.2 |
 | `70.3` | 113 | 1900 / 90 / 21.1 |
 | `olympic` | 51.5 | 1500 / 40 / 10 |
 | `sprint` | Sprint | 750 / 20 / 5 |
 
-#### 屆次概念
+**屆次概念**：屆次 = 年份，一個屆次可含多個距離。DB 中每個 `race_id + year + distance_category` 是一筆 `race_editions` 記錄。
 
-**屆次（Edition）= 年份**，一個屆次可包含多個距離組別（例如同一賽事同年舉辦 226 和 113）。DB 中每個 `race_id + year + distance_category` 組合是一筆 `race_editions` 記錄，UI 以年份為單位呈現和操作。
+**新增屆次**：勾選距離 → 每個距離各建立一筆 `race_editions`；刪除時有成績則阻擋。
 
-#### 新增屆次
+### 2.5 賽事後台審核（`/admin/races/review`，第 35 章）
 
-1. 選擇開始日期（必填）、結束日期（選填，多日賽事）
-2. 勾選本屆提供的距離組別（可多選）
-3. 勾選後展開每個距離的游泳/騎車/跑步 km 欄位（預設帶入標準距離，可調整）
-4. 填寫游泳環境、完賽人數、備註（選填）
-5. 送出後每個勾選距離各建立一筆 `race_editions` 記錄
+**事後審查（Post-Moderation）**：新賽事立即公開，同步進入待審佇列。
 
-#### 屆次列表
+| Tab | 說明 |
+|-----|------|
+| 待審 | `review_status = pending_review` 的賽事 |
+| 已核准 | 歷史核准記錄 |
+| 已拒絕 | 歷史拒絕記錄 |
+| 舉報 | `report_count` 達閾值的賽事 |
 
-- 依年份分組顯示，最新年份排最上
-- 每個年份卡片顯示該年所有距離及其 km 資料
-- 年份標頭右側有「編輯」和「刪除」按鈕（hover 顯示）
+**Inline 動作**：
 
-#### 編輯屆次（年份層級）
+| 動作 | 行為 |
+|------|------|
+| 核准 | `review_status → approved` |
+| 編輯後核准 | Inline 編輯，修正後核准 |
+| 拒絕 | 填寫原因，可選通知提交者 |
+| 保留（舉報 tab）| 忽略舉報，`report_count` 重設 |
+| 下架（舉報 tab）| 移除公開顯示 |
 
-點擊「編輯」展開整個年份的表單：
-- 可修改日期、游泳環境、人數、備註
-- 可調整各距離 km
-- 可新增距離（勾選新距離 → 建立新記錄）
-- 可移除距離（取消勾選 → 刪除該距離記錄，有成績時阻擋）
+**觸發邏輯**：
+- 首次提交用戶 → `review_status = pending_review`，通知助手
+- 已通過首次審核的用戶 → `review_status = approved`（直接），進背景隊列抽查
+- 被舉報達 3 次 → `review_status = pending_review`（重審），通知助手
 
-#### 刪除屆次（年份層級）
+### 2.6 會員名單（`/admin/members`，第 40 章）
 
-- 一次刪除該年份所有距離記錄
-- 任何距離底下有成績時，顯示筆數並阻擋刪除
+**搜尋**：name / nickname / Email 即時篩選 + 角色下拉 + 狀態下拉（全部 / 正常 / 已停權 / 已刪除）。已刪除帳號預設隱藏。
 
-#### 新增成績時的賽事選擇（使用者端）
+**列表欄位**：姓名 + Email / 角色 badge / 狀態（已停權顯示橘色）/ 成績筆數 / 註冊日期 / ⋯ 操作選單
 
-兩步驟選擇（`/records/new`）：
-1. 先選「賽事 + 年份」（例：太魯閣 2024）
-2. 若該年有多個距離，出現距離按鈕供選擇；只有一個距離時自動選取
+**詳情 Popup**：檢視模式 + 編輯模式切換
+
+| 可編輯欄位 | 備注 |
+|-----------|------|
+| name / nickname / Email | Email 修改需輸入確認文字 |
+| gender / birth_year / nationality / bio | |
+| 角色（選手 ↔ 助手）| 不能降低自己；不能指派 admin（限 admin 操作）|
+
+**操作按鈕**（依帳號狀態顯示）：
+
+| 帳號狀態 | 可用操作 | 所需角色 |
+|---------|---------|---------|
+| 正常 | 停權 / 刪除 | 停權：assistant+；刪除：admin only |
+| 已停權 | 解除停權 / 刪除 | 同上 |
+| 已刪除 | 復原（30 天內）| admin only |
+
+**停權效果**：無法登入；成績從排行榜隱藏；資料保留；可解除復原。
+
+**強制刪除**：`claimed` 成績變 `unlinked`；`self_reported` 1 個月後清除；需輸入「確認刪除 [Email]」確認文字。
+
+**ATHLETE 新增欄位**：`suspended_at` / `suspended_by` / `suspend_reason`
 
 ---
 
@@ -151,107 +196,110 @@
 
 每位選手只取歷史最佳成績（best-per-athlete 去重），依完賽時間排序。
 
-**URL 參數**：`?distance=full`（預設）/ `70.3` / `olympic` / `sprint`  
-**進榜條件**：`is_public = true` + `claim_status IN ('unclaimed', 'claimed')` + 有顯示名稱 + `result_type = 'solo'`  
-**去重邏輯**：有帳號的選手以 `athlete_id` 去重，未認領的以 `display_name` 去重，各取最小 `total_seconds`
+**URL 參數**：`?distance=full`（預設）/ `70.3` / `olympic` / `sprint`
+**進榜條件**：`is_public = true` + `claim_status IN ('unclaimed', 'claimed')` + `name IS NOT NULL` + `result_type = 'solo'`
+**去重邏輯**：有帳號的選手以 `athlete_id` 去重；未認領的以 `display_name` 去重；各取最小 `total_seconds`
+**顯示名稱優先順序**：`COALESCE(nickname, name, athlete_name_snapshot)`
 
-**視覺設計**：
-- 距離頁籤（226 啟用，其他三個 disabled 待資料累積後開啟）
-- Sub 分界線：226 男子 Sub10 / 女子 Sub10，各距離另有對應門檻
-- 未認領成績顯示「未認領」標籤，名字以灰色呈現
-- 底部「登錄我的成績 →」連結
-
-**更新日期**：自動取資料中最新的 `race_date`，非硬碼
+**視覺規則**：
+- 距離頁籤（226 預設；其他距離 disabled，待資料累積後開啟）
+- Sub 分界線：依距離各有門檻
+- 未認領成績顯示「未認領」標籤
+- 更新日期取資料中最新的 `race_date`，非硬碼
 
 ### 3.2 排行榜（`/rankings`）
 
-**與最速榜的差異**：同一選手可有多筆成績（不去重），可篩選特定賽事、年份
+同一選手可有多筆成績（不去重），可篩選特定賽事、年份。
 
-**URL 參數**：`?distance=full`（必填，預設）  
-**進入規則**：無 `distance` 參數時自動 redirect 至 `?distance=full`  
-**距離選擇**：按鈕頁籤（226 / 113 / 51.5 / Sprint），無「所有距離」選項  
-**其他篩選**：賽事（下拉）、性別（下拉），需按「篩選」按鈕送出
+**URL 參數**：`?distance=full`（必填，無此參數自動 redirect）
+**距離選擇**：226 / 113 / 51.5 / Sprint，無「所有距離」選項
+**其他篩選**：賽事（下拉）、性別（下拉）
 
 ### 3.3 未認領（`/unclaimed`）
 
 瀏覽策展層中尚未被認領的官方成績。
 
-**排序**：標記人數降冪 → 完賽時間升冪  
+**排序**：標記人數降冪 → 完賽時間升冪
 **搜尋**：姓名模糊搜尋 + 賽事 + 距離篩選
 
 **兩個操作入口**：
-1. **認領**（`ClaimButton`）：「這是我的成績」→ 呼叫 `claim_result()` RPC → `claim_status = pending` → 等待助手審核
-2. **標記通知**（`TagButton`）：「我認識這位選手」→ 新增 `claim_tags` 記錄 → 產生分享文字 → 呼叫 Web Share API
+1. **認領**（ClaimButton）：`claim_result()` RPC → `claim_status = pending` → 等待助手審核
+2. **標記通知**（TagButton）：新增 `claim_tags` 記錄 → 產生分享文字 → Web Share API
 
-**ClaimButton 顯示條件**（姓名比對）：  
-`ClaimButton` 只在 `athlete_name_snapshot` 與登入者 `nickname` 正規化相符時顯示（`visible` prop）。  
-正規化邏輯：`trim().toLowerCase().replace(/\s+/g, '')`。未填 nickname 者看不到認領按鈕。  
-元件：`src/components/claims/ClaimButton.tsx`，`visible` prop 預設 `true`，`if (!visible) return null` 放在 hook 之後（Rules of Hooks）。
+**ClaimButton 顯示條件**：`athlete_name_snapshot` 與登入者 `athletes.name` 正規化相符（`trim().toLowerCase().replace(/\s+/g, '')`）。未設定 `name` 的用戶看不到任何認領按鈕。
 
 **TagButton 渲染順序**：
-1. 分享面板（`showShare && shareText`）— 優先於「已通知」，避免 `revalidatePath` 搶先更新 prop 導致略過分享步驟
-2. 已標記（`hasTagged`）— 分享面板關閉後或重整後，顯示「✓ 已通知 ＋ 撤銷」
+1. 分享面板（`showShare && shareText`）
+2. 已標記（`hasTagged`）— 顯示「✓ 已通知 ＋ 撤銷」
 3. 未登入 → 達上限 → 一般按鈕
-
-元件：`src/components/claims/TagButton.tsx`
 
 ### 3.4 成績詳情（`/results/[id]`）
 
-單筆成績的完整資料頁，可從 `/unclaimed` 的姓名連結、分享連結進入。
+顯示完賽時間、5 項分項時間、成績來源標籤、認領狀態、整體名次。
+未認領成績顯示認領入口 + 標記入口 + 知情人留言列表。
 
-**顯示內容**：完賽時間、5 項分項時間、成績來源標籤（官方成績 / 已公證 / 自填）、認領狀態、整體名次  
-**互動**：未認領成績顯示認領入口 + 標記入口 + 知情人留言列表  
-**認領按鈕**：同 §3.3，需姓名正規化相符才顯示（Server Component 取 profile.nickname 後傳 `visible` prop）
+### 3.5 賽事資料庫（`/races`，第 33 章）
+
+賽事列表，依系列分組（IRONMAN 系列、Challenge 系列、普悠瑪、其他），台灣場地優先排序。
+
+**賽事互動（第 36 章，待實作）**：
+
+| 按鈕 | interest_type | 說明 |
+|------|--------------|------|
+| 想參加 | `wishlist` | 表達報名意願 |
+| 參加過 | `attended` | 聲明曾參加，觸發成績登錄提示 |
+
+- 未登入點擊：Auth Modal，intent `race_wishlist` / `race_attended`
+- 「參加過」按下後若無成績記錄，顯示 toast 提示
 
 ---
 
 ## 4. 登入用戶功能
 
-### 4.1 我的紀錄（`/records`）
+### 4.1 我的成績（`/records`）
 
 列出本人所有成績，含 `pending` 狀態（顯示「待審核」）。
 
-**自填成績操作**（RecordActions，僅 `source_credibility = 'self_reported'`）：
-- 點「編輯」→ modal 預填現有數值，送出呼叫 `updateResult` Server Action
-- 點「刪除」→ 確認 modal，確認後呼叫 `deleteResult` Server Action
+**自填成績**（`source_credibility = 'self_reported'`）：可編輯 / 刪除
 
-**官方成績操作**（21.4，`source_credibility = 'official' + claim_status = 'claimed'`）：
-- 顯示「解除關聯」按鈕（UnlinkButton），需二次確認
-- 確認後呼叫 `unlink_result()` RPC → `athlete_id = null`，`claim_status = 'unlinked'`
-- 解除後成績回到公共狀態，`athlete_name_snapshot` 保留作為公共紀錄
+**官方成績**（`source_credibility = 'official'` + `claim_status = 'claimed'`）：顯示「解除關聯」，呼叫 `unlink_result()` RPC。
 
-**認領狀態顯示**：
-- `claim_status = 'pending'` → 顯示「⏳ 待審核」
-- `claim_status = 'claimed'` + 非自填 → 顯示「✓ 已認領」
-
-**接力成績區塊**（頁面下半部，獨立於個人成績）：  
-資料來源：`team_members WHERE athlete_id = me` → join `teams` / `results`  
-顯示：賽事名稱、隊名、個人負責分項（`DisciplineIcon`）+ 分項時間、隊伍完賽總時間、認領狀態  
-點擊卡片 → `/teams/[id]` 隊伍頁  
-右上角新增「+ 接力成績」按鈕，導向 `/records/relay/new`
-
-**個人成績查詢**加上 `.eq('result_type', 'solo')` 過濾，確保不混入 relay result。
+**接力成績區塊**（頁面下半部）：顯示個人負責分項 + 分項時間 + 隊伍完賽總時間。右上角「+ 接力成績」導向 `/records/relay/new`。
 
 ### 4.2 新增成績（`/records/new`）
 
-選手自填成績表單。動態載入賽事選單（`GET /api/races`）。成功後 redirect → `/records`。
+**我的成績模式**（預設）：
+- `athlete_id` 綁定登入者，`claim_status = 'claimed'`，`source_credibility = 'self_reported'`
 
-**21.3 首次成績登錄引導**（Profile 補充流程）：
+**幫他人新增模式**（`?for=other`，所有已登入用戶）：
+- `athlete_id = null`，`athlete_name_snapshot` 必填，`claim_status = 'unclaimed'`，`is_public = true`（固定）
 
-| 條件 | 行為 |
-|------|------|
-| Profile 完整（nickname + gender + birth_year + nationality 均已填）| 正常表單，無額外步驟 |
-| Profile 不完整 + 勾選「公開成績」 | 表單底部出現藍色「完成個人資料以進入排行榜」區塊，只顯示尚未填寫的欄位 |
-| Profile 不完整 + 取消勾選「公開成績」 | 區塊即時隱藏，私人成績直接儲存無需補填 |
+**公開/私人規則**：公開成績需 `name` + `gender` + `birth_year` + `nationality` 全填（`nickname` 不強制）。
 
-- 僅顯示缺少的欄位（nickname / gender / birth_year / nationality），已填的不重複詢問
-- 送出時 `createResult` server action 先更新 athletes 表，再驗證完整性，不完整則阻擋
-- 此引導僅在 profile 不完整時觸發；Profile 頁面補完後，之後新增成績不再出現
+**21.3 首次成績登錄引導**：Profile 不完整且勾選公開時，表單底部出現補填區塊；私人成績不觸發。
 
-### 4.3 個人資料（`/profile`）
+### 4.3 個人資料（`/profile`，第 31 章）
 
-編輯 `nickname`、`gender`、`birth_year`、`nationality`、`bio`。  
-未填 `nickname` 的選手不進入排行榜（成績可私人保存）。
+Inline 編輯：點擊欄位直接切換為可編輯狀態，Enter 儲存，Escape 取消。
+
+| 欄位 | 進榜必填 | 說明 |
+|------|---------|------|
+| 頭像 | 否 | |
+| 姓名（name）| 是 | 真實姓名，認領比對與進榜依據 |
+| 暱稱（nickname）| 否 | 選填，填寫後排行榜優先顯示 |
+| 性別 | 是 | |
+| 出生年份 | 是 | |
+| 國籍 | 是 | |
+| 自我介紹 | 否 | |
+| Email | 唯讀 | |
+
+**進度提示**：頁面頂部顯示「還差 N 個欄位即可進入排行榜」。
+
+**帳號刪除**：輸入 Email 確認 → 1 個月緩衝後永久刪除；策展層成績解除關聯為 `unlinked` 狀態。
+
+### 4.4 Wish List（`/my/wishlist`，第 36 章，待實作）
+
+顯示選手所有「想參加」的賽事，按日期排序。
 
 ---
 
@@ -259,151 +307,275 @@
 
 ### 5.1 Auth Modal（主要登入入口）
 
-**元件**：`src/components/auth/AuthModal.tsx`（Client Component）  
-**狀態管理**：`src/context/auth-modal.tsx`（React Context）  
-**掛載位置**：`src/app/layout.tsx`（根層，全頁面有效）
-
-Modal 以彈出形式覆蓋當前頁面，不跳頁，保留頁面狀態。
-
-| 狀態 | 描述 |
-|------|------|
-| `closed` | 預設，不顯示 |
-| `open:login` | Email / 密碼登入表單 |
-| `open:register` | 註冊表單（Modal 內切換） |
-| `open:loading` | 請求進行中 |
-| `open:error` | 登入失敗，顯示錯誤 |
+Modal 覆蓋當前頁面，不跳頁，保留頁面狀態。
 
 **Intent 跳轉邏輯**：
 
 | intent | 登入成功後行為 |
 |--------|-------------|
-| `login`（預設） | Modal 關閉，留在當前頁，Nav 更新 |
-| `new_result` | Modal 關閉，導向 `/records/new` |
-| `claim` | Modal 關閉，導向 `/results/:resultId/claim` |
-
-任何元件可呼叫 `useAuthModal().open(intent?, payload?)` 觸發。
+| `login`（預設）| Modal 關閉，留在當前頁 |
+| `new_result` | 導向 `/records/new` |
+| `new_result_for_other` | 導向 `/records/new?for=other` |
+| `claim` | 導向 `/results/:resultId/claim` |
+| `race_wishlist` | 完成 wishlist 標記，回賽事頁 |
+| `race_attended` | 完成 attended 標記，顯示成績登錄提示 |
 
 ### 5.2 登入頁（`/login`）
 
-**用途**：直接連結進入（如 Email 通知）。  
-**版面**：全螢幕置中，上方大 `TrilogLogo`（`size="lg"`，1.8s 動態波浪）+ 下方表單卡片。  
-Email + password 登入。登入成功後導向 `/leaderboard`。已登入者由 middleware 擋回。
+全螢幕置中，供外部連結（如 Email 通知）直接進入。
 
-### 5.3 註冊頁（`/register`）
+### 5.3 Route Redirect 規則
 
-建立帳號後自動觸發 `handle_new_user` trigger，在 `athletes` 表建立對應記錄。已登入者由 middleware 擋回 `/leaderboard`。
-
----
-
-## 6. Route Group 架構
-
-| Route Group | Layout 內容 | 包含的路由 |
-|-------------|------------|----------|
-| `(main)` | Nav + 全頁背景 | leaderboard, rankings, relay, unclaimed, records, records/new, records/relay/new, results/[id], teams/[id], profile |
-| `(admin)` | Nav + 全頁背景（獨立） | /admin, /admin/races, /admin/races/[id], /admin/results |
-| `(auth)` | 全螢幕置中，大 Logo + 表單 | login, register |
-
-`(admin)` 與 `(main)` 刻意獨立，未來各自調整 layout 不互相影響。
+| 原路徑 | Redirect 至 |
+|--------|------------|
+| `/my/profile` | `/profile` |
+| `/my/results` | `/records` |
 
 ---
 
-## 7. 接力功能（Spec 20）
+## 6. 接力功能（第 20 章）
 
-### 7.1 接力榜（`/relay`）
+### 6.1 接力榜（`/relay`）
 
-**元件**：`src/app/(main)/relay/page.tsx`（Server Component） + `src/components/relay/RelayLeaderboard.tsx`（Client Component）  
-**說明**：獨立於 solo 榜的接力隊伍排行榜  
-**篩選條件**：距離（sprint/olympic/70.3/full）、組別（男子/女子/混合）、賽事
+獨立排行榜，篩選：距離、組別（男子/女子/混合）、賽事。
 
-### 7.2 隊伍頁（`/teams/[id]`）
+### 6.2 隊伍頁（`/teams/[id]`）
 
-**元件**：`src/app/(main)/teams/[id]/page.tsx`（Server Component）  
-**顯示**：隊名、完賽時間、T1/T2、成員列表（含分項 icon、個人時間、認領狀態）
+顯示：隊名、完賽時間、T1/T2、成員列表（分項、個人時間、認領狀態）。
 
-**認領按鈕顯示條件**（全部滿足才顯示）：
+**認領按鈕顯示條件**（全部滿足）：
 1. 使用者已登入
 2. 成員 `claim_status = 'unclaimed'` 且 `athlete_id IS NULL`
-3. 成員的 `athlete_name_snapshot` 與登入者 `nickname` **正規化相符**（trim + 轉小寫 + 壓縮空格）
-4. 登入者尚未透過 `athlete_id` 認領此隊伍中的任一成員
+3. 成員的 `athlete_name_snapshot` 與登入者 `athletes.name` 正規化相符
+4. 登入者尚未認領此隊伍中的任一成員
 
-> 正規化比對避免大小寫或空格差異誤判，同時防止顯示不相關成員的認領按鈕，保持版面簡潔。
+### 6.3 新增接力成績（`/records/relay/new`）
 
-### 7.3 新增接力成績（`/records/relay/new`）
+選擇賽事 → 填入總時間 / 組別 / 隊名 → 設定成員（最多 3 位）→ 勾選「這是我」自動認領 → 提交
 
-**元件**：`src/components/relay/NewRelayResultForm.tsx`（Client Component）  
-**入口**：`/records/new` 右上角「+ 接力成績」按鈕、`/records` 右上角「+ 接力成績」按鈕  
-**流程**：選擇賽事 → 填入總時間 / 組別 / 隊名 → 設定成員（最多 3 位）→ 勾選「這是我」自動認領 → 提交
+### 6.4 業務規則
 
-### 7.4 我的紀錄（`/records`）— 接力區塊
-
-Solo 成績與接力成績分兩個區塊顯示：
-
-| 區塊 | 資料來源 | 顯示內容 |
-|------|---------|---------|
-| 個人成績 | `results WHERE athlete_id = me AND result_type = 'solo'` | 賽事、時間、分項、認領狀態 |
-| 接力成績 | `team_members WHERE athlete_id = me` → join teams/results | 賽事、隊名、我的分項 icon + 時間、完賽總時間 |
-
-點擊接力卡片跳至 `/teams/[id]` 隊伍頁。
-
-### 7.5 業務規則
-
-- `result_type = 'relay'` 的 Result 的 `athlete_id` 始終為 null，成員由 `team_members` 管理
-- T1/T2 存放在 TEAM 表（隊伍層級），不歸屬個別成員
-- 任一成員認領 → 該成員 `claim_status` 更新為 `pending`；result 的 `claim_status` 從 `unclaimed` 更新為 `pending`
-- 接力榜顯示條件：`result.is_public = true AND result.claim_status IN ('unclaimed', 'claimed')`（來自 `relay_leaderboard_entries` view）
-- 認領姓名比對正規化邏輯：`trim().toLowerCase().replace(/\s+/g, '')`
+- relay Result 的 `athlete_id` 始終為 null，成員由 `team_members` 管理
+- T1/T2 存 TEAM 層級，不歸屬個別成員
+- 成員認領：`claim_status → pending`；result 的 `claim_status → pending`
 
 ---
 
-## 8. 共用 UI 元件
+## 7. 資料模型核心規則
 
-### 8.1 DisciplineIcon（分項 icon）
+### 7.1 認領狀態流程
 
-**元件**：`src/components/ui/DisciplineIcon.tsx`  
-**用途**：顯示游泳 / 自行車 / 跑步的識別 icon，目前用於接力榜成員列表。
-
-**Props**：
-```tsx
-<DisciplineIcon discipline="swim" />               // 預設尺寸 w-5 h-5，顏色 text-swim
-<DisciplineIcon discipline="bike" className="w-6 h-6 text-white" />  // 覆寫尺寸與顏色
-<DisciplineIcon discipline="run"  className="w-4 h-4" />
+```
+unclaimed → pending（申請認領）→ claimed（審核通過）
+claimed → unlinked（解除關聯）→ unclaimed
 ```
 
-| discipline | 預設顏色 | 圖示說明 |
-|-----------|---------|--------|
-| `swim` | `text-swim`（藍 #4ea1ff）| 人頭 + 划水手臂 + 雙水波 |
-| `bike` | `text-bike`（綠 #66c6be）| 雙輪車架 + 騎士頭 |
-| `run`  | `text-run`（紅 #ff685e） | 奔跑人形（頭 + 四肢） |
+帳號刪除時：`claimed` 成績自動變 `unlinked`；`self_reported` 成績 1 個月後刪除；`certificate` / `official` 保留資料，移除帳號關聯。
 
-**設計**：`viewBox="0 0 24 24"`，線條風格（`stroke`），`fill="none"`，顏色完全由 `currentColor` 控制，可在任何背景上使用。
+### 7.2 source_credibility 分層
+
+| 值 | 說明 | 標章 |
+|----|------|------|
+| `official` | 策展層助手建立 | 官方策展標章 |
+| `certificate` | 選手上傳證書並審核通過 | 已公證標章 |
+| `self_reported` | 選手自填 | 自填標示 |
+
+### 7.3 ATHLETE 核心欄位
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| `name` | string nullable | 真實姓名，進榜必填，認領比對依據 |
+| `nickname` | string nullable | 顯示暱稱，選填；排行榜顯示優先於 name |
+| `role` | string | `athlete` / `assistant` / `admin` |
+| `deleted_at` | timestamp nullable | 軟刪除，1 個月後永久清除 |
+
+**顯示名稱優先順序**：`COALESCE(nickname, name, athlete_name_snapshot)`
+
+### 7.4 RACE 審核欄位
+
+| 欄位 | 值 | 說明 |
+|------|-----|------|
+| `status` | `pending_review` / `active` / `inactive` / `cancelled` | 賽事公開狀態 |
+| `review_status` | `pending_review` / `approved` / `rejected` | 後台審核狀態 |
+| `report_count` | int | 達 3 次自動轉 `pending_review` 重審 |
 
 ---
 
-## 9. 測試記錄
+## 8. 待開發功能（Phase 2，第 37 章）
 
-### 9.1 Spec v1.5 Ch.30-32 驗證（2026-06-05）
+### 8.1 貢獻遊戲化
 
-**測試環境**：`npm run dev`（localhost:3000），Preview browser 驅動  
-**帳號**：dino.ko@gmail.com（role: assistant）
+- 貢獻指標：新增成績數、被認領數、認領率、新增賽事數
+- 徽章系統：初心推手、推坑達人、社群柱石、資料守護者、賽事記錄者、鐵人傳教士
 
-| # | 測試項目 | 結果 | 說明 |
-|---|---------|------|------|
-| 1 | Nav active state — `/leaderboard` | ✅ PASS | 橘色底線（#FF6B3D）正確標示，`aria-current="page"` 存在 |
-| 2 | Nav active state — 切換頁面 | ✅ PASS | 點擊「未認領」底線正確移動 |
-| 3 | PageContextStrip — `/leaderboard` | ✅ PASS | 顯示「最速榜 · 台灣選手 · 個人最佳 · 跨賽事」 |
-| 4 | PageContextStrip — `/unclaimed` | ✅ PASS | 顯示「未認領成績 · 搜尋你的名字，認領屬於你的成績」 |
-| 5 | PageContextStrip — `/records` | ✅ PASS（修正後）| 原本缺少對應，修正後顯示「我的紀錄 · 個人成績歷史」 |
-| 6 | Auth Modal — 未登入點「登入」 | ✅ PASS | Modal 彈出，背景頁面不跳離 |
-| 7 | `/login` 頁 Logo | ✅ PASS | `TrilogLogo size="lg" context="login"` SVG 三邊 + 動態波浪正確顯示 |
-| 8 | Avatar — 已登入顯示姓名縮寫 | ✅ PASS | 顯示「柯」（nickname 第一字） |
-| 9 | Avatar 下拉選單展開 | ✅ PASS | 顯示「柯敏龍 / dino.ko@gmail.com」+ 我的紀錄 / 個人資料 / 管理後台 / 登出 |
-| 10 | `/my/profile` 頁面載入 | ✅ PASS | 進榜進度條 4/4，欄位正確顯示 |
-| 11 | `/my/profile` inline 編輯 | ✅ PASS | 點擊切換為 input，Escape 取消回復原值 |
-| 12 | `/profile` → `/my/profile` redirect | ✅ PASS | 已登入時正確跳轉 |
-| 13 | `/my/results` → `/records` redirect | ✅ PASS | 正確導向 |
+### 8.2 選手追蹤
 
-**測試中發現並修正**：
-- `/records` 缺少 PageContextStrip mapping → 已補上，commit `21f00b6`
+- 單向 Follow 機制
+- 個人動態頁 `/my/feed`：被追蹤者的新成績、認領、PB 更新
 
-**待建立**：
-- ⚠️ `/races` 頁面尚未建立，Nav「賽事」連結目前 404
+### 8.3 朋友視角排行榜
+
+- 最速榜新增切換開關（登入後可見）
+- 只顯示追蹤的選手 + 自己，排名重新計算
+- 追蹤人數不足 3 人時顯示引導提示
+
+---
+
+## 10. 追蹤功能（第 38 章）
+
+### 10.1 FollowButton 元件
+
+星星圖示（☆/★）表示追蹤狀態，為獨立 Client Component。
+
+| 狀態 | 圖示 | 說明 |
+|------|------|------|
+| 未追蹤 | ☆（空心）| 點擊後追蹤 |
+| 已追蹤 | ★（實心）| accent 色（#66c6be），點擊後確認取消 |
+| 未登入 | ☆（空心）| 點擊觸發 Auth Modal，intent: `follow` |
+
+**取消追蹤**需經確認提示（「取消追蹤 [姓名]？」），避免誤操作。
+
+**不顯示條件**：`athlete_id IS NULL`（未認領成績）或 `athlete_id === 登入者`（自己的成績）。
+
+### 10.2 觸發位置
+
+| 位置 | 顯示條件 | 尺寸 |
+|------|---------|------|
+| 最速榜 `/leaderboard` 每列右側（`.tlb-follow` 欄）| 已認領且非本人 | `size="sm"`（16px）|
+| 成績詳情頁 `/results/:id` 選手姓名旁 | 已認領且非本人 | `size="md"`（20px）|
+
+**最速榜列結構更新**（`.tlb-row` 改為五欄）：名次 36px / 姓名 1fr / 時間 110px / 賽事 1fr / 追蹤 32px
+
+手機版（≤600px）追蹤欄（`.tlb-follow`）隱藏。
+
+### 10.3 Auth Modal intent 補充
+
+| intent | payload | 登入後行為 |
+|--------|---------|-----------|
+| `follow` | `{ athleteId: string }` | 自動呼叫 `POST /api/athletes/:id/follow` → 成功則星星變實心；失敗靜默處理（用戶可再點一次）|
+
+### 10.4 資料庫
+
+**ATHLETE_FOLLOW 表**：
+
+| 欄位 | 說明 |
+|------|------|
+| follower_id | uuid FK，追蹤者 |
+| following_id | uuid FK，被追蹤者 |
+| created_at | timestamp |
+| UNIQUE | (follower_id, following_id) |
+| CHECK | follower_id ≠ following_id |
+
+**注意**：`follower_count`/`following_count` 不實作快取，改為即時 COUNT 查詢。
+
+### 10.5 API 端點
+
+| 方法 | 路徑 | 說明 |
+|------|------|------|
+| POST | `/api/athletes/:id/follow` | 追蹤；自我追蹤 400；已追蹤 409 |
+| DELETE | `/api/athletes/:id/follow` | 取消追蹤；未追蹤 404 |
+| GET | `/api/athletes/:id/is-following` | 查詢是否已追蹤，回傳 `{ following: boolean }` |
+| GET | `/api/athletes/me/following` | 自己追蹤的選手 id 列表（供最速榜批次查詢用）|
+
+### 10.6 未來規劃（保留記錄）
+
+- 選手公開頁 `/athletes/:id` 的 FollowButton（依賴選手公開頁功能）
+- 幫他人新增成績後的追蹤引導提示（對方認領後通知新增者）
+- 個人動態頁 `/my/feed`（第 37.3 章，獨立規格待補）
+- 朋友視角排行榜（第 37.4 章，依賴追蹤功能上線後實作）
+
+---
+
+## 11. 關注名單（第 39 章）
+
+### 11.1 入口
+
+Avatar 下拉選單新增「關注名單 (N)」，N 為追蹤人數；N=0 時不顯示 badge。
+
+### 11.2 頁面（`/my/following`）
+
+| 項目 | 說明 |
+|------|------|
+| 存取 | 已登入；未登入導向 `/login` |
+| 排序 | 最近追蹤的在前（`athlete_follows.created_at` 降序）|
+| 頁首 | 「你關注了 N 位選手」+ 搜尋框（client-side，即時篩選）|
+
+### 11.3 選手卡片
+
+每位追蹤的選手一張卡片，欄位結構：
+
+| 區塊 | 內容 |
+|------|------|
+| 身份（200px）| Avatar + `COALESCE(nickname, name)` + 國籍 |
+| 成績（1fr）| 226 / 113 / 51.5 / Sprint 各距離最佳時間（DM Mono）；無成績顯示「—」；成績旁顯示小字賽事名稱 |
+| 操作（40px）| ★ FollowButton，點擊取消追蹤（需確認提示）|
+
+**成績顯示條件**：`is_public = true` + `claim_status IN ('unclaimed', 'claimed')`，每距離取最快一筆。
+
+### 11.4 空狀態
+
+| 元素 | 說明 |
+|------|------|
+| 標題 | 「你還沒有關注任何選手」|
+| 說明 | 「在最速榜上點擊選手旁的 ☆，開始關注他們的成績動態」|
+| CTA | 「前往最速榜」→ `/leaderboard` |
+
+### 11.5 API
+
+| 方法 / 路徑 | 說明 |
+|------------|------|
+| GET `/api/athletes/me/following/details` | 關注名單完整資料：選手基本資訊 + 各距離最佳成績陣列，按 `created_at` 降序 |
+| DELETE `/api/athletes/:id/follow` | 取消追蹤（與第 38 章相同端點）|
+
+**回傳格式**（單筆）：`{ athlete_id, name, nickname, nationality, avatar_url, followed_at, bests: { full, "70.3", olympic, sprint } }`，各距離 `null` 表示無成績。
+
+### 11.6 Page Context Strip
+
+| 路徑 | 標題 | 副標 |
+|------|------|------|
+| /my/following | 關注名單 | 你關注的選手 · 查看他們的最佳成績 |
+
+---
+## 9. 設計系統
+
+### 9.1 色彩
+
+```css
+--bg-deep:    #060D18;
+--bg-surface: #0D1526;
+--bg-card:    #111E35;
+--accent:     #66c6be;   /* mint green，主品牌強調色 */
+--run:        #FF6B3D;   /* 橘色，跑步 / 次要強調色 */
+--swim:       #22C9C9;
+--bike:       #A8E063;
+--gold:       #F5C842;
+--silver:     #A0A0A0;
+--bronze:     #CD9660;
+--female:     #D4537E;
+--text-1:     #F0EDE6;
+--text-2:     #8A96A8;
+--text-3:     #4A5568;
+```
+
+### 9.2 字體
+
+| 用途 | 字體 | 字重 |
+|------|------|------|
+| 品牌標題 | Syne | 800 |
+| 時間數字 | DM Mono | 400 / 500 |
+| 中文內容 | Noto Sans TC | 300 / 400 / 500 |
+
+### 9.3 Logo（第 29、29-A 章）
+
+| prop | 選項 | 說明 |
+|------|------|------|
+| `size` | `sm` / `md` / `lg` | 130px / 195px / 260px 寬 |
+| `context` | `nav` / `login` / `static` | 動畫速度 3s / 1.8s / 無動畫 |
+| `markOnly` | boolean | 僅顯示三角形符號 |
+
+底邊（跑步橘色）三個波峰持續向左流動，clipPath 限制在三角形內。`prefers-reduced-motion` 停用動畫。
+
+---
+
+*對應規格書版本：v2.9（2026-06-08）*
+*完整規格：trilog_spec_v40.docx（Claude.ai project）*

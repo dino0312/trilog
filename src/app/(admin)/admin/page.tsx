@@ -13,7 +13,7 @@ export default async function AdminPage() {
     .from('results')
     .select(`
       id, total_seconds, athlete_name_snapshot, claimed_at, certificate_url,
-      athletes ( id, nickname, email ),
+      athletes ( id, name, nickname, email ),
       race_editions ( year, races ( name ) )
     `)
     .eq('claim_status', 'pending')
@@ -24,7 +24,7 @@ export default async function AdminPage() {
     .from('results')
     .select(`
       id, total_seconds, athlete_name_snapshot, claimed_at, source_credibility,
-      athletes ( id, nickname, email ),
+      athletes ( id, name, nickname, email ),
       race_editions ( year, races ( name ) )
     `)
     .eq('claim_status', 'claimed')
@@ -77,7 +77,7 @@ export default async function AdminPage() {
                         <p className="text-xs text-ink-4">{edition?.races?.name} {edition?.year}</p>
                       </td>
                       <td className="px-4 py-3 text-ink-3">
-                        <p>{athlete?.nickname ?? '—'}</p>
+                        <p>{athlete?.nickname ?? athlete?.name ?? '—'}</p>
                         <p className="text-xs text-ink-4">{athlete?.email}</p>
                       </td>
                       <td className="px-4 py-3 font-mono text-accent">
@@ -149,7 +149,7 @@ export default async function AdminPage() {
                         <p className="text-xs text-ink-4">{edition?.races?.name} {edition?.year}</p>
                       </td>
                       <td className="px-4 py-3 text-ink-3">
-                        <p>{athlete?.nickname ?? '—'}</p>
+                        <p>{athlete?.nickname ?? athlete?.name ?? '—'}</p>
                         <p className="text-xs text-ink-4">{athlete?.email}</p>
                       </td>
                       <td className="px-4 py-3 font-mono text-accent">

@@ -28,7 +28,7 @@ export async function GET(req: Request) {
   const teamIds = [...new Set(entries.map(e => e.team_id))]
   const { data: members } = await supabase
     .from('team_members')
-    .select('id, team_id, athlete_id, athlete_name_snapshot, disciplines, split_seconds, claim_status, sort_order, athletes(id, nickname, nationality, gender, avatar_url)')
+    .select('id, team_id, athlete_id, athlete_name_snapshot, disciplines, split_seconds, claim_status, sort_order, athletes(id, name, nickname, nationality, gender, avatar_url)')
     .in('team_id', teamIds)
     .order('sort_order')
 

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 
 type Props = {
   athlete: {
+    name: string | null
     nickname: string | null
     gender: string | null
     birth_year: number | null
@@ -23,10 +24,17 @@ export function ProfileForm({ athlete }: Props) {
   return (
     <form action={action} className="flex flex-col gap-5">
       <Input
-        label="暱稱（排行榜顯示名稱）"
+        label="真實姓名"
+        id="name" name="name"
+        defaultValue={athlete.name ?? ''}
+        placeholder="用於認領成績與排行榜"
+      />
+
+      <Input
+        label="暱稱（選填，優先顯示於排行榜）"
         id="nickname" name="nickname"
         defaultValue={athlete.nickname ?? ''}
-        placeholder="留空則不顯示於排行榜"
+        placeholder="留空則顯示真實姓名"
       />
 
       <div className="grid grid-cols-2 gap-4">

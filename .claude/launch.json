@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "trilog-dev",
-      "runtimeExecutable": "/bin/sh",
+      "runtimeExecutable": "/bin/bash",
       "runtimeArgs": ["-c", "cd /Users/dino/Developments/Trilog/trilog && npm run dev"],
       "port": 3000
     }

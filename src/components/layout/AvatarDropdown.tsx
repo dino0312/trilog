@@ -2,19 +2,18 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 interface Props {
-  email:       string
-  name:        string | null   // athlete.nickname（spec v27 改名為 name）
-  isAssistant: boolean
+  email:          string
+  name:           string | null   // athlete.nickname ?? athlete.name（顯示優先順序）
+  isAssistant:    boolean
+  followingCount: number
 }
 
-export function AvatarDropdown({ email, name, isAssistant }: Props) {
+export function AvatarDropdown({ email, name, isAssistant, followingCount }: Props) {
   const [open, setOpen]     = useState(false)
   const ref                 = useRef<HTMLDivElement>(null)
-  const router              = useRouter()
 
   /* 點擊外部關閉 */
   useEffect(() => {
@@ -35,8 +34,8 @@ export function AvatarDropdown({ email, name, isAssistant }: Props) {
   async function handleLogout() {
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.refresh()
-    router.push('/leaderboard')
+    // 強制完整頁面重載，確保 middleware 以乾淨 session 重新驗證
+    window.location.href = '/leaderboard'
   }
 
   /* Avatar 顯示：姓名第一字 or Email 首字母 */
@@ -71,6 +70,16 @@ export function AvatarDropdown({ email, name, isAssistant }: Props) {
           <div className="py-1">
             <DropdownLink href="/my/results" onClick={() => setOpen(false)}>我的紀錄</DropdownLink>
             <DropdownLink href="/my/profile" onClick={() => setOpen(false)}>個人資料</DropdownLink>
+            <DropdownLink href="/my/following" onClick={() => setOpen(false)}>
+              <span className="flex items-center justify-between w-full">
+                <span>關注名單</span>
+                {followingCount > 0 && (
+                  <span className="rounded-full bg-accent/20 px-1.5 py-0.5 text-[10px] font-semibold text-accent">
+                    {followingCount}
+                  </span>
+                )}
+              </span>
+            </DropdownLink>
           </div>
 
           {/* 管理後台（助手以上） */}

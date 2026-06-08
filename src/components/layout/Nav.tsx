@@ -4,6 +4,7 @@ import { TrilogLogo } from '@/components/ui/TrilogLogo'
 import { NavLinks } from './NavLinks'
 import { NavAuthButtons } from './NavAuthButtons'
 import { AvatarDropdown } from './AvatarDropdown'
+import { AddDropdown } from './AddDropdown'
 import { PageContextStrip } from './PageContextStrip'
 
 export async function Nav() {
@@ -13,13 +14,17 @@ export async function Nav() {
   let athleteName: string | null = null
   let isAssistant = false
 
+  let followingCount = 0
+
   if (user) {
-    const [{ data: athlete }, { data: assistant }] = await Promise.all([
-      supabase.from('athletes').select('nickname').eq('id', user.id).single(),
+    const [{ data: athlete }, { data: assistant }, { count }] = await Promise.all([
+      supabase.from('athletes').select('nickname, name').eq('id', user.id).single(),
       supabase.rpc('is_assistant_or_above'),
+      supabase.from('athlete_follows').select('*', { count: 'exact', head: true }).eq('follower_id', user.id),
     ])
-    athleteName = athlete?.nickname ?? null
-    isAssistant = assistant ?? false
+    athleteName    = athlete?.nickname ?? athlete?.name ?? null
+    isAssistant    = assistant ?? false
+    followingCount = count ?? 0
   }
 
   return (
@@ -41,23 +46,15 @@ export async function Nav() {
           <div className="ml-auto flex items-center gap-1">
             {user ? (
               <>
-                {/* 新增成績 */}
-                <Link
-                  href="/records/new"
-                  className="flex items-center gap-1.5 rounded-lg border border-[#FF6B3D] bg-[rgba(255,107,61,0.08)] px-3 py-1.5 text-sm font-medium text-[#FF6B3D] transition hover:bg-[#FF6B3D] hover:text-white"
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <line x1="12" y1="5" x2="12" y2="19"/>
-                    <line x1="5"  y1="12" x2="19" y2="12"/>
-                  </svg>
-                  新增成績
-                </Link>
+                {/* 新增下拉選單 */}
+                <AddDropdown isAssistant={isAssistant} />
 
                 {/* Avatar 下拉選單 */}
                 <AvatarDropdown
                   email={user.email!}
                   name={athleteName}
                   isAssistant={isAssistant}
+                  followingCount={followingCount}
                 />
               </>
             ) : (

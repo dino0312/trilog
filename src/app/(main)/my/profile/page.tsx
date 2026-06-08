@@ -12,7 +12,7 @@ export default async function MyProfilePage() {
 
   const { data: athlete } = await supabase
     .from('athletes')
-    .select('nickname, gender, birth_year, nationality, bio')
+    .select('name, nickname, gender, birth_year, nationality, bio')
     .eq('id', user.id)
     .single()
 
@@ -22,6 +22,7 @@ export default async function MyProfilePage() {
         <p className="text-sm text-ink-4">{user.email}</p>
       </div>
       <ProfileInlineForm athlete={{
+        name:        athlete?.name        ?? null,
         nickname:    athlete?.nickname    ?? null,
         gender:      athlete?.gender      ?? null,
         birth_year:  athlete?.birth_year  ?? null,

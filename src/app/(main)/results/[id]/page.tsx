@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { secondsToTime } from '@/lib/utils/time'
 import { ClaimButton } from '@/components/claims/ClaimButton'
 import { TagButton } from '@/components/claims/TagButton'
+import { FollowButton } from '@/components/athletes/FollowButton'
 
 export const metadata: Metadata = { title: '成績詳情 · Tri·log' }
 
@@ -23,7 +24,7 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
   const { data: { user } } = await supabase.auth.getUser()
 
   const { data: profile } = user
-    ? await supabase.from('athletes').select('nickname').eq('id', user.id).single()
+    ? await supabase.from('athletes').select('name').eq('id', user.id).single()
     : { data: null }
 
   const { data: result } = await supabase
@@ -62,6 +63,19 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
 
   const isUnclaimed = result.claim_status === 'unclaimed' || result.claim_status === 'unlinked'
 
+  // 追蹤狀態（已認領 + 非自己才查詢）
+  let isFollowing = false
+  const showFollow = !!result.athlete_id && result.athlete_id !== user?.id
+  if (user && showFollow) {
+    const { data: followRow } = await supabase
+      .from('athlete_follows')
+      .select('follower_id')
+      .eq('follower_id', user.id)
+      .eq('following_id', result.athlete_id!)
+      .maybeSingle()
+    isFollowing = !!followRow
+  }
+
   return (
     <main className="flex-1 p-6 max-w-2xl mx-auto w-full">
       {/* 標頭 */}
@@ -71,9 +85,20 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
           {' · '}{DISTANCE_LABEL[edition?.distance_category] ?? edition?.distance_category}
           {race?.city && ` · ${race.city}`}
         </p>
-        <h1 className="text-2xl font-bold text-ink">
-          {result.athlete_name_snapshot ?? '匿名選手'}
-        </h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-ink">
+            {result.athlete_name_snapshot ?? '匿名選手'}
+          </h1>
+          {showFollow && (
+            <FollowButton
+              athleteId={result.athlete_id!}
+              athleteName={result.athlete_name_snapshot ?? ''}
+              initialFollowing={isFollowing}
+              isLoggedIn={!!user}
+              size="md"
+            />
+          )}
+        </div>
         <div className="flex items-center gap-3 mt-2">
           <span className={`text-xs px-2 py-0.5 rounded-full border ${
             result.source_credibility === 'official' ? 'border-accent/40 text-accent' :
@@ -127,10 +152,10 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
             <ClaimButton
               resultId={result.id}
               visible={
-                !!profile?.nickname &&
+                !!profile?.name &&
                 !!result.athlete_name_snapshot &&
                 result.athlete_name_snapshot.trim().toLowerCase().replace(/\s+/g, '') ===
-                profile.nickname.trim().toLowerCase().replace(/\s+/g, '')
+                profile.name.trim().toLowerCase().replace(/\s+/g, '')
               }
             />
             <div className="border-t border-border pt-3">

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { secondsToTime } from '@/lib/utils/time'
 import { DistanceTabs } from '@/components/leaderboard/DistanceTabs'
+import { FollowButton } from '@/components/athletes/FollowButton'
 
 export const metadata: Metadata = { title: '最速榜 · Tri·log' }
 
@@ -15,6 +16,10 @@ const SUB: Record<string, { M: number; F: number }> = {
 
 const DISTANCE_TITLE: Record<string, string> = {
   full: '226', '70.3': '113', olympic: '51.5', sprint: 'Sprint',
+}
+
+const DISTANCE_LABEL: Record<string, string> = {
+  full: '226 全距離', '70.3': '113 半程', olympic: '51.5 奧林匹克', sprint: '25.75 衝刺',
 }
 
 type Entry = {
@@ -70,12 +75,15 @@ function TimeCell({ seconds, rank, gender }: { seconds: number; rank: number; ge
 }
 
 function GenderSection({
-  entries, gender, updatedAt, distance,
+  entries, gender, updatedAt, distance, currentUserId, followingIds, isLoggedIn,
 }: {
   entries: Entry[]
   gender: 'M' | 'F'
   updatedAt: string
   distance: string
+  currentUserId: string | null
+  followingIds: Set<string>
+  isLoggedIn: boolean
 }) {
   const label      = gender === 'M' ? '男子組' : '女子組'
   const labelColor = gender === 'M' ? '#22C9C9' : '#D4537E'
@@ -90,10 +98,6 @@ function GenderSection({
           fontFamily: 'var(--font-dm)', fontSize: 13, letterSpacing: '0.12em',
           color: labelColor, borderLeft: `2px solid ${labelColor}`, paddingLeft: 10,
         }}>{label}</span>
-        <span style={{
-          fontFamily: 'var(--font-dm)', fontSize: 11, color: '#4A5568',
-          padding: '2px 8px', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 100,
-        }}>{updatedAt} 更新</span>
         <span style={{ fontFamily: 'var(--font-dm)', fontSize: 11, color: '#4A5568', marginLeft: 'auto' }}>
           {entries.length} 人
         </span>
@@ -148,6 +152,19 @@ function GenderSection({
               }}>
                 {e.edition_year} {e.race_name}
               </div>
+
+              {/* 追蹤按鈕（已認領且非自己） */}
+              <div className="tlb-follow" style={{ display: 'flex', justifyContent: 'center' }}>
+                {e.athlete_id && e.athlete_id !== currentUserId ? (
+                  <FollowButton
+                    athleteId={e.athlete_id}
+                    athleteName={e.display_name ?? ''}
+                    initialFollowing={followingIds.has(e.athlete_id)}
+                    isLoggedIn={isLoggedIn}
+                    size="sm"
+                  />
+                ) : null}
+              </div>
             </div>
           </div>
         )
@@ -163,6 +180,17 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
   const distance = rawDistance ?? 'full'
 
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // 取得追蹤列表（未登入則空）
+  let followingIds = new Set<string>()
+  if (user) {
+    const { data: follows } = await supabase
+      .from('athlete_follows')
+      .select('following_id')
+      .eq('follower_id', user.id)
+    followingIds = new Set((follows ?? []).map(f => f.following_id))
+  }
 
   const [{ data: maleRaw }, { data: femaleRaw }] = await Promise.all([
     supabase
@@ -194,36 +222,38 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
     : '—'
 
   const distTitle = DISTANCE_TITLE[distance] ?? distance
+  const distLabel = DISTANCE_LABEL[distance] ?? distance
 
   return (
     <main style={{ maxWidth: 860, margin: '0 auto', padding: '2.5rem 2rem 4rem' }}>
       <style>{`
         .tlb-row:hover { background: rgba(255,255,255,0.025); transition: background 0.1s; }
-        .tlb-row { grid-template-columns: 36px minmax(0,1fr) 110px minmax(0,1fr); }
+        .tlb-row { grid-template-columns: 36px minmax(0,1fr) 110px minmax(0,1fr) 32px; }
         .tlb-race { display: block; }
+        .tlb-follow { display: flex; }
         @media (max-width: 600px) {
           .tlb-row { grid-template-columns: 36px minmax(0,1fr) 100px; }
           .tlb-race { display: none; }
+          .tlb-follow { display: none; }
         }
       `}</style>
 
       {/* 頁面標題 */}
       <div style={{ padding: '1.5rem 0 1.5rem' }}>
         <p style={{
-          fontFamily: 'var(--font-dm)', fontSize: 11, color: '#22C9C9',
-          letterSpacing: '0.15em', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10,
+          fontFamily: 'var(--font-syne)', fontWeight: 800,
+          fontSize: 'clamp(1.4rem, 3vw, 2.4rem)', color: '#4A5568',
+          letterSpacing: '-0.03em', lineHeight: 1, marginBottom: 6,
         }}>
-          <span style={{ display: 'block', width: 20, height: 1, background: '#22C9C9' }} />
           台灣選手
         </p>
         <h1 style={{
           fontFamily: 'var(--font-syne)', fontWeight: 800,
           fontSize: 'clamp(2.8rem, 6vw, 4.5rem)', letterSpacing: '-0.03em',
-          lineHeight: 1, color: '#F0EDE6', marginBottom: 8,
+          lineHeight: 1, color: '#F0EDE6',
         }}>
           最<span style={{ color: '#FF6B3D' }}>速</span>榜
         </h1>
-        <p style={{ fontSize: 15, color: '#4A5568' }}>各選手個人最佳完賽時間，跨賽事排列</p>
       </div>
 
       {/* 最速榜卡片 */}
@@ -248,29 +278,17 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
             pointerEvents: 'none', userSelect: 'none', letterSpacing: -6,
           }}>{distTitle}</span>
 
-          {/* 標籤膠囊 */}
           <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            fontFamily: 'var(--font-dm)', fontSize: 10, color: '#FF6B3D',
-            letterSpacing: '0.14em',
-            border: '1px solid rgba(255,107,61,0.3)',
-            padding: '3px 10px', borderRadius: 100, marginBottom: 12,
+            fontFamily: 'var(--font-syne)', fontWeight: 800, fontSize: 40,
+            color: '#F0EDE6', letterSpacing: '-0.03em', lineHeight: 1, marginBottom: 8,
           }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#FF6B3D', display: 'inline-block' }} />
-            最速榜
-          </div>
-
-          <div style={{
-            fontFamily: 'var(--font-syne)', fontWeight: 800, fontSize: 36,
-            color: '#F0EDE6', letterSpacing: '-0.03em', lineHeight: 1, marginBottom: 6,
-          }}>
-            台灣鐵人 <span style={{ color: '#FF6B3D' }}>{distTitle}</span>
+            {distLabel}
           </div>
           <div style={{
-            fontSize: 14, color: '#4A5568', fontFamily: 'var(--font-dm)',
+            fontSize: 13, color: '#4A5568', fontFamily: 'var(--font-dm)',
             letterSpacing: '0.04em', marginBottom: '1.5rem',
           }}>
-            各選手個人最佳成績 · 跨賽事排列 · 僅供參考
+            個人最佳 · 跨賽事 · 僅供參考
           </div>
 
           {/* 距離頁籤 */}
@@ -279,7 +297,8 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
 
         {/* 男子組 */}
         {male.length > 0 && (
-          <GenderSection entries={male} gender="M" updatedAt={updatedAt} distance={distance} />
+          <GenderSection entries={male} gender="M" updatedAt={updatedAt} distance={distance}
+            currentUserId={user?.id ?? null} followingIds={followingIds} isLoggedIn={!!user} />
         )}
 
         {male.length === 0 && female.length === 0 && (
@@ -295,7 +314,8 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
 
         {/* 女子組 */}
         {female.length > 0 && (
-          <GenderSection entries={female} gender="F" updatedAt={updatedAt} distance={distance} />
+          <GenderSection entries={female} gender="F" updatedAt={updatedAt} distance={distance}
+            currentUserId={user?.id ?? null} followingIds={followingIds} isLoggedIn={!!user} />
         )}
 
         {/* 底部說明 */}

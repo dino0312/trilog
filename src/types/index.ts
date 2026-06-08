@@ -22,6 +22,7 @@ export type {
 
 export interface Athlete {
   id:          string
+  name:        string | null
   nickname:    string | null
   gender:      'M' | 'F' | null
   birth_year:  number | null

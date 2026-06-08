@@ -4,9 +4,11 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const TABS = [
-  { href: '/admin',         label: '審核中心' },
-  { href: '/admin/races',   label: '賽事管理' },
-  { href: '/admin/results', label: '官方成績' },
+  { href: '/admin',                label: '審核中心' },
+  { href: '/admin/races',          label: '賽事管理' },
+  { href: '/admin/races/review',   label: '賽事審核' },
+  { href: '/admin/results',        label: '官方成績' },
+  { href: '/admin/members',        label: '會員名單' },
 ]
 
 export function AdminTabs() {

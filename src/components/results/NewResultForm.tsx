@@ -14,7 +14,7 @@ type RaceEdition = {
 }
 
 type Profile = {
-  nickname: string | null
+  name: string | null
   gender: string | null
   birth_year: number | null
   nationality: string | null
@@ -23,6 +23,7 @@ type Profile = {
 type Props = {
   profileComplete: boolean
   profile: Profile
+  forOther?: boolean
 }
 
 const initial: ResultState = { error: null }
@@ -47,7 +48,7 @@ const NATIONALITIES = [
   { value: 'FRA', label: '🇫🇷 法國' },
 ]
 
-export function NewResultForm({ profileComplete, profile }: Props) {
+export function NewResultForm({ profileComplete, profile, forOther = false }: Props) {
   const [state, action, pending] = useActionState(createResult, initial)
   const [editions, setEditions] = useState<RaceEdition[]>([])
   const [raceYearKey, setRaceYearKey] = useState('')
@@ -85,11 +86,11 @@ export function NewResultForm({ profileComplete, profile }: Props) {
     else setEditionId('')
   }, [availableDistances])
 
-  // 需要顯示 profile 補充欄位：公開 + profile 不完整
-  const showProfileSection = isPublic && !profileComplete
+  // 需要顯示 profile 補充欄位：公開 + profile 不完整 + 非幫他人模式
+  const showProfileSection = isPublic && !profileComplete && !forOther
 
   // 哪些 profile 欄位需要補填
-  const needNickname    = !profile.nickname
+  const needName        = !profile.name
   const needGender      = !profile.gender
   const needBirthYear   = !profile.birth_year
   const needNationality = !profile.nationality
@@ -97,6 +98,24 @@ export function NewResultForm({ profileComplete, profile }: Props) {
   return (
     <form action={action} className="flex flex-col gap-5">
       <input type="hidden" name="race_edition_id" value={editionId} />
+      {forOther && <input type="hidden" name="for_other" value="true" />}
+
+      {/* 幫他人新增：歸屬人姓名 */}
+      {forOther && (
+        <div className="rounded-xl border border-accent/20 bg-accent/5 px-4 py-3 flex flex-col gap-3">
+          <div>
+            <p className="text-sm font-semibold text-ink">成績歸屬人</p>
+            <p className="text-xs text-ink-3 mt-0.5">此成績將以「未認領」狀態建立，本人可稍後自行認領</p>
+          </div>
+          <Input
+            label="姓名"
+            id="athlete_name_snapshot"
+            name="athlete_name_snapshot"
+            placeholder="選手真實姓名（用於比對認領）"
+            required
+          />
+        </div>
+      )}
 
       {/* Step 1：選賽事年份 */}
       <div className="flex flex-col gap-1.5">
@@ -184,11 +203,11 @@ export function NewResultForm({ profileComplete, profile }: Props) {
             </p>
           </div>
 
-          {needNickname && (
+          {needName && (
             <Input
-              label="暱稱（排行榜顯示名稱）"
-              id="p-nickname" name="nickname"
-              placeholder="你的名字或暱稱"
+              label="真實姓名"
+              id="p-name" name="name"
+              placeholder="用於認領成績與排行榜"
               required={isPublic}
             />
           )}
@@ -239,7 +258,7 @@ export function NewResultForm({ profileComplete, profile }: Props) {
       {state.error && <p className="text-sm text-red">{state.error}</p>}
 
       <Button type="submit" loading={pending} disabled={!editionId}>
-        儲存成績
+        {forOther ? '代入成績' : '儲存成績'}
       </Button>
     </form>
   )

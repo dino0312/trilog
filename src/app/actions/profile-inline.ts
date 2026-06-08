@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import type { Gender } from '@/types/database'
 
-type Field = 'nickname' | 'gender' | 'birth_year' | 'nationality' | 'bio'
+type Field = 'name' | 'nickname' | 'gender' | 'birth_year' | 'nationality' | 'bio'
 
 export async function updateProfileField(
   field: Field,
@@ -28,6 +28,7 @@ export async function updateProfileField(
 
   // 用具名欄位更新，避免 Supabase 型別的 dynamic key 限制
   const patch =
+    field === 'name'        ? { name: value as string | null } :
     field === 'nickname'    ? { nickname: value as string | null } :
     field === 'gender'      ? { gender: value as Gender | null } :
     field === 'birth_year'  ? { birth_year: value as number | null } :

@@ -29,16 +29,61 @@ export async function createRace(_prev: RaceActionState, formData: FormData): Pr
   const { error } = await supabase.from('races').insert({
     name,
     slug,
-    country:   (formData.get('country')   as string) || null,
-    city:      (formData.get('city')      as string) || null,
-    organizer: (formData.get('organizer') as string) || null,
-    website:   (formData.get('website')   as string) || null,
+    country:    (formData.get('country')   as string) || null,
+    city:       (formData.get('city')      as string) || null,
+    organizer:  (formData.get('organizer') as string) || null,
+    website:    (formData.get('website')   as string) || null,
     created_by: user.id,
+    status:     'pending_review',
   })
 
   if (error) return { error: error.message, success: false }
 
   revalidatePath('/admin/races')
+  revalidatePath('/admin/races/review')
+  return { error: null, success: true }
+}
+
+export async function approveRace(_prev: RaceActionState, formData: FormData): Promise<RaceActionState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: '未登入', success: false }
+
+  const { data: isAssistant } = await supabase.rpc('is_assistant_or_above')
+  if (!isAssistant) return { error: '權限不足', success: false }
+
+  const id = formData.get('race_id') as string
+  const { error } = await supabase.from('races').update({ status: 'active' }).eq('id', id)
+
+  if (error) return { error: error.message, success: false }
+
+  revalidatePath('/admin/races')
+  revalidatePath('/admin/races/review')
+  return { error: null, success: true }
+}
+
+export async function rejectRace(_prev: RaceActionState, formData: FormData): Promise<RaceActionState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: '未登入', success: false }
+
+  const { data: isAssistant } = await supabase.rpc('is_assistant_or_above')
+  if (!isAssistant) return { error: '權限不足', success: false }
+
+  const id = formData.get('race_id') as string
+
+  // 確認沒有關聯屆次才能刪除
+  const { count } = await supabase
+    .from('race_editions').select('id', { count: 'exact', head: true }).eq('race_id', id)
+  if (count && count > 0) {
+    return { error: '此賽事已有屆次資料，請先刪除屆次再拒絕', success: false }
+  }
+
+  const { error } = await supabase.from('races').delete().eq('id', id)
+  if (error) return { error: error.message, success: false }
+
+  revalidatePath('/admin/races')
+  revalidatePath('/admin/races/review')
   return { error: null, success: true }
 }
 

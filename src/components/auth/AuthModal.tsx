@@ -45,12 +45,22 @@ export function AuthModal() {
   if (!isOpen) return null
 
   /* ── 登入成功後跳轉 ── */
-  function handleSuccess() {
+  async function handleSuccess() {
     close()
     router.refresh()  // 刷新 Server Components（Nav 顯示已登入狀態）
-    if (intent === 'new_result')  router.push('/records/new')
-    else if (intent === 'claim' && intentPayload.resultId)
+    if (intent === 'new_result') {
+      router.push('/records/new')
+    } else if (intent === 'claim' && intentPayload.resultId) {
       router.push(`/results/${intentPayload.resultId}/claim`)
+    } else if (intent === 'follow' && intentPayload.athleteId) {
+      // 登入後自動執行追蹤，失敗則靜默（使用者可再點一次）
+      try {
+        await fetch(`/api/athletes/${intentPayload.athleteId}/follow`, { method: 'POST' })
+        router.refresh()
+      } catch {
+        // 靜默失敗
+      }
+    }
   }
 
   /* ── Email 登入 ── */

@@ -24,7 +24,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const { data: members } = await supabase
     .from('team_members')
-    .select('id, athlete_id, athlete_name_snapshot, disciplines, split_seconds, source_credibility, claim_status, sort_order, claimed_at, athletes(id, nickname, nationality, gender, avatar_url)')
+    .select('id, athlete_id, athlete_name_snapshot, disciplines, split_seconds, source_credibility, claim_status, sort_order, claimed_at, athletes(id, name, nickname, nationality, gender, avatar_url)')
     .eq('team_id', id)
     .order('sort_order')
 

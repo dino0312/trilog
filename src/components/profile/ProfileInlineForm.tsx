@@ -5,6 +5,7 @@ import { InlineField } from './InlineField'
 import { updateProfileField } from '@/app/actions/profile-inline'
 
 type Athlete = {
+  name:        string | null
   nickname:    string | null
   gender:      string | null
   birth_year:  number | null
@@ -12,7 +13,7 @@ type Athlete = {
   bio:         string | null
 }
 
-const REQUIRED_FIELDS: (keyof Athlete)[] = ['nickname', 'gender', 'birth_year', 'nationality']
+const REQUIRED_FIELDS: (keyof Athlete)[] = ['name', 'gender', 'birth_year', 'nationality']
 const NATIONALITY_OPTIONS = [
   { value: 'TWN', label: '🇹🇼 台灣' },
   { value: 'JPN', label: '🇯🇵 日本' },
@@ -76,10 +77,16 @@ export function ProfileInlineForm({ athlete: initial }: { athlete: Athlete }) {
       {/* Inline 編輯欄位 */}
       <div className="rounded-xl border border-border bg-bg-card px-4">
         <InlineField
-          label="姓名"
-          value={initial.nickname}
-          placeholder="填寫真實姓名，排行榜顯示用"
+          label="真實姓名"
+          value={initial.name}
+          placeholder="用於認領成績與排行榜"
           required
+          onSave={v => save('name', v)}
+        />
+        <InlineField
+          label="暱稱（選填）"
+          value={initial.nickname}
+          placeholder="優先顯示於排行榜，留空則顯示真實姓名"
           onSave={v => save('nickname', v)}
         />
         <InlineField

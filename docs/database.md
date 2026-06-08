@@ -135,7 +135,8 @@ relay 成績的分項欄位由 CHECK constraint 強制為 null：`relay_splits_m
 
 **RLS 摘要**：
 - 讀取：`is_public = true` OR `claim_status IN ('unclaimed','unlinked')` OR `athlete_id = auth.uid()`
-- INSERT（solo）：已登入 + `result_type='solo'` + self_reported + `athlete_id = auth.uid()`
+- INSERT（solo，自己）：已登入 + `result_type='solo'` + self_reported + `athlete_id = auth.uid()`
+- INSERT（solo，他人）：已登入 + `result_type='solo'` + self_reported + `athlete_id IS NULL` + `claim_status='unclaimed'`（migration 20260607000002 / 000004）
 - INSERT（relay）：已登入 + `result_type='relay'` + self_reported + `athlete_id IS NULL`（migration 20260604000005）
 - 本人 UPDATE：自己的非 official 成績
 - Assistant UPDATE：公證/認領狀態更新
@@ -350,6 +351,9 @@ unclaimed ──────────→ pending
 | — | results_assistant_insert.sql | results INSERT policy 調整 | 004 |
 | — | relay_result_insert_policy.sql | relay results INSERT policy | 006 |
 | — | races_extended_columns.sql | races 新增 name_zh/name_en/series/county/organizer_co/operator；race_editions 新增 venue/registration_url | 003 |
+| — | 20260607000002_results_insert_for_others.sql | results INSERT policy：已登入用戶可插入他人成績（athlete_id=null）| 004 |
+| — | 20260607000003_races_pending_review.sql | races.status 加入 `pending_review` 值域；新賽事預設 status='pending_review' | 003 |
+| — | 20260607000004_results_for_others_open_to_all.sql | DROP 000002 policy，改建 `authenticated` 角色通用 policy（移除 assistant 限制）| 000002 |
 
 **新增 migration 時的命名規則**：`YYYYMMDDHHMMSS_description.sql`，確保時間戳唯一。
 

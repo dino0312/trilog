@@ -2,11 +2,11 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 
-const TABS = [
-  { value: 'full',    label: '226 全距離', enabled: true  },
-  { value: '70.3',    label: '113 半程',   enabled: false },
-  { value: 'olympic', label: '51.5 奧林匹克', enabled: false },
-  { value: 'sprint',  label: '25.75 衝刺', enabled: false },
+const TABS: { value: string; label: string; enabled: boolean; hidden?: boolean }[] = [
+  { value: 'full',    label: '226 全距離',    enabled: true  },
+  { value: '70.3',    label: '113 半程',      enabled: true  },
+  { value: 'olympic', label: '51.5 奧林匹克', enabled: true  },
+  { value: 'sprint',  label: '25.75 衝刺',   enabled: false, hidden: true },
 ]
 
 export function DistanceTabs({ current }: { current: string }) {
@@ -25,7 +25,7 @@ export function DistanceTabs({ current }: { current: string }) {
       borderTop: '1px solid rgba(255,255,255,0.04)',
       margin: '0 -2rem',
     }}>
-      {TABS.map(tab => {
+      {TABS.filter(tab => !tab.hidden).map(tab => {
         const active = tab.value === current
         return (
           <button
@@ -44,7 +44,9 @@ export function DistanceTabs({ current }: { current: string }) {
               whiteSpace: 'nowrap',
               fontFamily: "'Noto Sans TC', sans-serif",
               background: 'transparent',
-              border: 'none',
+              borderTop: 'none',
+              borderLeft: 'none',
+              borderRight: 'none',
             } as React.CSSProperties}
           >
             {tab.label}

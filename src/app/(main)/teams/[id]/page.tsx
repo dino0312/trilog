@@ -24,9 +24,9 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // 取登入者 nickname，用於比對成員姓名
+  // 取登入者 name，用於比對成員姓名
   const { data: myProfile } = user
-    ? await supabase.from('athletes').select('nickname').eq('id', user.id).single()
+    ? await supabase.from('athletes').select('name').eq('id', user.id).single()
     : { data: null }
 
   const { data: team } = await supabase
@@ -43,7 +43,7 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
       team_members (
         id, athlete_id, athlete_name_snapshot, disciplines, split_seconds,
         source_credibility, claim_status, sort_order, claimed_at,
-        athletes ( id, nickname, nationality, gender, avatar_url )
+        athletes ( id, name, nickname, nationality, gender, avatar_url )
       )
     `)
     .eq('id', id)
@@ -67,20 +67,20 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
     disciplines: string[]; split_seconds: number | null;
     source_credibility: string; claim_status: string; sort_order: number;
     claimed_at: string | null;
-    athletes: { id: string; nickname: string | null; nationality: string | null; gender: string | null } | null
+    athletes: { id: string; name: string | null; nickname: string | null; nationality: string | null; gender: string | null } | null
   }>).sort((a, b) => a.sort_order - b.sort_order)
 
   // 已透過 athlete_id 認領的成員
   const myMember = user ? members.find(m => m.athlete_id === user.id) : null
 
-  // 姓名比對：nickname 與 athlete_name_snapshot 正規化後相符
+  // 姓名比對：name 與 athlete_name_snapshot 正規化後相符
   const normalize = (s: string) => s.trim().toLowerCase().replace(/\s+/g, '')
-  const myNickname = myProfile?.nickname ?? ''
-  const nameMatchedMembers = (user && myNickname && !myMember)
+  const myName = myProfile?.name ?? ''
+  const nameMatchedMembers = (user && myName && !myMember)
     ? members.filter(m =>
         m.claim_status === 'unclaimed' &&
         !m.athlete_id &&
-        normalize(m.athlete_name_snapshot) === normalize(myNickname)
+        normalize(m.athlete_name_snapshot) === normalize(myName)
       )
     : []
 
@@ -146,7 +146,7 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
         <h2 className="text-sm font-semibold text-ink-3 mb-3">成員</h2>
         <div className="flex flex-col gap-3">
           {members.map(m => {
-            const displayName = m.athletes?.nickname ?? m.athlete_name_snapshot
+            const displayName = m.athletes?.nickname ?? m.athletes?.name ?? m.athlete_name_snapshot
             const isMe        = user && m.athlete_id === user.id
             const unclaimed   = m.claim_status === 'unclaimed'
 

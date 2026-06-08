@@ -15,7 +15,7 @@ export type Json =
 // ── Enum-like types ──────────────────────────────────────────
 
 export type Role               = 'athlete' | 'assistant' | 'admin'
-export type RaceStatus         = 'active' | 'inactive' | 'cancelled'
+export type RaceStatus         = 'active' | 'inactive' | 'cancelled' | 'pending_review'
 export type DistanceCategory   = 'sprint' | 'olympic' | '70.3' | 'full'
 export type WeatherSource      = 'open-meteo' | 'visual-crossing' | 'manual'
 export type SwimType           = 'ocean' | 'lake' | 'river' | 'pool' | 'other'
@@ -51,30 +51,38 @@ export type Database = {
         Row: {
           id:          string
           email:       string
+          name:        string | null
           nickname:    string | null
           gender:      Gender | null
           birth_year:  number | null
           nationality: string | null
           bio:         string | null
           avatar_url:  string | null
-          is_minor:    boolean
-          role:        Role
-          created_at:  string
-          updated_at:  string
-          deleted_at:  string | null
+          is_minor:       boolean
+          role:           Role
+          created_at:     string
+          updated_at:     string
+          deleted_at:     string | null
+          suspended_at:   string | null
+          suspended_by:   string | null
+          suspend_reason: string | null
         }
         Insert: {
-          id:           string
-          email:        string
-          nickname?:    string | null
-          gender?:      Gender | null
-          birth_year?:  number | null
-          nationality?: string | null
-          bio?:         string | null
-          avatar_url?:  string | null
-          is_minor?:    boolean
-          role?:        Role
-          deleted_at?:  string | null
+          id:              string
+          email:           string
+          name?:           string | null
+          nickname?:       string | null
+          gender?:         Gender | null
+          birth_year?:     number | null
+          nationality?:    string | null
+          bio?:            string | null
+          avatar_url?:     string | null
+          is_minor?:       boolean
+          role?:           Role
+          deleted_at?:     string | null
+          suspended_at?:   string | null
+          suspended_by?:   string | null
+          suspend_reason?: string | null
         }
         Update: Partial<Database['public']['Tables']['athletes']['Insert']>
         Relationships: []
@@ -312,6 +320,22 @@ export type Database = {
         Relationships: []
       }
 
+      // ── athlete_follows ──────────────────────────────────
+      athlete_follows: {
+        Row: {
+          follower_id:  string
+          following_id: string
+          created_at:   string
+        }
+        Insert: {
+          follower_id:   string
+          following_id:  string
+          created_at?:   string
+        }
+        Update: Partial<Database['public']['Tables']['athlete_follows']['Insert']>
+        Relationships: []
+      }
+
       // ── race_editors ─────────────────────────────────────
       race_editors: {
         Row: {
@@ -404,7 +428,8 @@ export type Database = {
       athlete_public_profiles: {
         Row: {
           id:                  string
-          nickname:            string
+          name:                string
+          nickname:            string | null
           nationality:         string | null
           gender:              Gender | null
           birth_year:          number | null

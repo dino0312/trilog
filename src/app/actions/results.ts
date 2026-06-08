@@ -30,23 +30,50 @@ export async function createResult(_prev: ResultState, formData: FormData): Prom
   const runStr        = formData.get('run') as string
   const isPublic      = formData.getAll('is_public').includes('true')
   const notes         = formData.get('notes') as string | null
+  const forOther      = formData.get('for_other') === 'true'
 
   const totalSeconds = parseTime(totalStr)
   if (!totalSeconds || totalSeconds <= 0) return { error: '請輸入正確的完賽時間（HH:MM:SS）' }
   if (!raceEditionId) return { error: '請選擇賽事' }
 
+  // ── 幫他人新增成績 ─────────────────────────────────────────
+  if (forOther) {
+    const athleteNameSnapshot = (formData.get('athlete_name_snapshot') as string | null)?.trim()
+    if (!athleteNameSnapshot) return { error: '請填寫成績歸屬人姓名' }
+
+    const { error } = await supabase.from('results').insert({
+      race_edition_id:       raceEditionId,
+      athlete_id:            null,
+      athlete_name_snapshot: athleteNameSnapshot,
+      result_type:           'solo',
+      source_credibility:    'self_reported',
+      claim_status:          'unclaimed',
+      total_seconds:         totalSeconds,
+      swim_seconds:          parseTime(swimStr),
+      t1_seconds:            parseTime(t1Str),
+      bike_seconds:          parseTime(bikeStr),
+      t2_seconds:            parseTime(t2Str),
+      run_seconds:           parseTime(runStr),
+      is_public:             isPublic,
+      notes:                 notes || null,
+    })
+
+    if (error) return { error: error.message }
+    redirect('/unclaimed')
+  }
+
   // ── 21.3：公開成績需要完整 profile ────────────────────────
   if (isPublic) {
-    const nickname    = (formData.get('nickname') as string | null)?.trim() || null
+    const name        = (formData.get('name') as string | null)?.trim() || null
     const gender      = (formData.get('gender') as string | null) || null
     const birth_year  = formData.get('birth_year') ? Number(formData.get('birth_year')) : null
     const nationality = (formData.get('nationality') as string | null) || null
 
     // 若表單帶了 profile 欄位，先更新
-    if (nickname || gender || birth_year || nationality) {
+    if (name || gender || birth_year || nationality) {
       const { error: profileError } = await supabase
         .from('athletes')
-        .update({ nickname, gender: gender as 'M' | 'F' | null, birth_year, nationality })
+        .update({ name, gender: gender as 'M' | 'F' | null, birth_year, nationality })
         .eq('id', user.id)
       if (profileError) return { error: profileError.message }
     }
@@ -54,12 +81,12 @@ export async function createResult(_prev: ResultState, formData: FormData): Prom
     // 再次確認 profile 完整
     const { data: athlete } = await supabase
       .from('athletes')
-      .select('nickname, gender, birth_year, nationality')
+      .select('name, gender, birth_year, nationality')
       .eq('id', user.id)
       .single()
 
-    if (!athlete?.nickname || !athlete?.gender || !athlete?.birth_year || !athlete?.nationality) {
-      return { error: '公開成績需填寫暱稱、性別、出生年份及國籍，才能進入排行榜' }
+    if (!athlete?.name || !athlete?.gender || !athlete?.birth_year || !athlete?.nationality) {
+      return { error: '公開成績需填寫姓名、性別、出生年份及國籍，才能進入排行榜' }
     }
   }
 

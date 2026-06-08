@@ -31,7 +31,7 @@ type Member = {
   split_seconds:         number | null
   claim_status:          string
   sort_order:            number
-  athletes:              { id: string; nickname: string | null } | null
+  athletes:              { id: string; name: string | null; nickname: string | null } | null
 }
 
 const GENDER_LABEL: Record<string, string> = { male: '男子組', female: '女子組', mixed: '混合組' }
@@ -124,7 +124,7 @@ export function RelayLeaderboard({ distance, genderCategory, raceId }: Props) {
                           ))}
                           </span>
                           <span className={`text-base font-semibold ${nameColor}`}>
-                            {m.athletes?.nickname ?? m.athlete_name_snapshot}
+                            {m.athletes?.nickname ?? m.athletes?.name ?? m.athlete_name_snapshot}
                           </span>
                           {m.split_seconds && (
                             <span className="font-mono text-sm font-bold text-white">{secondsToTime(m.split_seconds)}</span>
