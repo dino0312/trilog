@@ -44,6 +44,24 @@
 
 ## 記錄
 
+### [2026-06-11] 未成年選手 is_searchable 應用層強制
+
+**狀態**：✅ 完成
+
+**完成內容**：
+- `updateProfileField('birth_year', ...)` 更新出生年份時，同步計算 `is_minor`（當年年齡 < 18）
+- 若為未成年，一併將 `is_searchable = false` 寫入 DB，防止出現在全站搜尋結果
+- 搭配 migration `20260611000001`（現有未成年帳號批次設 false）形成完整保護
+
+**技術決策**：
+- `birth_year` 分支提前 return，避免與其他欄位的 typed patch 衝突（Supabase `.update()` 不接受 `Record<string, unknown>`）
+- 不自動將成年後（>= 18）的選手恢復 `is_searchable = true`，以尊重使用者自行關閉的設定
+
+**異動檔案**：
+- `src/app/actions/profile-inline.ts`
+
+---
+
 ### [2026-06-11] 選手排行榜追蹤功能完整實作（第 38–44 章）
 
 **狀態**：⚠️ 部分完成
