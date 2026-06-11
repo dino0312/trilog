@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { secondsToTime } from '@/lib/utils/time'
 import { DistanceTabs } from '@/components/leaderboard/DistanceTabs'
@@ -123,14 +124,30 @@ function GenderSection({
               <div><RankBadge rank={rank} /></div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                <span style={{
-                  fontSize: 15, fontWeight: 500,
-                  color: e.claim_status === 'unclaimed' ? '#8A96A8' : '#F0EDE6',
-                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  fontFamily: "'Noto Sans TC', sans-serif",
-                }}>
-                  {e.display_name ?? '—'}
-                </span>
+                {e.athlete_id && e.claim_status === 'claimed' ? (
+                  <Link
+                    href={`/athletes/${e.athlete_id}`}
+                    style={{
+                      fontSize: 15, fontWeight: 500,
+                      color: '#F0EDE6',
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      fontFamily: "'Noto Sans TC', sans-serif",
+                      textDecoration: 'none',
+                    }}
+                    className="hover:text-accent transition-colors"
+                  >
+                    {e.display_name ?? '—'}
+                  </Link>
+                ) : (
+                  <span style={{
+                    fontSize: 15, fontWeight: 500,
+                    color: e.claim_status === 'unclaimed' ? '#8A96A8' : '#F0EDE6',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    fontFamily: "'Noto Sans TC', sans-serif",
+                  }}>
+                    {e.display_name ?? '—'}
+                  </span>
+                )}
                 {e.claim_status === 'unclaimed' && (
                   <span style={{
                     flexShrink: 0,

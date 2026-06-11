@@ -44,6 +44,229 @@
 
 ## 記錄
 
+### [2026-06-11] 選手排行榜追蹤功能完整實作（第 38–44 章）
+
+**狀態**：⚠️ 部分完成
+
+**完成內容**：
+- 新增 `GET /api/athletes/search?q=`：全站選手搜尋，回傳含 `is_following`，limit 8
+- 新增 `GET /api/athletes/:id`：選手公開頁 API，回傳 bests、成績明細、接力成績；停權/已刪除回傳 error 欄位
+- 新增 `/athletes/[id]` 選手公開頁（Server Component）：Hero / 成績摘要 / 成績明細 / 接力成績四區塊，`generateMetadata()` SEO
+- `FollowButton` 新增 `size="lg"`（24px）
+- 屆次頁 `/races/[slug]/[year]` 新增成績列表區塊（`EditionResultsSection` Client Component）：多距離頁籤、client-side 搜尋、FollowButton / ClaimButton / TagButton、選手姓名連結 → `/athletes/:id`
+- 最速榜姓名欄：已認領成績加 `<Link href="/athletes/:id">` 可點擊
+- `/my/following` 升級雙搜尋框：搜尋框 A（全站搜尋，debounce 300ms）+ 篩選框 B（client-side 過濾已追蹤清單）；選手卡片名稱連結 → `/athletes/:id`
+- Nav `AvatarDropdown`：新增「我的公開頁」連結（`/athletes/:id`）、支援 avatar_url 頭像顯示、修正連結路徑（`/records`、`/profile`）
+
+**技術決策**：
+- `is_searchable` 欄位尚未存在於 DB schema，search API 暫時省略此過濾條件，待 migration 補上後恢復
+- 屆次頁成績列表設計為獨立 Client Component（EditionResultsSection），Server Component 在頁面 query 全部資料後傳入，避免 client-side fetch 延遲
+
+**已知問題 ／ TODO**：
+- `is_searchable` 欄位需建立 migration（`ALTER TABLE athletes ADD COLUMN is_searchable BOOLEAN NOT NULL DEFAULT TRUE`），並在 search API 補上 `.eq('is_searchable', true)` 篩選
+- `/profile` → `/my/profile` 路由重定向確認（現有 `my/profile` 頁面，Nav 改連 `/profile` 後需確認 middleware redirect 正常運作）
+- 屆次頁 `overall_rank` 排序：部分成績無 `overall_rank` 時改用 `total_seconds` 升序，目前邏輯已處理
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | 選手公開頁 `/athletes/:id` 載入 | ✅ PASS | Hero、成績摘要、空成績提示正確 |
+| 2 | 選手公開頁自己頁面不顯示 FollowButton | ✅ PASS | |
+| 3 | Nav 下拉顯示「我的公開頁」| ✅ PASS | 含我的紀錄、關注名單、個人資料、我的公開頁、登出 |
+| 4 | 關注名單搜尋框 A 輸入觸發 API | ✅ PASS | 回傳正確（搜尋無帳號選手時顯示「找不到符合的選手」屬預期）|
+| 5 | 關注名單空狀態顯示正確 | ✅ PASS | 四區塊結構正確 |
+| 6 | TypeScript 無錯誤 | ✅ PASS | `npx tsc --noEmit` 全數通過 |
+| 7 | 最速榜未認領選手無連結 | ✅ PASS | 預期行為（無 athlete_id）|
+
+**待驗證**：
+- ⚠️ 屆次頁成績列表（需有 claimed 成績的帳號才能完整驗證 FollowButton + 姓名連結）
+- ⚠️ 選手公開頁有成績時的完整顯示（需認領成績）
+
+**異動檔案**：
+- `src/app/api/athletes/search/route.ts`（新增）
+- `src/app/api/athletes/[id]/route.ts`（新增）
+- `src/app/(main)/athletes/[id]/page.tsx`（新增目錄 + 檔案）
+- `src/components/athletes/FollowButton.tsx`（新增 size="lg"）
+- `src/components/races/EditionResultsSection.tsx`（新增）
+- `src/app/(main)/races/[slug]/[year]/page.tsx`（加入成績列表查詢 + EditionResultsSection）
+- `src/app/(main)/leaderboard/page.tsx`（姓名加連結）
+- `src/app/(main)/my/following/FollowingClient.tsx`（升級雙搜尋框 + athletes/:id 連結）
+- `src/app/(main)/my/following/page.tsx`（補 isLoggedIn prop）
+- `src/components/layout/Nav.tsx`（傳入 avatarUrl、userId）
+- `src/components/layout/AvatarDropdown.tsx`（頭像顯示 + 我的公開頁 + 路徑修正）
+- `docs/api.md`（§6 完整更新）
+
+### [2026-06-10] 賽事互動 intent：登入後自動完成標記
+
+**狀態**：✅ 完成
+
+**完成內容**：
+- 補上 features.md §5.1 規格缺口：`race_wishlist` / `race_attended` intent 登入成功後自動完成標記
+- `AuthModalPayload` 擴充 `raceId` / `year` 欄位（`src/context/auth-modal.tsx`）
+- `RaceInterestButtons` 未登入點擊時將 `{ raceId, year }` 帶入 Modal payload
+- `AuthModal.handleSuccess` 新增分支：登入後以瀏覽器 client 直接 insert `race_interest`，已存在時靠 unique constraint 靜默忽略，`router.refresh()` 後停留在賽事頁
+- 衝突處理：「首次登入（name 為空）導向 `/my/profile`」改為僅在無特定 intent（`login`）時觸發，避免吃掉自動標記流程
+
+**技術決策**：
+- 沿用 `follow` intent 的「登入後自動執行、失敗靜默」模式，使用者可再點一次
+- 重複標記不擋錯誤訊息：unique constraint `(athlete_id, race_id, year, interest_type)` 自然去重
+
+**驗證紀錄**（preview 瀏覽器實測，帳號 dino.ko@viwave.com）：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | 未登入點「想參加」開啟 Auth Modal | ✅ PASS | payload 帶 raceId + year |
+| 2 | Modal 內登入 | ✅ PASS | Modal 關閉、停留 /races |
+| 3 | 登入後自動寫入 race_interest | ✅ PASS | wishlist / 2027 記錄確認存在 |
+| 4 | UI 顯示「✓ 想參加」+ 計數 +1 | ✅ PASS | |
+| 5 | Console 無錯誤 | ✅ PASS | |
+
+**已知問題 ／ TODO**：
+- `router.refresh()` 視覺更新偶有數秒延遲（Next.js RSC refresh 特性），資料正確
+- 規格「參加過後若無成績顯示 toast 提示成績登錄」未實作——專案尚無 toast 元件，待規格討論決定設計
+- features.md 仍為 v2.9（2026-06-08），多項實作已超前規格（屆次細節頁、天氣、玩賽樂園分類、email 驗證流程），待 Claude.ai 同步；§4.3 帳號刪除（30 天緩衝 vs auth 立即硬刪）與 `/profile` vs `/my/profile` 路由不一致需回規格決策
+
+**異動檔案**：
+- `src/context/auth-modal.tsx`
+- `src/components/races/RaceInterestButtons.tsx`
+- `src/components/auth/AuthModal.tsx`
+
+---
+
+### [2026-06-10] 帳號刪除修復 + 註冊驗證信流程 + 玩賽樂園分類
+
+**狀態**：✅ 完成
+
+**完成內容**：
+- 修復後台刪除帳號的 RLS 錯誤（"new row violates row-level security policy"）：
+  - Migration `20260609000005_admin_soft_delete_fn.sql`：新增 `admin_soft_delete_athlete(target_id)` SECURITY DEFINER 函式，內部自行驗證 admin 權限後執行軟刪除
+  - `deleteMember` action 改用 RPC 呼叫此函式
+  - Migration 000003／000004 嘗試重建 policy 的方式無效，最終確認 UPDATE policy 的 WITH CHECK 子查詢同表時有遞迴 RLS 評估問題
+- 刪除帳號同步硬刪除 `auth.users`：
+  - 新增 `src/lib/supabase/admin.ts`（service role client，僅 server-side）
+  - `.env.local` 加入 `SUPABASE_SERVICE_ROLE_KEY`（Vercel 也需設定）
+  - 被刪 email 可重新註冊
+- 修復註冊 504 timeout：
+  - 根本原因：Supabase SMTP 設定 Port 463（錯誤），Resend 只支援 465/587，發驗證信逾時導致整個 signup 504
+  - 改為 465 後驗證信正常寄送
+  - 過程中加入的 `athletes_insert_policy`（WITH CHECK true，安全性由 FK constraint 保證）保留
+- 註冊／登入流程改善：
+  - 註冊成功 → Modal 顯示「驗證信已寄出」畫面（信封 icon + 前往登入按鈕）
+  - 首次登入（`athletes.name` 為空）→ 自動導向 `/my/profile` 填寫個人資料
+  - 一般登入 → 維持原導向邏輯
+  - 註冊錯誤訊息改善：email 已存在時顯示中文提示，不再出現空 `{}`
+  - 刪除／停權確認按鈕加上「刪除中…」／「處理中…」loading 狀態
+- 正式版驗證信模板：
+  - `docs/email-templates/confirm-signup.html`：table 排版 + inline style（Gmail/Outlook 相容）、深色品牌標頭 + Logo、薄荷綠 CTA 按鈕、純文字連結 fallback
+  - `public/email-logo.png`：以 headless Chrome 從 TrilogLogo SVG 渲染的 2x PNG（Gmail 不支援 SVG）
+  - 模板以 `{{ .SiteURL }}/email-logo.png` 引用 Logo
+- 玩賽樂園獨立賽事分類：
+  - 新增 `WANSAILEYUAN` series（顯示「玩賽樂園」，紫色標籤，排序在最後）
+  - Migration 000001／000002：將 LAVA 玩賽樂園賽事 series 更新
+  - 後台賽事編輯表單新增「系列分類」下拉選單，`updateRace` 儲存 series
+- 系列內排序國碼改為三碼（`TWN`），台灣賽事優先
+
+**技術決策**：
+- admin 對他人資料的寫入操作一律走 SECURITY DEFINER RPC，不依賴 UPDATE policy 的同表子查詢（遞迴 RLS 問題）
+- service role client 獨立檔案 `lib/supabase/admin.ts`，僅 import 進 server actions
+- email 模板放 `docs/email-templates/` 版控，實際設定貼到 Supabase Dashboard
+- 國家代碼統一 ISO 3166-1 alpha-3（TWN／DEU…）
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | 後台刪除帳號 | ✅ PASS | RPC 軟刪除 + auth.users 硬刪除 |
+| 2 | 被刪 email 重新註冊 | ✅ PASS | |
+| 3 | 註冊寄送驗證信 | ✅ PASS | SMTP Port 改 465 後正常 |
+| 4 | 註冊後顯示「驗證信已寄出」 | ✅ PASS | |
+| 5 | 首次登入導向 /my/profile | ✅ PASS | |
+| 6 | email 模板渲染預覽 | ✅ PASS | headless Chrome 截圖確認 |
+
+**已知問題 ／ TODO**：
+- Supabase Dashboard 需手動完成：貼上 Confirm signup 模板、Site URL 改為正式網域、重新開啟 Confirm email
+- Vercel 需新增 `SUPABASE_SERVICE_ROLE_KEY` 環境變數
+- 其他 email 模板（Reset Password、Magic Link 等）尚未製作
+
+**異動檔案**：
+- `supabase/migrations/20260609000001`～`20260609000009`（series 更新、policy 修復、admin_soft_delete_athlete）
+- `src/lib/supabase/admin.ts`（新增）
+- `src/app/(admin)/admin/members/actions.ts`
+- `src/app/(admin)/admin/members/MemberDetail.tsx`
+- `src/app/(admin)/admin/races/[id]/RaceEditForm.tsx`
+- `src/app/actions/races.ts`、`src/app/actions/auth.ts`
+- `src/components/auth/AuthModal.tsx`
+- `src/app/(main)/races/page.tsx`
+- `src/types/database.ts`
+- `docs/email-templates/confirm-signup.html`（新增）
+- `public/email-logo.png`（新增）
+
+---
+
+### [2026-06-10] 移除「即將推出」預告文字
+
+**狀態**：✅ 完成
+
+**完成內容**：
+- 移除 `/races` 頁面底部的虛線預告區塊（「路線資訊、天氣資料、歷屆成績分佈 — 即將推出」）
+- 移除 `/races/[slug]/[year]` 屆次細節頁底部的預告區塊（「歷屆成績分佈 — 即將推出」）
+
+**技術決策**：
+- 歷屆成績分佈待實作時直接在屆次細節頁底部加入，不需預告佔位文字
+
+**異動檔案**：
+- `src/app/(main)/races/page.tsx`
+- `src/app/(main)/races/[slug]/[year]/page.tsx`
+
+---
+
+### [2026-06-09] 屆次細節頁 + 天氣抓取 + 防寒衣
+
+**狀態**：✅ 完成
+
+**完成內容**：
+- Migration `20260608000010_race_editions_results_url.sql`：`race_editions` 新增 `results_url`
+- 新增 `/races/[slug]/[year]` 屆次細節頁：同年多距離共用，顯示場地、報名連結、成績查詢連結、三項規格（各距離各一列）、游泳環境、天氣、完賽人數
+- `/races/[slug]` 年份列與距離 tag 改為可點擊連結
+- 後台屆次表單新增「報名網頁 URL」、「成績查詢 URL」、防寒衣（三態）、水溫欄位
+- 後台唯讀列表「游泳環境」欄加入防寒衣 ✓/✗ 與水溫；新增「連結」欄顯示報名/成績連結
+- 互動按鈕依年份顯示：未來只顯示「想參加」、過去只顯示「參加過」、當年兩者；使用 `visibility:hidden` 保留按鈕欄位位置
+- 後台賽事表單（新增 + 編輯）加入緯度/經度欄位
+- Server Action `fetchEditionWeather`：用 `races.lat/lng + race_date` 呼叫 Open-Meteo Historical Archive API，取 06:00–12:00 均值，存入 `weather_data + weather_source='open-meteo'`（同年所有距離共用）
+- 後台屆次底部加「抓取天氣」按鈕，成功後即時顯示天氣資料
+
+**技術決策**：
+- 天氣取賽事當天 06:00–12:00 均值（鐵人三項典型比賽時段），儲存 temp_c、humidity_pct、wind_speed_ms、wind_direction、precipitation_mm
+- 風向角度轉中文方位（8 方位）
+- Open-Meteo Historical Archive API 免費、無需 API Key
+- 座標設計：存在 `races` 表（非屆次），同一賽事場地通常固定，避免重複填寫
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | `/races/challenge-taiwan/2025` 屆次細節頁 | ✅ PASS | 場地、規格、游泳環境、天氣全部顯示 |
+| 2 | 後台「抓取天氣」Challenge Taiwan 2025 | ✅ PASS | 26.1°C・63%・2 m/s 東南・0 mm |
+| 3 | 天氣資料同步至前台細節頁 | ✅ PASS | 即時顯示 |
+| 4 | 互動按鈕位置固定（visibility:hidden）| ✅ PASS | 未來/過去按鈕欄位對齊 |
+| 5 | 新增賽事表單含 lat/lng | ✅ PASS | TypeScript 通過 |
+| 6 | 未設定座標時抓取天氣 | ✅ PASS | 顯示明確錯誤訊息 |
+
+**異動檔案**：
+- `supabase/migrations/20260608000010_race_editions_results_url.sql`（新增）
+- `src/app/(main)/races/[slug]/page.tsx`
+- `src/app/(main)/races/[slug]/[year]/page.tsx`（新增）
+- `src/app/(admin)/admin/races/[id]/YearEditionBlock.tsx`
+- `src/app/(admin)/admin/races/[id]/EditionForm.tsx`
+- `src/app/(admin)/admin/races/[id]/RaceEditForm.tsx`
+- `src/app/(admin)/admin/races/[id]/page.tsx`
+- `src/app/(admin)/admin/races/RaceForm.tsx`
+- `src/app/actions/races.ts`
+- `src/types/database.ts`
+
+---
+
 ### [2026-06-08] 賽事互動 v3：年份層級分組 + 賽事詳情頁
 
 **狀態**：✅ 完成

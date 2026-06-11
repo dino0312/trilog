@@ -59,6 +59,7 @@ export type Database = {
           bio:         string | null
           avatar_url:  string | null
           is_minor:       boolean
+          is_searchable:  boolean
           role:           Role
           created_at:     string
           updated_at:     string
@@ -78,6 +79,7 @@ export type Database = {
           bio?:            string | null
           avatar_url?:     string | null
           is_minor?:       boolean
+          is_searchable?:  boolean
           role?:           Role
           deleted_at?:     string | null
           suspended_at?:   string | null
@@ -491,6 +493,10 @@ export type Database = {
       is_assistant_or_above: {
         Args:    Record<string, never>
         Returns: boolean
+      }
+      admin_soft_delete_athlete: {
+        Args:    { target_id: string }
+        Returns: void
       }
     }
 

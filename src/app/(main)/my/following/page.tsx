@@ -74,7 +74,7 @@ export default async function FollowingPage() {
         </p>
       </div>
 
-      <FollowingClient athletes={athleteList} />
+      <FollowingClient athletes={athleteList} isLoggedIn={true} />
     </main>
   )
 }

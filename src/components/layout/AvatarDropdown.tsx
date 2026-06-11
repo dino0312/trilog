@@ -7,11 +7,13 @@ import { createClient } from '@/lib/supabase/client'
 interface Props {
   email:          string
   name:           string | null   // athlete.nickname ?? athlete.name（顯示優先順序）
+  avatarUrl:      string | null
+  userId:         string
   isAssistant:    boolean
   followingCount: number
 }
 
-export function AvatarDropdown({ email, name, isAssistant, followingCount }: Props) {
+export function AvatarDropdown({ email, name, avatarUrl, userId, isAssistant, followingCount }: Props) {
   const [open, setOpen]     = useState(false)
   const ref                 = useRef<HTMLDivElement>(null)
 
@@ -38,7 +40,7 @@ export function AvatarDropdown({ email, name, isAssistant, followingCount }: Pro
     window.location.href = '/leaderboard'
   }
 
-  /* Avatar 顯示：姓名第一字 or Email 首字母 */
+  /* Avatar 顯示：頭像 → 姓名第一字 → Email 首字母 */
   const initial = name ? name[0] : email[0].toUpperCase()
 
   return (
@@ -46,12 +48,16 @@ export function AvatarDropdown({ email, name, isAssistant, followingCount }: Pro
       {/* Avatar 按鈕 */}
       <button
         onClick={() => setOpen(v => !v)}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-elev text-sm font-bold text-ink transition hover:bg-border-strong"
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-elev text-sm font-bold text-ink transition hover:bg-border-strong overflow-hidden"
         aria-label="個人選單"
         aria-expanded={open}
         aria-haspopup="true"
       >
-        {initial}
+        {avatarUrl
+          // eslint-disable-next-line @next/next/no-img-element
+          ? <img src={avatarUrl} alt={name ?? email} className="h-8 w-8 object-cover" />
+          : initial
+        }
       </button>
 
       {/* 下拉選單 */}
@@ -68,8 +74,7 @@ export function AvatarDropdown({ email, name, isAssistant, followingCount }: Pro
 
           {/* 選單項目 */}
           <div className="py-1">
-            <DropdownLink href="/my/results" onClick={() => setOpen(false)}>我的紀錄</DropdownLink>
-            <DropdownLink href="/my/profile" onClick={() => setOpen(false)}>個人資料</DropdownLink>
+            <DropdownLink href="/records" onClick={() => setOpen(false)}>我的紀錄</DropdownLink>
             <DropdownLink href="/my/following" onClick={() => setOpen(false)}>
               <span className="flex items-center justify-between w-full">
                 <span>關注名單</span>
@@ -80,6 +85,8 @@ export function AvatarDropdown({ email, name, isAssistant, followingCount }: Pro
                 )}
               </span>
             </DropdownLink>
+            <DropdownLink href="/profile" onClick={() => setOpen(false)}>個人資料</DropdownLink>
+            <DropdownLink href={`/athletes/${userId}`} onClick={() => setOpen(false)}>我的公開頁</DropdownLink>
           </div>
 
           {/* 管理後台（助手以上） */}

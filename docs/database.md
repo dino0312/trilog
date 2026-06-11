@@ -36,7 +36,11 @@
 | `birth_year` | int nullable | 1900–2100，自動計算年齡組 |
 | `nationality` | text nullable | ISO 3166-1 alpha-3（如 'TWN'），地區篩選用 |
 | `is_minor` | boolean | 依 birth_year 計算，驅動新成績的隱私預設 |
+| `is_searchable` | boolean | 預設 true；false 時不出現在 `/api/athletes/search`；未成年強制 false |
 | `role` | text | 'athlete' / 'assistant' / 'admin'（CHECK）|
+| `suspended_at` | timestamptz nullable | 停權時間；null = 正常 |
+| `suspended_by` | uuid FK nullable | 執行停權的助手帳號 |
+| `suspend_reason` | text nullable | 停權原因 |
 | `deleted_at` | timestamptz nullable | 軟刪除，非 null = 已申請刪帳，1 個月後排程清除 |
 
 **觸發器**：

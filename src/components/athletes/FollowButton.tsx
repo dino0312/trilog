@@ -8,7 +8,7 @@ interface Props {
   athleteName:      string
   initialFollowing: boolean
   isLoggedIn:       boolean
-  size?:            'sm' | 'md'
+  size?:            'sm' | 'md' | 'lg'
 }
 
 export function FollowButton({
@@ -22,7 +22,7 @@ export function FollowButton({
   const [isPending, startTransition] = useTransition()
   const { open } = useAuthModal()
 
-  const iconSize = size === 'sm' ? 16 : 20
+  const iconSize = size === 'sm' ? 16 : size === 'lg' ? 24 : 20
 
   async function toggle() {
     if (!isLoggedIn) {

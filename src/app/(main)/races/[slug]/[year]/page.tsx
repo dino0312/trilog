@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { RaceInterestButtons } from '@/components/races/RaceInterestButtons'
+import { EditionResultsSection } from '@/components/races/EditionResultsSection'
 
 const DISTANCE_LABEL: Record<string, string> = {
   sprint: 'Sprint', olympic: '51.5', '70.3': '113', full: '226',
@@ -101,6 +102,60 @@ export default async function EditionPage({
     .eq('year', year)
   const wishlistCount = (countsRaw ?? []).filter(i => i.interest_type === 'wishlist').length
   const attendedCount = (countsRaw ?? []).filter(i => i.interest_type === 'attended').length
+
+  // 成績列表
+  const editionIds = editions.map(e => e.id)
+  const { data: rawResults } = await supabase
+    .from('results')
+    .select(`
+      id, total_seconds, athlete_id, athlete_name_snapshot,
+      claim_status, overall_rank, curated_gender, race_edition_id,
+      claim_tag_count,
+      race_editions ( distance_category )
+    `)
+    .in('race_edition_id', editionIds)
+    .eq('result_type', 'solo')
+    .eq('is_public', true)
+    .in('claim_status', ['unclaimed', 'claimed', 'unlinked'])
+    .order('overall_rank', { ascending: true, nullsFirst: false })
+    .order('total_seconds', { ascending: true })
+
+  const editionResults = (rawResults ?? []).map(r => ({
+    result_id:             r.id,
+    total_seconds:         r.total_seconds,
+    athlete_id:            r.athlete_id,
+    athlete_name_snapshot: r.athlete_name_snapshot,
+    claim_status:          r.claim_status,
+    overall_rank:          r.overall_rank,
+    curated_gender:        r.curated_gender,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    distance_category:     (r.race_editions as any)?.distance_category ?? '',
+    claim_tag_count:       r.claim_tag_count ?? 0,
+  }))
+
+  // 登入者追蹤清單 + 已標記清單 + 姓名（供 ClaimButton 比對）
+  let followingIds: string[] = []
+  let myTaggedResultIds: string[] = []
+  let userAthleteNameNormalized: string | null = null
+  if (user) {
+    const athleteIds = editionResults
+      .filter(r => r.athlete_id)
+      .map(r => r.athlete_id!)
+      .filter((v, i, a) => a.indexOf(v) === i)
+
+    const [followsRes, tagsRes, profileRes] = await Promise.all([
+      athleteIds.length > 0
+        ? supabase.from('athlete_follows').select('following_id').eq('follower_id', user.id).in('following_id', athleteIds)
+        : Promise.resolve({ data: [] }),
+      supabase.from('claim_tags').select('result_id').eq('tagged_by', user.id).in('result_id', editionResults.map(r => r.result_id)),
+      supabase.from('athletes').select('name').eq('id', user.id).single(),
+    ])
+    followingIds = (followsRes.data ?? []).map((f: { following_id: string }) => f.following_id)
+    myTaggedResultIds = (tagsRes.data ?? []).map((t: { result_id: string }) => t.result_id)
+    if (profileRes.data?.name) {
+      userAthleteNameNormalized = profileRes.data.name.trim().toLowerCase().replace(/\s+/g, '')
+    }
+  }
 
   // 日期格式化
   const formatDate = (d: string | null) =>
@@ -251,10 +306,16 @@ export default async function EditionPage({
 
       </div>
 
-      {/* 成績連結（未來：顯示該屆次 top 成績） */}
-      <div className="mt-6 rounded-xl border border-dashed border-border p-5 text-center">
-        <p className="text-sm text-ink-4">歷屆成績分佈 — 即將推出</p>
-      </div>
+      {/* ④ 成績列表 */}
+      <EditionResultsSection
+        results={editionResults}
+        currentUserId={user?.id ?? null}
+        isLoggedIn={isLoggedIn}
+        followingIds={followingIds}
+        userAthleteNameNormalized={userAthleteNameNormalized}
+        myTaggedResultIds={myTaggedResultIds}
+      />
+
     </main>
   )
 }

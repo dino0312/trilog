@@ -204,17 +204,51 @@ https://archive-api.open-meteo.com/v1/archive
 
 | 路由 | 方法 | 授權 | 說明 |
 |------|------|------|------|
+| `/api/athletes/search` | GET | public | 全站選手搜尋（?q=，limit 8）|
 | `/api/athletes/me` | GET | authed | 取得自己的完整資料（含私人成績）|
 | `/api/athletes/me` | PUT | authed | 更新 Profile |
 | `/api/athletes/me` | DELETE | authed | 申請刪除帳號（軟刪除）|
-| `/api/athletes/:id` | GET | public | 取得他人公開 Profile |
+| `/api/athletes/me/following` | GET | authed | 追蹤的選手 id 陣列 |
+| `/api/athletes/me/following/details` | GET | authed | 追蹤選手完整資料 + bests |
+| `/api/athletes/:id` | GET | public | 選手公開頁資料（含 bests、成績、接力）|
+| `/api/athletes/:id/follow` | POST | authed | 追蹤；自我追蹤 400；已追蹤 409 |
+| `/api/athletes/:id/follow` | DELETE | authed | 取消追蹤；未追蹤 404 |
+| `/api/athletes/:id/is-following` | GET | authed | `{ following: boolean }` |
 
-### GET /api/athletes/:id（公開 Profile）
+### GET /api/athletes/search
 
-**資料來源**：`athlete_public_profiles` view
+**Query**：`?q=` 關鍵字（空字串回傳空陣列）
 
-**回傳內容**：nickname、nationality、gender、birth_year、bio、avatar_url、public_result_count  
-**不回傳**：email、role、is_minor、deleted_at
+**過濾**：`deleted_at IS NULL`、`suspended_at IS NULL`（`is_searchable` 欄位建立後補上）
+
+**回傳**：`{ athletes: [{ id, name, nickname, nationality, avatar_url, is_following }] }`
+
+### GET /api/athletes/:id（選手公開頁）
+
+**停權 / 已刪除**：HTTP 200 回傳 `{ error: 'suspended' | 'deleted' }`，前端渲染提示頁
+
+**回傳**：
+```json
+{
+  "id": "...",
+  "name": "...",
+  "nickname": "...",
+  "nationality": "TWN",
+  "bio": "...",
+  "avatar_url": "...",
+  "created_at": "...",
+  "follower_count": 5,
+  "is_following": false,
+  "bests": { "full": 32100, "70.3": null, "olympic": null, "sprint": null },
+  "results": [{ "result_id", "total_seconds", "is_public", "claim_status",
+                "source_credibility", "year", "distance_category", "race_name", "race_slug" }],
+  "relay_results": [{ "member_id", "team_id", "team_name", "gender_category",
+                      "disciplines", "split_seconds", "year", "distance_category",
+                      "race_name", "race_slug" }]
+}
+```
+
+**本人請求**：`results` 包含私人成績（`is_public=false`）
 
 ### DELETE /api/athletes/me（申請刪帳）
 
@@ -290,7 +324,7 @@ API 端點本身不依賴 middleware 做授權，各端點自行呼叫 `supabase
 | 端點 | 說明 |
 |------|------|
 | `POST /api/results/:id/share` | 產生成績分享卡（圖片）|
-| `POST /api/athletes/search` | 模糊搜尋選手名稱（Phase 2：Email 通知）|
+| `GET /api/athletes/search` | ✅ 已實作（第 38-44 章）|
 | `GET /api/races/:slug/stats` | 賽事歷年成績分佈統計 |
 | `POST /api/imports/gpx` | GPX 裝置檔案解析（Phase 3）|
 

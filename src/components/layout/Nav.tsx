@@ -16,15 +16,18 @@ export async function Nav() {
 
   let followingCount = 0
 
+  let athleteAvatarUrl: string | null = null
+
   if (user) {
     const [{ data: athlete }, { data: assistant }, { count }] = await Promise.all([
-      supabase.from('athletes').select('nickname, name').eq('id', user.id).single(),
+      supabase.from('athletes').select('nickname, name, avatar_url').eq('id', user.id).single(),
       supabase.rpc('is_assistant_or_above'),
       supabase.from('athlete_follows').select('*', { count: 'exact', head: true }).eq('follower_id', user.id),
     ])
-    athleteName    = athlete?.nickname ?? athlete?.name ?? null
-    isAssistant    = assistant ?? false
-    followingCount = count ?? 0
+    athleteName      = athlete?.nickname ?? athlete?.name ?? null
+    athleteAvatarUrl = athlete?.avatar_url ?? null
+    isAssistant      = assistant ?? false
+    followingCount   = count ?? 0
   }
 
   return (
@@ -53,6 +56,8 @@ export async function Nav() {
                 <AvatarDropdown
                   email={user.email!}
                   name={athleteName}
+                  avatarUrl={athleteAvatarUrl}
+                  userId={user.id}
                   isAssistant={isAssistant}
                   followingCount={followingCount}
                 />
