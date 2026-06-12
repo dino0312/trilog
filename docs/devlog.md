@@ -80,6 +80,46 @@ decisions:
 
 ## 記錄
 
+### [2026-06-12] 版號系統建立 + UI 標籤清理
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: []
+status: implemented
+decisions:
+  - id: D-VER-01
+    chapter: 0
+    content: "Admin footer 顯示 'v{semver} · {git-hash}'，build 時注入 NEXT_PUBLIC_APP_VERSION / NEXT_PUBLIC_GIT_HASH"
+    spec_impact: false
+    synced: false
+  - id: D-VER-02
+    chapter: 0
+    content: "Patch 版號格式為三位數零補齊（0.2.001…0.2.999），每次 git commit 由 pre-commit hook 自動遞增"
+    spec_impact: false
+    synced: false
+  - id: D-VER-03
+    chapter: 0
+    content: "Minor / major 版號由開發者手動執行 npm run version:minor / version:major 控制，不自動觸發"
+    spec_impact: false
+    synced: false
+  - id: D-VER-04
+    chapter: 0
+    content: "使用者頁面移除『已公證』/『公證』顯示標籤；certificate 型別與資料庫欄位保留，Admin 頁面仍顯示"
+    spec_impact: false
+    synced: false
+```
+
+**完成內容**：
+- `next.config.ts` 在 build 時讀取 `package.json` version 與 `git rev-parse --short HEAD`，注入為 `NEXT_PUBLIC_APP_VERSION` / `NEXT_PUBLIC_GIT_HASH`
+- Admin layout footer 右下角顯示 `v{version} · {hash}`，只有管理員可見
+- 新增 `scripts/bump-patch.mjs`：將 patch 格式化為三位數零補齊並寫回 `package.json`
+- `.git/hooks/pre-commit`：每次 commit 自動執行 `bump-patch.mjs` 並 stage `package.json`
+- `package.json` scripts 加入 `version:patch`、`version:minor`、`version:major`
+- 使用者頁面（`results/[id]`、`athletes/[id]`、`records`、`teams/[id]`）移除 `certificate` 對應的「已公證」顯示文字；`certificate` 顯示行為同 `self_reported`
+
+---
+
 ### [2026-06-12] Ch.45 成績記錄體驗優化
 
 **狀態**：✅ 完成
