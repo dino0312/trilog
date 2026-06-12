@@ -80,6 +80,72 @@ decisions:
 
 ## 記錄
 
+### [2026-06-12] Email 驗證引導流程
+
+**狀態**：⚠️ 部分完成
+
+```spec-sync
+chapters: [8, 28]
+status: partial
+decisions:
+  - id: D-VERIFY-01
+    chapter: 8
+    content: "新增 §8.3：註冊後導向 /register/verify 頁，顯示 masked email + 操作說明 + 60s 重發 cooldown"
+    spec_impact: true
+    synced: false
+  - id: D-VERIFY-02
+    chapter: 28
+    content: "Ch.28 新增 open:email_sent 狀態對應 AuthModal 的 emailSent 流程；ModalEmailSent 元件提供已驗證→登入快速路徑"
+    spec_impact: true
+    synced: false
+  - id: D-VERIFY-03
+    chapter: 8
+    content: "GlobalVerifyBanner：server component 檢查 email_confirmed_at，未驗證登入者在 (main) 頁面頂部顯示 warn bar，可 dismiss（sessionStorage）"
+    spec_impact: true
+    synced: false
+  - id: D-VERIFY-04
+    chapter: 0
+    content: "POST /api/auth/resend-verification 呼叫 supabase.auth.resend({ type: 'signup', email })；rate limit 60s 由 client localStorage 管理"
+    spec_impact: false
+    synced: false
+```
+
+**完成內容**：
+- `src/app/(auth)/register/verify/page.tsx`：獨立驗證引導頁，masked email 顯示（前2字 + `****`）、三條操作提示、重發按鈕、「已驗證，前往登入」
+- `src/app/(auth)/register/verify/ResendButton.tsx`：重發按鈕 client component，60s cooldown 寫入 localStorage
+- `src/app/api/auth/resend-verification/route.ts`：POST，body `{ email }`，呼叫 Supabase resend
+- `src/app/actions/auth.ts`：`signUp` 成功後改為 redirect 到 `/register/verify?email=xxx`（原本跳 `/my/profile`）
+- `src/components/layout/GlobalVerifyBanner.tsx`：server wrapper，讀 `user.email_confirmed_at`
+- `src/components/layout/GlobalVerifyBannerClient.tsx`：warn bar，dismiss 寫 sessionStorage，resend 共用同一 cooldown key
+- `src/app/(main)/layout.tsx`：插入 `<GlobalVerifyBanner />`（Nav 下方）
+- `src/components/auth/AuthModal.tsx`：emailSent 狀態抽出為 `ModalEmailSent`，寄出後隱藏底部完整頁面連結
+
+**已知問題 ／ TODO**：
+- ⚠️ Supabase Dashboard「Confirm email」是否開啟需手動確認（見 2026-06-10 devlog TODO）；若未開啟，`signUp` 後會直接建立 session，`email_confirmed_at` 非 null，banner 不會出現 — 行為正確但驗證信不會寄
+- ⏳ 驗證成功後的 toast 通知（等全域 toast 元件實作後補，對應 Ch.28 `closed:success` 狀態）
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | `npx tsc --noEmit` | ✅ PASS | 零錯誤 |
+| 2 | `/register/verify?email=test@example.com` 頁面載入 | ⚠️ 待驗證 | 需啟動 dev server |
+| 3 | 重發按鈕 60s cooldown | ⚠️ 待驗證 | 需瀏覽器測試 |
+| 4 | GlobalVerifyBanner 未驗證用戶顯示 | ⚠️ 待驗證 | 需 Confirm email 開啟 + 測試帳號 |
+| 5 | 已驗證用戶不顯示 banner | ⚠️ 待驗證 | 同上 |
+
+**異動檔案**：
+- `src/app/(auth)/register/verify/` (新增)
+- `src/app/api/auth/resend-verification/route.ts` (新增)
+- `src/app/actions/auth.ts`
+- `src/components/layout/GlobalVerifyBanner.tsx` (新增)
+- `src/components/layout/GlobalVerifyBannerClient.tsx` (新增)
+- `src/app/(main)/layout.tsx`
+- `src/components/auth/AuthModal.tsx`
+- `docs/api.md`
+
+---
+
 ### [2026-06-12] 版號系統建立 + UI 標籤清理
 
 **狀態**：✅ 完成
