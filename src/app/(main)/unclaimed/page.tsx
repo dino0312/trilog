@@ -121,12 +121,6 @@ export default async function UnclaimedPage({ searchParams }: { searchParams: Se
 
   return (
     <main className="flex-1 p-6 max-w-4xl mx-auto w-full">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-ink">未認領成績</h1>
-        <p className="mt-0.5 text-sm text-ink-3">
-          搜尋你的名字來認領成績，或通知你認識的選手
-        </p>
-      </div>
 
       {/* 搜尋與篩選 */}
       <form className="flex flex-wrap gap-3 mb-6">

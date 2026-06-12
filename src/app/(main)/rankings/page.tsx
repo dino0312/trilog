@@ -46,12 +46,7 @@ export default async function RankingsPage({ searchParams }: { searchParams: Sea
 
   return (
     <main className="flex-1 p-6 max-w-5xl mx-auto w-full">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-ink">排行榜</h1>
-        <p className="mt-0.5 text-sm text-ink-3">
-          {DISTANCE_LABEL[distance] ?? distance} · {entries?.length ?? 0} 筆成績
-        </p>
-      </div>
+      <p className="text-sm text-ink-3 mb-6">{DISTANCE_LABEL[distance] ?? distance} · {entries?.length ?? 0} 筆成績</p>
 
       <RankingsFilters
         races={races ?? []}

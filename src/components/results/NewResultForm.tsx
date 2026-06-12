@@ -1,17 +1,10 @@
 'use client'
 
-import { useActionState, useEffect, useState, useMemo } from 'react'
+import { useActionState, useState } from 'react'
 import { createResult, type ResultState } from '@/app/actions/results'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
-
-type RaceEdition = {
-  id: string
-  year: number
-  race_date: string
-  distance_category: string
-  races: { id: string; name: string; city: string } | null
-}
+import { RaceEditionPicker, type RaceEditionValue } from '@/components/races/RaceEditionPicker'
 
 type Profile = {
   name: string | null
@@ -28,13 +21,6 @@ type Props = {
 
 const initial: ResultState = { error: null }
 
-const DISTANCE_LABEL: Record<string, string> = {
-  sprint: 'Sprint', olympic: '51.5', '70.3': '113', full: '226',
-}
-const DISTANCE_ORDER: Record<string, number> = {
-  sprint: 1, olympic: 2, '70.3': 3, full: 4,
-}
-
 const NATIONALITIES = [
   { value: 'TWN', label: '🇹🇼 台灣' },
   { value: 'JPN', label: '🇯🇵 日本' },
@@ -50,41 +36,9 @@ const NATIONALITIES = [
 
 export function NewResultForm({ profileComplete, profile, forOther = false }: Props) {
   const [state, action, pending] = useActionState(createResult, initial)
-  const [editions, setEditions] = useState<RaceEdition[]>([])
-  const [raceYearKey, setRaceYearKey] = useState('')
-  const [editionId, setEditionId] = useState('')
+  const [raceEdition, setRaceEdition] = useState<RaceEditionValue | null>(null)
+  const [raceError, setRaceError] = useState<string | undefined>()
   const [isPublic, setIsPublic] = useState(true)
-
-  useEffect(() => {
-    fetch('/api/races').then(r => r.json()).then(setEditions)
-  }, [])
-
-  // 每個賽事 + 年份組合（去重）
-  const raceYears = useMemo(() => {
-    const seen = new Set<string>()
-    const result: { key: string; label: string }[] = []
-    for (const e of editions) {
-      const key = `${e.races?.id}__${e.year}`
-      if (!seen.has(key)) {
-        seen.add(key)
-        result.push({ key, label: `${e.races?.name}（${e.year}）` })
-      }
-    }
-    return result
-  }, [editions])
-
-  const availableDistances = useMemo(() => {
-    if (!raceYearKey) return []
-    const [raceId, year] = raceYearKey.split('__')
-    return editions
-      .filter(e => e.races?.id === raceId && String(e.year) === year)
-      .sort((a, b) => (DISTANCE_ORDER[a.distance_category] ?? 9) - (DISTANCE_ORDER[b.distance_category] ?? 9))
-  }, [editions, raceYearKey])
-
-  useEffect(() => {
-    if (availableDistances.length === 1) setEditionId(availableDistances[0].id)
-    else setEditionId('')
-  }, [availableDistances])
 
   // 需要顯示 profile 補充欄位：公開 + profile 不完整 + 非幫他人模式
   const showProfileSection = isPublic && !profileComplete && !forOther
@@ -96,8 +50,18 @@ export function NewResultForm({ profileComplete, profile, forOther = false }: Pr
   const needNationality = !profile.nationality
 
   return (
-    <form action={action} className="flex flex-col gap-5">
-      <input type="hidden" name="race_edition_id" value={editionId} />
+    <form
+      action={async (formData) => {
+        if (!raceEdition?.editionId) {
+          setRaceError('請選擇賽事與年份')
+          return
+        }
+        setRaceError(undefined)
+        formData.set('race_edition_id', raceEdition.editionId)
+        await action(formData)
+      }}
+      className="flex flex-col gap-5"
+    >
       {forOther && <input type="hidden" name="for_other" value="true" />}
 
       {/* 幫他人新增：歸屬人姓名 */}
@@ -117,45 +81,8 @@ export function NewResultForm({ profileComplete, profile, forOther = false }: Pr
         </div>
       )}
 
-      {/* Step 1：選賽事年份 */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-ink-2">賽事</label>
-        <select
-          required
-          value={raceYearKey}
-          onChange={e => setRaceYearKey(e.target.value)}
-          className="w-full rounded-lg border border-border-strong bg-bg-elev px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
-        >
-          <option value="">請選擇賽事…</option>
-          {raceYears.map(ry => (
-            <option key={ry.key} value={ry.key}>{ry.label}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Step 2：距離 */}
-      {raceYearKey && availableDistances.length > 1 && (
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-ink-2">距離組別</label>
-          <div className="flex flex-wrap gap-2">
-            {availableDistances.map(e => (
-              <button
-                key={e.id}
-                type="button"
-                onClick={() => setEditionId(e.id)}
-                className={[
-                  'px-4 py-2 rounded-lg border text-sm font-medium transition',
-                  editionId === e.id
-                    ? 'border-accent bg-accent/10 text-accent'
-                    : 'border-border text-ink-3 hover:border-border-strong',
-                ].join(' ')}
-              >
-                {DISTANCE_LABEL[e.distance_category] ?? e.distance_category}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* 賽事選擇 */}
+      <RaceEditionPicker value={raceEdition} onChange={setRaceEdition} error={raceError} />
 
       {/* 號碼布 */}
       <Input label="號碼布（選填）" id="bib_number" name="bib_number" placeholder="例：A123" />
@@ -260,7 +187,7 @@ export function NewResultForm({ profileComplete, profile, forOther = false }: Pr
 
       {state.error && <p className="text-sm text-red">{state.error}</p>}
 
-      <Button type="submit" loading={pending} disabled={!editionId}>
+      <Button type="submit" loading={pending} disabled={!raceEdition?.editionId}>
         {forOther ? '代入成績' : '儲存成績'}
       </Button>
     </form>

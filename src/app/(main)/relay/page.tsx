@@ -29,10 +29,6 @@ export default async function RelayPage({ searchParams }: { searchParams: Search
 
   return (
     <main className="flex-1 p-6 max-w-5xl mx-auto w-full">
-      <div className="mb-6">
-        <h1 className="text-4xl font-bold text-ink">接力榜</h1>
-        <p className="mt-0.5 text-base text-ink-3">接力隊伍成績排行</p>
-      </div>
 
       {/* Distance tabs */}
       <div className="flex gap-2 mb-5 flex-wrap">

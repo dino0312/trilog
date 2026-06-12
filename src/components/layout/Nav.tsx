@@ -42,7 +42,7 @@ export async function Nav() {
 
           {/* 主選單連結（含 active state）*/}
           <nav className="flex h-14 items-center">
-            <NavLinks />
+            <NavLinks isLoggedIn={!!user} />
           </nav>
 
           {/* 右側：新增成績 + Avatar / 登入 */}

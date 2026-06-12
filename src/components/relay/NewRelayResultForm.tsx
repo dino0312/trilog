@@ -1,17 +1,10 @@
 'use client'
 
-import { useActionState, useEffect, useState, useMemo } from 'react'
+import { useActionState, useState } from 'react'
 import { createRelayResult, type ResultState } from '@/app/actions/results'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
-
-type RaceEdition = {
-  id: string
-  year: number
-  race_date: string
-  distance_category: string
-  races: { id: string; name: string; city: string } | null
-}
+import { RaceEditionPicker, type RaceEditionValue } from '@/components/races/RaceEditionPicker'
 
 type Member = {
   name:          string
@@ -21,13 +14,6 @@ type Member = {
 }
 
 const initial: ResultState = { error: null }
-
-const DISTANCE_ORDER: Record<string, number> = {
-  sprint: 1, olympic: 2, '70.3': 3, full: 4,
-}
-const DISTANCE_LABEL: Record<string, string> = {
-  sprint: 'Sprint', olympic: '51.5', '70.3': '113', full: '226',
-}
 
 function parseTime(val: string): number | null {
   if (!val) return null
@@ -42,44 +28,13 @@ const EMPTY_MEMBER: Member = { name: '', disciplines: [], split_seconds: '', is_
 export function NewRelayResultForm() {
   const [state, action, pending] = useActionState(createRelayResult, initial)
 
-  const [editions, setEditions]         = useState<RaceEdition[]>([])
-  const [raceYearKey, setRaceYearKey]   = useState('')
-  const [editionId, setEditionId]       = useState('')
-  const [isPublic, setIsPublic]         = useState(true)
-  const [members, setMembers]           = useState<Member[]>([
+  const [raceEdition, setRaceEdition] = useState<RaceEditionValue | null>(null)
+  const [raceError, setRaceError]     = useState<string | undefined>()
+  const [isPublic, setIsPublic]       = useState(true)
+  const [members, setMembers]         = useState<Member[]>([
     { ...EMPTY_MEMBER, is_me: true },
     { ...EMPTY_MEMBER },
   ])
-
-  useEffect(() => {
-    fetch('/api/races').then(r => r.json()).then(setEditions)
-  }, [])
-
-  const raceYears = useMemo(() => {
-    const seen = new Set<string>()
-    const result: { key: string; label: string }[] = []
-    for (const e of editions) {
-      const key = `${e.races?.id}__${e.year}`
-      if (!seen.has(key)) {
-        seen.add(key)
-        result.push({ key, label: `${e.races?.name}（${e.year}）` })
-      }
-    }
-    return result
-  }, [editions])
-
-  const availableDistances = useMemo(() => {
-    if (!raceYearKey) return []
-    const [raceId, year] = raceYearKey.split('__')
-    return editions
-      .filter(e => e.races?.id === raceId && String(e.year) === year)
-      .sort((a, b) => (DISTANCE_ORDER[a.distance_category] ?? 9) - (DISTANCE_ORDER[b.distance_category] ?? 9))
-  }, [editions, raceYearKey])
-
-  useEffect(() => {
-    if (availableDistances.length === 1) setEditionId(availableDistances[0].id)
-    else setEditionId('')
-  }, [availableDistances])
 
   function updateMember(idx: number, field: keyof Member, value: unknown) {
     setMembers(prev => prev.map((m, i) => i === idx ? { ...m, [field]: value } : m))
@@ -111,46 +66,23 @@ export function NewRelayResultForm() {
   })))
 
   return (
-    <form action={action} className="flex flex-col gap-5">
-      <input type="hidden" name="race_edition_id" value={editionId} />
+    <form
+      action={async (formData) => {
+        if (!raceEdition?.editionId) {
+          setRaceError('請選擇賽事與年份')
+          return
+        }
+        setRaceError(undefined)
+        formData.set('race_edition_id', raceEdition.editionId)
+        await action(formData)
+      }}
+      className="flex flex-col gap-5"
+    >
       <input type="hidden" name="members" value={membersJson} />
       <input type="hidden" name="is_public" value={isPublic ? 'true' : 'false'} />
 
       {/* 賽事選擇 */}
-      <div>
-        <label className="block text-xs text-ink-3 mb-1.5">賽事 *</label>
-        <select
-          value={raceYearKey}
-          onChange={e => setRaceYearKey(e.target.value)}
-          className="w-full rounded-lg border border-border bg-bg-card px-3 py-2 text-sm text-ink"
-        >
-          <option value="">— 選擇賽事與年份 —</option>
-          {raceYears.map(({ key, label }) => (
-            <option key={key} value={key}>{label}</option>
-          ))}
-        </select>
-      </div>
-
-      {availableDistances.length > 1 && (
-        <div>
-          <label className="block text-xs text-ink-3 mb-1.5">距離 *</label>
-          <div className="flex gap-2 flex-wrap">
-            {availableDistances.map(e => (
-              <button
-                key={e.id} type="button"
-                onClick={() => setEditionId(e.id)}
-                className={`px-3 py-1.5 rounded-lg text-sm border transition ${
-                  editionId === e.id
-                    ? 'bg-accent text-accent-ink border-accent'
-                    : 'border-border text-ink-3 hover:text-ink'
-                }`}
-              >
-                {DISTANCE_LABEL[e.distance_category] ?? e.distance_category}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      <RaceEditionPicker value={raceEdition} onChange={setRaceEdition} error={raceError} />
 
       {/* 基本資訊 */}
       <div className="grid grid-cols-2 gap-3">
@@ -270,7 +202,7 @@ export function NewRelayResultForm() {
         <p className="text-sm text-run">{state.error}</p>
       )}
 
-      <Button type="submit" disabled={pending || !editionId}>
+      <Button type="submit" disabled={pending || !raceEdition?.editionId}>
         {pending ? '儲存中…' : '新增接力成績'}
       </Button>
     </form>

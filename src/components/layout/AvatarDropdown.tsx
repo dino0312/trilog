@@ -74,7 +74,7 @@ export function AvatarDropdown({ email, name, avatarUrl, userId, isAssistant, fo
 
           {/* 選單項目 */}
           <div className="py-1">
-            <DropdownLink href="/records" onClick={() => setOpen(false)}>我的紀錄</DropdownLink>
+            <DropdownLink href="/records" onClick={() => setOpen(false)}>我的成績</DropdownLink>
             <DropdownLink href="/my/following" onClick={() => setOpen(false)}>
               <span className="flex items-center justify-between w-full">
                 <span>關注名單</span>

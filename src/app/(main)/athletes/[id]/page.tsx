@@ -39,7 +39,7 @@ export default async function AthletePublicPage({ params }: Props) {
 
   const { data: athlete } = await supabase
     .from('athletes')
-    .select('id, name, nickname, nationality, bio, avatar_url, created_at, suspended_at, deleted_at')
+    .select('id, name, nickname, nationality, bio, avatar_url, contribution_score, created_at, suspended_at, deleted_at')
     .eq('id', id)
     .single()
 
@@ -62,6 +62,14 @@ export default async function AthletePublicPage({ params }: Props) {
   }
 
   const isSelf = user?.id === id
+
+  // 貢獻：幫他人新增且已被認領的成績數
+  const { count: claimedByMeCount } = await supabase
+    .from('results')
+    .select('*', { count: 'exact', head: true })
+    .eq('created_by', id)
+    .eq('claim_status', 'claimed')
+    .neq('athlete_id', id)
 
   // 追蹤數 + is_following（並行）
   const [{ count: followerCount }, { data: followRow }] = await Promise.all([
@@ -226,6 +234,22 @@ export default async function AthletePublicPage({ params }: Props) {
             {athlete.bio && (
               <p className="mt-2 text-sm text-ink-3 leading-relaxed">{athlete.bio}</p>
             )}
+
+            {/* 貢獻積分（§46.6：有積分或已幫人找到主人時顯示；自己永遠顯示） */}
+            {(isSelf || (athlete.contribution_score ?? 0) > 0 || (claimedByMeCount ?? 0) > 0) && (
+              <div className="mt-3 flex items-center gap-4 flex-wrap">
+                {((athlete.contribution_score ?? 0) > 0 || isSelf) && (
+                  <span className="text-xs text-ink-3">
+                    貢獻值 <span className="text-accent font-semibold">{athlete.contribution_score ?? 0}</span> 分
+                  </span>
+                )}
+                {((claimedByMeCount ?? 0) > 0 || isSelf) && (
+                  <span className="text-xs text-ink-3">
+                    已幫 <span className="text-accent font-semibold">{claimedByMeCount ?? 0}</span> 筆成績找到主人
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -248,7 +272,7 @@ export default async function AthletePublicPage({ params }: Props) {
       {results.length > 0 && (
         <div className="rounded-xl border border-border bg-bg-card mb-6 overflow-hidden">
           <div className="px-5 py-3 border-b border-border flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-ink">成績紀錄</h2>
+            <h2 className="text-sm font-semibold text-ink">成績</h2>
             {isSelf && (
               <Link href="/records" className="text-xs text-accent hover:underline">
                 管理我的成績 →

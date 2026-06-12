@@ -3,18 +3,26 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-const LINKS = [
+const PUBLIC_LINKS = [
   { href: '/leaderboard', label: '最速榜' },
   { href: '/unclaimed',   label: '未認領' },
   { href: '/races',       label: '賽事' },
 ]
 
-export function NavLinks() {
+const AUTH_LINKS = [
+  { href: '/records',      label: '我的成績' },
+  { href: '/my/following', label: '關注名單' },
+]
+
+type Props = { isLoggedIn?: boolean }
+
+export function NavLinks({ isLoggedIn = false }: Props) {
   const pathname = usePathname()
+  const links = isLoggedIn ? [...PUBLIC_LINKS, ...AUTH_LINKS] : PUBLIC_LINKS
 
   return (
     <>
-      {LINKS.map(({ href, label }) => {
+      {links.map(({ href, label }) => {
         const active = pathname === href || pathname.startsWith(href + '/')
         return (
           <Link

@@ -7,7 +7,7 @@ import { RecordActions } from '@/components/results/RecordActions'
 import { UnlinkButton } from '@/components/results/UnlinkButton'
 import { DisciplineIcon } from '@/components/ui/DisciplineIcon'
 
-export const metadata: Metadata = { title: '我的紀錄' }
+export const metadata: Metadata = { title: '我的成績' }
 
 const DISTANCE_LABEL: Record<string, string> = {
   sprint: 'Sprint', olympic: '51.5', '70.3': '113', full: '226',
@@ -60,26 +60,7 @@ export default async function RecordsPage() {
 
   return (
     <main className="flex-1 p-6 max-w-3xl mx-auto w-full">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-ink">我的紀錄</h1>
-          <p className="mt-0.5 text-sm text-ink-3">{totalCount} 筆成績</p>
-        </div>
-        <div className="flex gap-2">
-          <Link
-            href="/records/relay/new"
-            className="rounded-lg border border-border px-4 py-2 text-sm text-ink-3 hover:text-ink hover:bg-bg-elev transition"
-          >
-            + 接力成績
-          </Link>
-          <Link
-            href="/records/new"
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-ink hover:brightness-110 transition"
-          >
-            + 新增成績
-          </Link>
-        </div>
-      </div>
+      <p className="text-sm text-ink-3 mb-6">{totalCount} 筆成績</p>
 
       {/* Solo 成績 */}
       {!!results?.length && (
@@ -89,9 +70,6 @@ export default async function RecordsPage() {
       {!totalCount ? (
         <div className="rounded-xl border border-border bg-bg-card p-12 text-center">
           <p className="text-ink-3">還沒有任何成績記錄</p>
-          <Link href="/records/new" className="mt-3 inline-block text-sm text-accent hover:underline">
-            新增第一筆成績
-          </Link>
         </div>
       ) : (
         <div className="flex flex-col gap-3">

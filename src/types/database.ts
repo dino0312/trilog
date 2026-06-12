@@ -62,13 +62,14 @@ export type Database = {
           avatar_url:  string | null
           is_minor:       boolean
           is_searchable:  boolean
-          role:           Role
-          created_at:     string
-          updated_at:     string
-          deleted_at:     string | null
-          suspended_at:   string | null
-          suspended_by:   string | null
-          suspend_reason: string | null
+          role:               Role
+          contribution_score: number
+          created_at:         string
+          updated_at:         string
+          deleted_at:         string | null
+          suspended_at:       string | null
+          suspended_by:       string | null
+          suspend_reason:     string | null
         }
         Insert: {
           id:              string
@@ -218,6 +219,7 @@ export type Database = {
           notes:                 string | null
           claimed_at:            string | null
           verified_at:           string | null
+          created_by:            string | null
           created_at:            string
           updated_at:            string
         }
@@ -244,8 +246,32 @@ export type Database = {
           notes?:                 string | null
           claimed_at?:            string | null
           verified_at?:           string | null
+          created_by?:            string | null
         }
         Update: Partial<Database['public']['Tables']['results']['Insert']>
+        Relationships: []
+      }
+
+      // ── contribution_events ──────────────────────────────
+      contribution_events: {
+        Row: {
+          id:            string
+          athlete_id:    string
+          event_type:    'add_self' | 'add_other' | 'other_claimed'
+          result_id:     string
+          points:        number
+          revoke_reason: string | null
+          created_at:    string
+        }
+        Insert: {
+          id?:            string
+          athlete_id:     string
+          event_type:     'add_self' | 'add_other' | 'other_claimed'
+          result_id:      string
+          points:         number
+          revoke_reason?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['contribution_events']['Insert']>
         Relationships: []
       }
 

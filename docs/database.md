@@ -132,6 +132,11 @@ relay 成績的分項欄位由 CHECK constraint 強制為 null：`relay_splits_m
 | `total_seconds` | int | 完賽總時間（秒），排行榜排序主鍵 |
 | `claim_tag_count` | int | 反正規化快取，由 trigger 自動維護，排行榜直讀不 JOIN |
 | `is_public` | boolean | false = 私人，不上排行榜 |
+| `created_by` | uuid nullable | 新增此筆成績的使用者（auth.uid()）；null = 系統批次匯入或舊資料 |
+
+**觸發積分的 trigger**：
+- `results_on_insert_contribution`：results INSERT 後，若非 official 且有 created_by，插入 `add_self`(+1) 或 `add_other`(+3)
+- `results_on_claim_contribution`：results UPDATE claim_status → 'claimed' 時，若 created_by ≠ 認領者，插入 `other_claimed`(+2)
 
 **觸發器**：
 - `results_set_updated_at`：BEFORE UPDATE，更新 `updated_at`
@@ -149,7 +154,27 @@ relay 成績的分項欄位由 CHECK constraint 強制為 null：`relay_splits_m
 
 ---
 
-### 2.5 claim_tags（知情人標記）
+### 2.5 contribution_events（貢獻積分事件）
+
+**設計意圖**：流水帳式記錄每一次積分事件（新增自己、新增他人、被認領），刪除一筆即撤銷對應積分，由 trigger 自動維護 `athletes.contribution_score`。
+
+**重要欄位**：
+
+| 欄位 | 語意 |
+|------|------|
+| `athlete_id` | 得分者 |
+| `event_type` | `add_self`(+1) / `add_other`(+3) / `other_claimed`(+2) |
+| `result_id` | 觸發積分的成績 |
+| `points` | 積分值（正整數）|
+| `revoke_reason` | 管理員撤銷時填寫原因 |
+
+**RLS**：公開讀取；僅 admin 可 DELETE（撤銷積分）。
+
+**積分規則**：`source_credibility = 'official'` 的成績不觸發積分。已取得積分不因成績後續變更自動扣回；僅管理員可手動撤銷。
+
+---
+
+### 2.6 claim_tags（知情人標記）
 
 **設計意圖**：讓認識未認領選手的用戶標記「我已通知本人」，製造社群連結。
 
@@ -358,6 +383,8 @@ unclaimed ──────────→ pending
 | — | 20260607000002_results_insert_for_others.sql | results INSERT policy：已登入用戶可插入他人成績（athlete_id=null）| 004 |
 | — | 20260607000003_races_pending_review.sql | races.status 加入 `pending_review` 值域；新賽事預設 status='pending_review' | 003 |
 | — | 20260607000004_results_for_others_open_to_all.sql | DROP 000002 policy，改建 `authenticated` 角色通用 policy（移除 assistant 限制）| 000002 |
+| — | 20260613000001_results_created_by.sql | results 新增 `created_by uuid` 欄位，記錄成績新增者 | 004 |
+| — | 20260613000002_contribution_events.sql | contribution_events 表 + athletes.contribution_score + 三個 trigger | 002、004 |
 
 **新增 migration 時的命名規則**：`YYYYMMDDHHMMSS_description.sql`，確保時間戳唯一。
 

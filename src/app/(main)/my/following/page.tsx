@@ -64,15 +64,9 @@ export default async function FollowingPage() {
 
   return (
     <main className="flex-1 p-6 max-w-4xl mx-auto w-full">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-ink">關注名單</h1>
-        <p className="mt-0.5 text-sm text-ink-3">
-          你關注的選手 · 查看他們的最佳成績
-          {athleteList.length > 0 && (
-            <span className="ml-2 text-ink-4">（{athleteList.length} 位）</span>
-          )}
-        </p>
-      </div>
+      {athleteList.length > 0 && (
+        <p className="text-sm text-ink-3 mb-6">{athleteList.length} 位</p>
+      )}
 
       <FollowingClient athletes={athleteList} isLoggedIn={true} />
     </main>

@@ -80,6 +80,393 @@ decisions:
 
 ## 記錄
 
+### [2026-06-13] 「記錄」統一改為「成績」
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: [20]
+status: implemented
+decisions:
+  - id: D001
+    chapter: 20
+    content: "所有 UI 文字中「我的紀錄」改為「我的成績」、「新增記錄」改為「新增成績」，URL 路徑 /records 不動"
+    spec_impact: true
+    synced: false
+```
+
+**完成內容**：
+- `NavLinks.tsx`：`我的紀錄` → `我的成績`
+- `AvatarDropdown.tsx`：`我的紀錄` → `我的成績`
+- `PageContextStrip.tsx`：`我的紀錄`（/records、/my/results）→ `我的成績`；`新增記錄` → `新增成績`
+- `/records/page.tsx`：metadata title `我的紀錄` → `我的成績`
+- `/records/relay/[teamId]/edit/page.tsx`：`返回我的紀錄` → `返回我的成績`
+- `athletes/[id]/page.tsx`：section header `成績紀錄` → `成績`
+
+**異動檔案**：
+- `src/components/layout/NavLinks.tsx`
+- `src/components/layout/AvatarDropdown.tsx`
+- `src/components/layout/PageContextStrip.tsx`
+- `src/app/(main)/records/page.tsx`
+- `src/app/(main)/records/relay/[teamId]/edit/page.tsx`
+- `src/app/(main)/athletes/[id]/page.tsx`
+
+---
+
+### [2026-06-13] Nav 連結補齊與頁面主標清理
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: [20]
+status: implemented
+decisions:
+  - id: D001
+    chapter: 20
+    content: "Nav 加入「我的紀錄」(/records) 和「關注名單」(/my/following) 連結，僅登入後顯示"
+    spec_impact: true
+    synced: false
+  - id: D002
+    chapter: 20
+    content: "PageContextStrip 補 /my/following 條目；除最速榜外，有 PageContextStrip 的頁面移除 content 區的 <h1> 重複主標"
+    spec_impact: true
+    synced: false
+  - id: D003
+    chapter: 20
+    content: "/records 頁移除「+ 新增成績」與「+ 接力成績」按鈕，以及空狀態的「新增第一筆成績」連結"
+    spec_impact: true
+    synced: false
+```
+
+**完成內容**：
+- `NavLinks.tsx`：新增 `isLoggedIn` prop，登入後顯示「我的紀錄」`/records` 和「關注名單」`/my/following`
+- `Nav.tsx`：傳 `isLoggedIn={!!user}` 給 `<NavLinks />`
+- `PageContextStrip.tsx`：補齊 `/my/following`（title: '關注名單', sub: '你關注的選手 · 查看最佳成績'）
+- `/records/page.tsx`：移除 h1 標題列（含「+ 新增成績」「+ 接力成績」按鈕）、空狀態「新增第一筆成績」link；改以計數 `{totalCount} 筆成績` 替代
+- `/unclaimed/page.tsx`：移除 h1 主標，僅保留 PageContextStrip 的標題
+- `/rankings/page.tsx`：移除 h1「排行榜」，改以 `{distance} · {count} 筆成績` 小字
+- `/relay/page.tsx`：移除 h1 主標
+- `/my/following/page.tsx`：移除 h1，有資料時顯示 `{count} 位` 小字
+
+**技術決策**：
+- `NavLinks` 從 Server Component 改為接受 `isLoggedIn` prop 的 Client Component，Auth 狀態由 `Nav.tsx`（Server Component）向下傳遞，避免 Client Component 直接呼叫 Supabase
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | `/records` 頁面載入 | ✅ PASS | PageContextStrip 顯示「我的紀錄」，無 h1 重複 |
+| 2 | `/unclaimed` 頁面載入 | ✅ PASS | PageContextStrip 顯示「未認領成績」，無 h1 重複 |
+| 3 | `/my/following` 頁面載入 | ✅ PASS | PageContextStrip 顯示「關注名單」，無 h1 重複 |
+| 4 | Nav 登入後顯示「我的紀錄」「關注名單」| ✅ PASS | 已確認兩個連結出現在 Nav |
+
+**異動檔案**：
+- `src/components/layout/NavLinks.tsx`
+- `src/components/layout/Nav.tsx`
+- `src/components/layout/PageContextStrip.tsx`
+- `src/app/(main)/records/page.tsx`
+- `src/app/(main)/unclaimed/page.tsx`
+- `src/app/(main)/rankings/page.tsx`
+- `src/app/(main)/relay/page.tsx`
+- `src/app/(main)/my/following/page.tsx`
+
+---
+
+### [2026-06-13] 貢獻積分系統（spec §46）
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: [46]
+status: implemented
+decisions:
+  - id: D001
+    chapter: 46
+    content: "撤銷積分用 DELETE contribution_events，trigger 自動扣回，不需獨立 revoke API"
+    spec_impact: false
+    synced: false
+  - id: D002
+    chapter: 46
+    content: "other_claimed 由 results UPDATE trigger 觸發，不需修改 approve_claim function"
+    spec_impact: false
+    synced: false
+  - id: D003
+    chapter: 46
+    content: "claimedByMeCount 於個人頁即時計算（SELECT COUNT），不做反正規化快取，避免多一個 trigger"
+    spec_impact: false
+    synced: false
+```
+
+**完成內容**：
+- 新增 migration `20260613000002_contribution_events.sql`：
+  - `athletes.contribution_score INT NOT NULL DEFAULT 0`
+  - `contribution_events` 資料表（id / athlete_id / event_type / result_id / points / revoke_reason / created_at）
+  - RLS：公開讀取，admin 才能 DELETE
+  - `sync_contribution_score` trigger：INSERT 加分、DELETE 扣回（最低 0）
+  - `handle_result_contribution` trigger：results INSERT → `add_self`(+1) 或 `add_other`(+3)，官方成績跳過
+  - `handle_claim_contribution` trigger：results claim_status → 'claimed' → `other_claimed`(+2)，官方 / 自填者認領自己跳過
+  - Index `idx_contribution_events_athlete`
+- 更新 `src/types/database.ts`：
+  - `athletes.Row` 加 `contribution_score: number`
+  - 新增 `contribution_events` 完整型別
+- 更新 `src/app/(main)/athletes/[id]/page.tsx`：
+  - `athletes` 查詢新增 `contribution_score`
+  - 新增 `claimedByMeCount` 查詢
+  - Hero 區塊顯示貢獻值與「已幫 N 筆成績找到主人」（§46.6 顯示條件）
+- 更新 `docs/database.md`：2.5 節、migration 清單、觸發積分 trigger 說明
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | `npx tsc --noEmit` | ✅ PASS | 零錯誤 |
+| 2 | DB 直查 athletes.contribution_score | ✅ PASS | 欄位存在，default 0 正確 |
+| 3 | `/athletes/[自己]` Hero 顯示貢獻值 | ✅ PASS | isSelf 路徑：「貢獻值 0 分　已幫 0 筆成績找到主人」正確顯示 |
+| 4 | `/athletes/[他人]`（score=0）貢獻區塊隱藏 | ✅ PASS | 非自己且 0 分時區塊不渲染，符合 §46.6 |
+| 5 | console errors | ✅ PASS | 兩頁均無 JS 錯誤 |
+
+**待驗證**（trigger 路徑，需實際新增成績後核對 DB）：
+- ⚠️ 新增自己成績後確認 `add_self` (+1) 事件插入、contribution_score 更新
+- ⚠️ 幫他人新增成績後確認 `add_other` (+3) 事件插入
+- ⚠️ approve_claim 後確認 `other_claimed` (+2) 事件產生
+
+**異動檔案**：
+- `supabase/migrations/20260613000002_contribution_events.sql`
+- `src/types/database.ts`
+- `src/app/(main)/athletes/[id]/page.tsx`
+- `docs/database.md`
+
+---
+
+### [2026-06-13] results.created_by 欄位 + migration
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: []
+status: implemented
+decisions:
+  - id: D001
+    chapter: 0
+    content: "results 表新增 created_by 欄位，記錄新增該筆成績的使用者（auth.uid()），方便未來稽核與 admin 追蹤"
+    spec_impact: false
+    synced: false
+```
+
+**完成內容**：
+- 新增 migration `20260613000001_results_created_by.sql`：`results` 表加入 `created_by uuid REFERENCES athletes(id) ON DELETE SET NULL`
+- 更新 `src/types/database.ts`：`Row` 加 `created_by: string | null`，`Insert` 加 `created_by?: string | null`
+- 更新 `src/app/actions/results.ts`：三個 `results.insert()`（自己的 solo、幫他人 solo、relay）均帶入 `created_by: user.id`
+- 更新 `src/app/actions/official.ts`：官方成績 insert 帶入 `created_by: user.id`
+- 更新 `docs/database.md`：欄位說明表 + migration 清單
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | `npx tsc --noEmit` | ✅ PASS | 零錯誤 |
+
+**待驗證**（需 Supabase migration 執行後才能在 UI 測試）：
+- ⚠️ 新增成績後確認 `created_by` 有寫入
+
+**異動檔案**：
+- `supabase/migrations/20260613000001_results_created_by.sql`
+- `src/types/database.ts`
+- `src/app/actions/results.ts`
+- `src/app/actions/official.ts`
+- `docs/database.md`
+
+---
+
+### [2026-06-13] 規格調整：三 Tab 統一入口 + Nav 主連結 + 頁面清理
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: [20, 34]
+status: implemented
+decisions:
+  - id: D-UI-01
+    chapter: 20
+    content: "ResultEntryPage 加入第三個 Tab「幫他人新增」，?for=other 與 ?tab=other 皆導向此 Tab，不再有獨立版面"
+    spec_impact: true
+    synced: false
+  - id: D-UI-02
+    chapter: 34
+    content: "NavLinks 登入後顯示「我的紀錄」與「關注名單」主連結，Nav.tsx 傳入 isLoggedIn prop"
+    spec_impact: true
+    synced: false
+  - id: D-UI-03
+    chapter: 20
+    content: "/records 頁移除頁面內新增按鈕與空狀態連結，入口統一由 Nav +新增 下拉負責"
+    spec_impact: false
+    synced: false
+```
+
+**完成內容**：
+- `ResultEntryPage`：Tab 由兩個擴充為三個（個人成績 / 幫他人新增 / 接力成績）；`?for=other` 向後相容，導向 `other` Tab
+- `/records/new/page.tsx`：移除 `forOther` 獨立版面，統一走 `ResultEntryPage`；`defaultTab` 支援 `solo | other | relay`
+- `/records/page.tsx`：移除頁頭新增按鈕（`+ 新增成績` / `+ 接力成績`）與空狀態「新增第一筆成績」連結
+- `NavLinks.tsx`：新增 `isLoggedIn` prop；登入後在主選單顯示「我的紀錄」(`/records`) 與「關注名單」(`/my/following`)
+- `Nav.tsx`：傳入 `isLoggedIn={!!user}` 給 NavLinks
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | TypeScript 型別檢查 | ✅ PASS | 無錯誤 |
+| 2 | `/records/new` 三 Tab 顯示 | ✅ PASS | 截圖確認 |
+| 3 | Nav 顯示「我的紀錄」「關注名單」| ✅ PASS | 截圖確認（登入狀態）|
+| 4 | `/records` 無新增按鈕 | ✅ PASS | 截圖確認 |
+| 5 | `?for=other` 向後相容 | ⚠️ 待驗證 | 需瀏覽器點擊確認 Tab 預選正確 |
+
+**異動檔案**：
+- `src/components/results/ResultEntryPage.tsx`（修改）
+- `src/app/(main)/records/new/page.tsx`（修改）
+- `src/app/(main)/records/page.tsx`（修改）
+- `src/components/layout/NavLinks.tsx`（修改）
+- `src/components/layout/Nav.tsx`（修改）
+
+---
+
+### [2026-06-12] §20.11 統一成績新增入口（ResultEntryPage）
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: [20]
+status: implemented
+decisions:
+  - id: D-ENTRY-01
+    chapter: 20
+    content: "§20.11 新增成績入口統一為 /records/new，個人／接力以 Tab 切換；/records/relay/new 設 308 permanentRedirect 至 /records/new?tab=relay"
+    spec_impact: false
+    synced: false
+  - id: D-ENTRY-02
+    chapter: 20
+    content: "Tab 切換採雙表單同時 mount + CSS hidden 方案，確保切換 Tab 不重置 RaceEditionPicker 等已填欄位"
+    spec_impact: false
+    synced: false
+```
+
+**完成內容**：
+- `ResultEntryPage` Client Component（`src/components/results/ResultEntryPage.tsx`）
+  - 個人成績 / 接力成績 Tab，預設可由 `defaultTab` prop 控制
+  - 兩個表單同時 mount，inactive tab 以 `hidden` class 隱藏，切換不重置 state
+- `/records/new/page.tsx` 改用 `ResultEntryPage`，支援 `?tab=relay` query param 預選接力 Tab
+- `?for=other` 幫他人新增模式保留獨立版面（無 Tab，非統一入口）
+- `/records/relay/new/page.tsx` 改為 `permanentRedirect('/records/new?tab=relay')`（308）
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | TypeScript 型別檢查 | ✅ PASS | 無錯誤 |
+| 2 | `/records/new` 個人成績 Tab 渲染 | ✅ PASS | 表單正常顯示 |
+| 3 | 點擊接力成績 Tab | ✅ PASS | 切換後接力表單完整顯示 |
+| 4 | `/records/relay/new` 308 redirect | ✅ PASS | 已登入時導向 `/records/new?tab=relay` |
+
+**異動檔案**：
+- `src/components/results/ResultEntryPage.tsx`（新增）
+- `src/app/(main)/records/new/page.tsx`（修改）
+- `src/app/(main)/records/relay/new/page.tsx`（改為 permanentRedirect）
+
+---
+
+### [2026-06-12] 賽事清單台灣優先排序
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: [25]
+status: implemented
+decisions:
+  - id: D-RACESORT-01
+    chapter: 25
+    content: "RaceEditionPicker 下拉清單改為台灣優先排序：已知品牌（Challenge Taiwan / IRONMAN / 普悠瑪 / Force / 玩賽樂園）→ 其他台灣地區賽事 → 國外賽事"
+    spec_impact: true
+    synced: false
+  - id: D-RACESORT-02
+    chapter: 25
+    content: "台灣場次判斷目前用 heuristic（名稱含中文、含 Taiwan、city 含台灣城市）；暫不加 country 欄位，等賽事資料量增加後補"
+    spec_impact: false
+    synced: false
+```
+
+**完成內容**：
+- `RaceEditionPicker` 加入 `isTaiwanRace()` + `raceRank()` + `sortRaces()` 三個 helper
+- 排序優先順序：
+  1. Challenge Taiwan（名稱 ILIKE `challenge taiwan`）
+  2. IRONMAN 台灣場（IRONMAN + isTaiwanRace）
+  3. 普悠瑪
+  4. Force 系列（台灣場）
+  5. 玩賽樂園
+  6. 其他台灣地區賽事（含中文字、或 city 含台灣城市）
+  7. 國外賽事
+- `isTaiwanRace` 判斷邏輯：名稱含中文字 `/[一-鿿]/`、名稱含 "Taiwan"（不分大小寫）、或 `city` 欄位含台灣城市關鍵字
+- 排序在 mount 時執行一次（`setAllRaces(sortRaces(data))`），client-side，不影響 API
+
+**已知問題 ／ TODO**：
+- heuristic 判斷對「純英文名稱 + 未填 city」的台灣賽事會誤判為國外。長期解法：`races` 表加 `country` 欄位（ISO 3166-1 alpha-3），暫緩。
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | TypeScript 型別檢查 | ✅ PASS | 無錯誤 |
+| 2 | IRONMAN 非台灣場排至國外 | ⚠️ 待驗證 | 需有非台灣 IRONMAN 資料才能確認 |
+
+**異動檔案**：
+- `src/components/races/RaceEditionPicker.tsx`（新增 `isTaiwanRace` / `raceRank` / `sortRaces`）
+
+---
+
+### [2026-06-12] RaceEditionPicker 元件 + 相關 API
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: [25]
+status: implemented
+decisions:
+  - id: D-PICKER-01
+    chapter: 25
+    content: "§25.5 RaceEditionPicker 實作為獨立 Client Component，取代兩個表單的 select。新增 GET /api/races/search?q= 與 GET /api/races/:id/editions 兩支 API"
+    spec_impact: false
+    synced: false
+```
+
+**完成內容**：
+- `GET /api/races/search?q=` — ILIKE 搜尋 races 表，最多 8 筆
+- `GET /api/races/:id/editions` — 回傳依年份分組的 editions（含距離 tags）
+- `RaceEditionPicker` Client Component（`src/components/races/RaceEditionPicker.tsx`）
+  - Step 1：搜尋框，debounce 300ms，下拉最多 8 筆
+  - Step 2：年份清單，最新加「最新」badge，右側顯示距離 tags
+  - 已選狀態：chip 顯示「賽事名稱（YYYY）」，附「更改 / ✕」
+- `NewResultForm.tsx`、`NewRelayResultForm.tsx` 改用 RaceEditionPicker
+- 移除兩個表單中的舊 select + 距離選擇邏輯（呼叫 `/api/races` 的 useEffect 已移除）
+- 賽事清單依台灣優先順序排列：Challenge Taiwan → IRONMAN（台灣場）→ 普悠瑪 → Force → 玩賽樂園 → 其他台灣 → 國外
+
+**已知問題 ／ TODO**：
+- 台灣／國外判斷目前以名稱（含中文字、含 "Taiwan"）及 `city` 欄位做 heuristic。長期應在 `races` 表加 `country` 欄位（ISO 代碼）讓排序有明確依據。**暫緩，等賽事資料量增加後一併處理。**
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | TypeScript 型別檢查 | ✅ PASS | 無錯誤 |
+| 2 | Dev server 啟動 | ✅ PASS | 無 console 錯誤 |
+| 3 | /records/new 搜尋互動 | ⚠️ 待驗證 | 需登入帳號手動測試 |
+
+**異動檔案**：
+- `src/app/api/races/search/route.ts`（新增）
+- `src/app/api/races/[id]/editions/route.ts`（新增）
+- `src/components/races/RaceEditionPicker.tsx`（新增）
+- `src/components/results/NewResultForm.tsx`（修改）
+- `src/components/relay/NewRelayResultForm.tsx`（修改）
+
+---
+
 ### [2026-06-12] Email 驗證引導流程
 
 **狀態**：⚠️ 部分完成

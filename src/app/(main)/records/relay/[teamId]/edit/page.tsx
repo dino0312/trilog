@@ -42,7 +42,7 @@ export default async function RelayEditPage({ params }: { params: Promise<{ team
       <DeleteRelayForm teamId={teamId} teamName={team.team_name} />
 
       <div className="mt-4 text-center">
-        <a href="/records" className="text-sm text-ink-3 hover:text-ink transition">← 返回我的紀錄</a>
+        <a href="/records" className="text-sm text-ink-3 hover:text-ink transition">← 返回我的成績</a>
       </div>
     </main>
   )

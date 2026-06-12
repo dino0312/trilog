@@ -167,8 +167,10 @@ Supabase Auth 處理的流程（不需要自己實作）：
 
 | 路由 | 方法 | 授權 | 說明 |
 |------|------|------|------|
-| `/api/races` | GET | public | 列出賽事 |
+| `/api/races` | GET | public | 列出賽事（含 race_editions 全部欄位）|
 | `/api/races` | POST | assistant | 新增賽事 |
+| `/api/races/search` | GET | public | 搜尋賽事品牌（?q=，空或 * 回傳全部）|
+| `/api/races/:id/editions` | GET | public | 取得賽事所有屆次，依年份分組 |
 | `/api/races/:slug` | GET | public | 取得賽事詳情（含屆次列表）|
 | `/api/races/:slug` | PUT | assistant/editor | 更新賽事基本資料 |
 | `/api/races/:slug/editions` | GET | public | 列出所有屆次 |
@@ -176,6 +178,31 @@ Supabase Auth 處理的流程（不需要自己實作）：
 | `/api/races/:slug/editions/:year` | GET | public | 取得特定屆次（含天氣、成績分佈）|
 | `/api/races/:slug/editions/:year` | PUT | assistant/editor | 更新屆次資料 |
 | `/api/races/:slug/editions/:year/results` | POST | assistant | 批次匯入策展層成績 |
+
+### GET /api/races/search
+
+**Query params**：`q`（搜尋字串；空值或 `*` 回傳全部，否則 ILIKE `%q%`，limit 8）  
+**回傳**：`{ id, name, city }[]`，依 `name` 排序
+
+### GET /api/races/:id/editions
+
+**Path params**：`id`（race UUID）  
+**回傳**：依年份降冪分組的屆次陣列
+
+```json
+[
+  {
+    "year": 2025,
+    "race_date": "2025-10-12",
+    "editions": [
+      { "id": "uuid", "distance_category": "olympic" },
+      { "id": "uuid", "distance_category": "full" }
+    ]
+  }
+]
+```
+
+供 `RaceEditionPicker` Step 2 年份清單使用。
 
 ### POST /api/races/:slug/editions（新增屆次）
 

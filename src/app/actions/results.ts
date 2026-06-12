@@ -58,6 +58,7 @@ export async function createResult(_prev: ResultState, formData: FormData): Prom
       is_public:             isPublic,
       notes:                 notes || null,
       bib_number:            bibNumber,
+      created_by:            user.id,
     })
 
     if (error) return { error: error.message }
@@ -108,6 +109,7 @@ export async function createResult(_prev: ResultState, formData: FormData): Prom
     notes:                 notes || null,
     claimed_at:            new Date().toISOString(),
     bib_number:            bibNumber,
+    created_by:            user.id,
   })
 
   if (error) return { error: error.message }
@@ -239,7 +241,8 @@ export async function createRelayResult(_prev: ResultState, formData: FormData):
       total_seconds,
       is_public,
       notes,
-      claimed_at: new Date().toISOString(),
+      claimed_at:  new Date().toISOString(),
+      created_by:  user.id,
     })
     .select('id')
     .single()

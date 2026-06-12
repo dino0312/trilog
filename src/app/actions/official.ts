@@ -56,6 +56,7 @@ export async function addOfficialResult(
     t2_seconds:            parseTime(t2Str),
     run_seconds:           parseTime(runStr),
     overall_rank:          overallRank,
+    created_by:            user.id,
   })
 
   if (error) return { error: error.message, success: false }

@@ -8,9 +8,11 @@ const PAGE_CONTEXT: Record<string, { title: string; sub: string }> = {
   '/relay':       { title: '接力榜',     sub: '隊伍接力成績 · 跨賽事排列' },
   '/unclaimed':   { title: '未認領成績', sub: '搜尋你的名字，認領屬於你的成績' },
   '/races':       { title: '賽事資料庫', sub: '台灣鐵人三項賽事 · 路線 · 天氣 · 歷史成績' },
-  '/my/results':  { title: '我的紀錄',   sub: '個人成績歷史' },
-  '/records':     { title: '我的紀錄',   sub: '個人成績歷史' },
-  '/my/profile':  { title: '個人資料',   sub: '帳號設定與公開資訊' },
+  '/my/results':   { title: '我的成績',  sub: '個人成績歷史' },
+  '/records':      { title: '我的成績',  sub: '個人成績歷史' },
+  '/records/new':  { title: '新增成績',  sub: '個人成績 · 接力成績 · 幫他人新增' },
+  '/my/following': { title: '關注名單',  sub: '你關注的選手 · 查看最佳成績' },
+  '/my/profile':   { title: '個人資料',  sub: '帳號設定與公開資訊' },
   '/admin':       { title: '管理後台',   sub: '賽事資料 · 公證審核' },
 }
 
