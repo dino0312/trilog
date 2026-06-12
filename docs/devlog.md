@@ -121,7 +121,7 @@ decisions:
 - `src/components/auth/AuthModal.tsx`：emailSent 狀態抽出為 `ModalEmailSent`，寄出後隱藏底部完整頁面連結
 
 **已知問題 ／ TODO**：
-- ⚠️ Supabase Dashboard「Confirm email」是否開啟需手動確認（見 2026-06-10 devlog TODO）；若未開啟，`signUp` 後會直接建立 session，`email_confirmed_at` 非 null，banner 不會出現 — 行為正確但驗證信不會寄
+- ✅ Supabase Dashboard「Confirm email」已確認開啟（2026-06-12）
 - ⏳ 驗證成功後的 toast 通知（等全域 toast 元件實作後補，對應 Ch.28 `closed:success` 狀態）
 
 **驗證紀錄**：
