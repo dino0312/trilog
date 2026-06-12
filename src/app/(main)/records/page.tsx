@@ -34,7 +34,8 @@ export default async function RecordsPage() {
     `)
     .eq('athlete_id', user.id)
     .eq('result_type', 'solo')
-    .order('claimed_at', { ascending: false })
+    .order('race_editions(race_date)', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false })
 
   // relay：從 team_members 找出使用者參與的接力成績
   const { data: relayMembers } = await supabase
@@ -94,11 +95,18 @@ export default async function RecordsPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {results?.map(r => {
+          {results?.map((r, idx) => {
             const edition = r.race_editions as any
             const race = edition?.races as any
+            const year = edition?.year as number | undefined
+            const prevYear = idx > 0 ? (results[idx - 1].race_editions as any)?.year : null
+            const showYearHeader = (results.length ?? 0) >= 5 && year && year !== prevYear
             return (
-              <div key={r.id} className="rounded-xl border border-border bg-bg-card p-4">
+              <div key={r.id}>
+              {showYearHeader && (
+                <p className="text-xs font-semibold text-ink-4 uppercase tracking-widest mb-2 mt-1">{year}</p>
+              )}
+              <div className="rounded-xl border border-border bg-bg-card p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="font-semibold text-ink">
@@ -169,6 +177,7 @@ export default async function RecordsPage() {
                   </div>
                 )}
               </div>
+              </div>
             )
           })}
         </div>
@@ -187,8 +196,8 @@ export default async function RecordsPage() {
               if (!result) return null
 
               return (
+                <div key={member.id} className="relative">
                 <Link
-                  key={member.id}
                   href={`/teams/${team.id}`}
                   className="rounded-xl border border-border bg-bg-card p-4 hover:bg-bg-elev/30 transition block"
                 >
@@ -231,6 +240,13 @@ export default async function RecordsPage() {
                     </div>
                   </div>
                 </Link>
+                <Link
+                  href={`/records/relay/${team.id}/edit`}
+                  className="absolute top-3 right-3 text-xs text-ink-4 hover:text-ink px-2 py-1 rounded hover:bg-bg-elev transition"
+                >
+                  編輯
+                </Link>
+                </div>
               )
             })}
           </div>

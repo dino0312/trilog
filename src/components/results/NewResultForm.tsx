@@ -67,7 +67,7 @@ export function NewResultForm({ profileComplete, profile, forOther = false }: Pr
       const key = `${e.races?.id}__${e.year}`
       if (!seen.has(key)) {
         seen.add(key)
-        result.push({ key, label: `${e.races?.name} ${e.year}` })
+        result.push({ key, label: `${e.races?.name}（${e.year}）` })
       }
     }
     return result
@@ -156,6 +156,9 @@ export function NewResultForm({ profileComplete, profile, forOther = false }: Pr
           </div>
         </div>
       )}
+
+      {/* 號碼布 */}
+      <Input label="號碼布（選填）" id="bib_number" name="bib_number" placeholder="例：A123" />
 
       {/* 完賽時間 */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

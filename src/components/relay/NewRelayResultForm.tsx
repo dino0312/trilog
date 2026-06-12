@@ -62,7 +62,7 @@ export function NewRelayResultForm() {
       const key = `${e.races?.id}__${e.year}`
       if (!seen.has(key)) {
         seen.add(key)
-        result.push({ key, label: `${e.races?.name} ${e.year}` })
+        result.push({ key, label: `${e.races?.name}（${e.year}）` })
       }
     }
     return result

@@ -31,6 +31,7 @@ export async function createResult(_prev: ResultState, formData: FormData): Prom
   const isPublic      = formData.getAll('is_public').includes('true')
   const notes         = formData.get('notes') as string | null
   const forOther      = formData.get('for_other') === 'true'
+  const bibNumber     = (formData.get('bib_number') as string | null)?.trim() || null
 
   const totalSeconds = parseTime(totalStr)
   if (!totalSeconds || totalSeconds <= 0) return { error: '請輸入正確的完賽時間（HH:MM:SS）' }
@@ -56,6 +57,7 @@ export async function createResult(_prev: ResultState, formData: FormData): Prom
       run_seconds:           parseTime(runStr),
       is_public:             isPublic,
       notes:                 notes || null,
+      bib_number:            bibNumber,
     })
 
     if (error) return { error: error.message }
@@ -105,6 +107,7 @@ export async function createResult(_prev: ResultState, formData: FormData): Prom
     is_public:             isPublic,
     notes:                 notes || null,
     claimed_at:            new Date().toISOString(),
+    bib_number:            bibNumber,
   })
 
   if (error) return { error: error.message }
@@ -287,6 +290,35 @@ export async function createRelayResult(_prev: ResultState, formData: FormData):
       .update({ claim_status: 'claimed' })
       .eq('id', result.id)
   }
+
+  revalidatePath('/records')
+  redirect('/records')
+}
+
+export async function deleteRelayResult(_prev: ResultState, formData: FormData): Promise<ResultState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: '請先登入' }
+
+  const teamId = formData.get('team_id') as string
+
+  // 確認使用者是隊伍成員之一
+  const { data: member } = await supabase
+    .from('team_members')
+    .select('id')
+    .eq('team_id', teamId)
+    .eq('athlete_id', user.id)
+    .maybeSingle()
+
+  if (!member) return { error: '你不是此接力隊伍的成員' }
+
+  // 刪除 team_members（cascade 會刪 teams + results）
+  const { error } = await supabase
+    .from('teams')
+    .delete()
+    .eq('id', teamId)
+
+  if (error) return { error: error.message }
 
   revalidatePath('/records')
   redirect('/records')

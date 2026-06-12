@@ -79,7 +79,7 @@ export default async function AdminResultsPage({ searchParams }: { searchParams:
           <option value="">所有屆次</option>
           {(editions ?? []).map(e => (
             <option key={e.id} value={e.id}>
-              {(e.races as any)?.name} {e.year} · {DISTANCE_LABEL[e.distance_category]}
+              {(e.races as any)?.name}（{e.year}）· {DISTANCE_LABEL[e.distance_category]}
             </option>
           ))}
         </select>

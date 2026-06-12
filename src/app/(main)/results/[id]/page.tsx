@@ -111,6 +111,9 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
           <span className="text-xs text-ink-4">
             {CLAIM_LABEL[result.claim_status]}
           </span>
+          {result.bib_number && (
+            <span className="text-xs text-ink-4 font-mono">#{result.bib_number}</span>
+          )}
           {result.overall_rank && (
             <span className="text-xs text-ink-4">第 {result.overall_rank} 名</span>
           )}

@@ -80,6 +80,43 @@ decisions:
 
 ## 記錄
 
+### [2026-06-12] 接力未認領搜尋 + 最速標籤橘色調整
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: []
+status: implemented
+decisions:
+  - id: D001
+    chapter: 0
+    content: "未認領頁搜尋名字時，同時查詢 team_members 未認領隊員，以獨立「接力成績」區塊顯示，附「前往認領 →」連結至 /teams/:id"
+    spec_impact: true
+    synced: true
+  - id: D002
+    chapter: 0
+    content: "選手公開頁「最速」標籤改為橘色實心（#FF6B3D），與最速榜規範色一致"
+    spec_impact: false
+    synced: false
+```
+
+**完成內容**：
+- 未認領頁（`/unclaimed`）：搜尋有 `q` 時，額外查 `team_members` where `athlete_id IS NULL AND claim_status = 'unclaimed' AND athlete_name_snapshot ILIKE %q%`，結果顯示於個人成績下方獨立區塊
+- 「最速」標籤顏色從 `bg-accent`（薄荷綠）改為 `bg-[#FF6B3D]`（橘色）
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | 搜尋「吳玟達」顯示接力區塊 | ✅ PASS | 截圖確認，含賽事/隊名/項目/前往認領按鈕 |
+| 2 | 最速標籤橘色 | ✅ PASS | 截圖確認 |
+
+**異動檔案**：
+- `src/app/(main)/unclaimed/page.tsx`
+- `src/app/(main)/athletes/[id]/page.tsx`
+
+---
+
 ### [2026-06-12] 選手公開頁摘要優化 + 登入 Loading 指示
 
 **狀態**：✅ 完成
@@ -92,7 +129,7 @@ decisions:
     chapter: 0
     content: "選手公開頁成績摘要格改為三欄（226/113/51.5），移除 Sprint；成績明細中各距離最快記錄以 text-accent 橘色標示"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D002
     chapter: 0
     content: "Button 元件 loading 狀態改為 spinner SVG + 文字，AuthModal 登入成功時保持 loading 直到 modal 關閉"
@@ -195,6 +232,7 @@ decisions:
 
 ---
 
+
 ### [2026-06-11] 未成年選手 is_searchable 應用層強制
 
 **狀態**：✅ 完成
@@ -207,12 +245,12 @@ decisions:
     chapter: 31
     content: "birth_year 更新時同步計算 is_minor，未成年強制 is_searchable = false"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D002
     chapter: 31
     content: "成年後（>= 18）不自動恢復 is_searchable，尊重使用者自行關閉的設定"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D003
     chapter: 0
     content: "birth_year 分支提前 return，避免 Supabase .update() 不接受 Record<string, unknown> 的型別衝突"
@@ -246,12 +284,12 @@ decisions:
     chapter: 38
     content: "follower_count 用即時 COUNT，非快取欄位，效能在目前規模可接受"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D002
     chapter: 44
     content: "is_searchable 欄位尚未在 DB schema，search API 暫時省略此過濾條件，待 migration 補上後恢復"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D003
     chapter: 39
     content: "雙搜尋框：A 全站搜尋（API，debounce 300ms）+ B client-side 過濾已追蹤清單"
@@ -266,7 +304,7 @@ decisions:
     chapter: 44
     content: "停權或已刪除選手的公開頁 API 回傳 error 欄位，前端顯示對應狀態"
     spec_impact: true
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -332,12 +370,12 @@ decisions:
     chapter: 41
     content: "race_wishlist / race_attended intent 登入後自動完成標記，沿用 follow intent 的靜默失敗模式"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D002
     chapter: 41
     content: "首次登入（name 為空）導向 /my/profile 的邏輯，改為僅在無特定 intent 時觸發"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D003
     chapter: 0
     content: "重複標記由 unique constraint (athlete_id, race_id, year, interest_type) 自然去重，不額外擋錯誤訊息"
@@ -394,7 +432,7 @@ decisions:
     chapter: 40
     content: "被刪除帳號同步硬刪除 auth.users，被刪 email 可重新註冊"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D003
     chapter: 0
     content: "service role client 獨立檔案 lib/supabase/admin.ts，僅 import 進 server actions"
@@ -490,17 +528,17 @@ decisions:
     chapter: 41
     content: "天氣取賽事當天 06:00–12:00 均值（鐵人三項典型比賽時段），存 temp_c / humidity_pct / wind_speed_ms / wind_direction / precipitation_mm"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D002
     chapter: 41
     content: "座標設計：存在 races 表（非屆次），同一賽事場地通常固定，避免重複填寫"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D003
     chapter: 41
     content: "互動按鈕依年份顯示：未來只顯示「想參加」、過去只顯示「參加過」、當年兩者；用 visibility:hidden 保留欄位位置"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D004
     chapter: 41
     content: "Open-Meteo Historical Archive API 免費、無需 API Key"
@@ -557,12 +595,12 @@ decisions:
     chapter: 41
     content: "互動粒度定為年份層級 (race_id, year)，非距離層級；同年多距離通常選手只選一種參加"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D002
     chapter: 41
     content: "同年多距離在 /races 合併為一列（距離 tags），互動按鈕以年份為單位"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D003
     chapter: 0
     content: "樂觀計數：delta = state.active !== initialActive ? (state.active ? 1 : -1) : 0，只在狀態真正改變時調整"
@@ -633,7 +671,7 @@ decisions:
     chapter: 42
     content: "刪除前先查關聯成績數量，有成績則回傳錯誤，無成績才刪除（屆次因 CASCADE 自動刪除）"
     spec_impact: true
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -676,12 +714,12 @@ decisions:
     chapter: 23
     content: "卡片英雄區移除品牌標題，改以距離標籤為主視覺（fontSize 40），DISTANCE_LABEL mapping：full→226全距離、70.3→113半程、olympic→51.5奧林匹克"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D003
     chapter: 23
     content: "說明文字精簡為「個人最佳・跨賽事・僅供參考」，移除膠囊 badge"
     spec_impact: true
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -719,7 +757,7 @@ decisions:
     chapter: 23
     content: "啟用 113 半程（70.3）與 51.5 奧林匹克（olympic）Tab；25.75 衝刺（sprint）完全隱藏，待日後決定是否開放"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D002
     chapter: 0
     content: "DistanceTabs 新增 hidden 欄位，用 .filter(tab => !tab.hidden) 在 render 前過濾"
@@ -761,12 +799,12 @@ decisions:
     chapter: 40
     content: "MemberDetail popup 新增編輯模式，可編輯真實姓名、暱稱、性別、出生年份、國籍、自我介紹"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D002
     chapter: 40
     content: "出生年份驗證範圍 1930–2010；空字串自動轉 null"
     spec_impact: true
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -807,7 +845,7 @@ decisions:
     chapter: 40
     content: "刪除帳號時 claimed 成績改為 unlinked"
     spec_impact: true
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -887,17 +925,17 @@ decisions:
     chapter: 38
     content: "follower_count / following_count 快取欄位不實作，改為即時 COUNT"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D002
     chapter: 38
     content: "手機版最速榜追蹤欄隱藏（display: none via CSS class tlb-follow，≤600px）"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D003
     chapter: 38
     content: "Auth Modal follow intent：登入後靜默失敗，使用者可再點一次"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D004
     chapter: 38
     content: "Optimistic update：點擊即切換 UI，API 失敗再回滾"
@@ -961,7 +999,7 @@ decisions:
     chapter: 42
     content: "新賽事預設 status = pending_review；approveRace → active；rejectRace → delete（需先確認無關聯屆次）"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D002
     chapter: 42
     content: "疑似重複偵測在 server render 時做（非即時），比較正規化後名稱是否互相包含（長度 ≥ 4 字元）"
@@ -1001,7 +1039,7 @@ decisions:
     chapter: 34
     content: "Nav + 按鈕改為 AddDropdown，三個選項：自己的成績、他人成績（所有登入用戶）、新增賽事（assistant+，分隔線區分）"
     spec_impact: true
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -1034,7 +1072,7 @@ decisions:
     chapter: 34
     content: "幫他人新增成績開放所有已登入用戶，移除 assistant+ 限制；角色限制僅保留在「新增賽事」"
     spec_impact: true
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -1065,7 +1103,7 @@ decisions:
     chapter: 34
     content: "?for=other 路徑（非 ?for=friend）；with athlete_id=null / claim_status=unclaimed / athlete_name_snapshot 插入"
     spec_impact: true
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -1172,7 +1210,7 @@ decisions:
     chapter: 31
     content: "/my/results redirect → /records；/profile → /my/profile"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D002
     chapter: 30
     content: "AvatarDropdown 含「我的紀錄 / 個人資料 / 管理後台 / 登出」"
