@@ -13,7 +13,7 @@ const DISTANCE_LABEL: Record<string, string> = {
   sprint: 'Sprint', olympic: '51.5', '70.3': '113', full: '226',
 }
 const CREDIBILITY_LABEL: Record<string, string> = {
-  official: '官方成績', certificate: '已公證', self_reported: '自填',
+  official: '官方成績', self_reported: '自填',
 }
 const CLAIM_LABEL: Record<string, string> = {
   unclaimed: '未認領', pending: '審核中', claimed: '已認領', unlinked: '已解除關聯',
@@ -102,11 +102,9 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
         </div>
         <div className="flex items-center gap-3 mt-2">
           <span className={`text-xs px-2 py-0.5 rounded-full border ${
-            result.source_credibility === 'official' ? 'border-accent/40 text-accent' :
-            result.source_credibility === 'certificate' ? 'border-good/40 text-good' :
-            'border-border text-ink-4'
+            result.source_credibility === 'official' ? 'border-accent/40 text-accent' : 'border-border text-ink-4'
           }`}>
-            {CREDIBILITY_LABEL[result.source_credibility]}
+            {CREDIBILITY_LABEL[result.source_credibility] ?? '自填'}
           </span>
           <span className="text-xs text-ink-4">
             {CLAIM_LABEL[result.claim_status]}

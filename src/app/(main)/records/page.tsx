@@ -14,7 +14,7 @@ const DISTANCE_LABEL: Record<string, string> = {
 }
 
 const CREDIBILITY_LABEL: Record<string, string> = {
-  self_reported: '自填', certificate: '公證', official: '官方',
+  self_reported: '自填', official: '官方',
 }
 
 export default async function RecordsPage() {
@@ -115,7 +115,7 @@ export default async function RecordsPage() {
                     </p>
                     <p className="text-xs text-ink-4 mt-0.5">
                       {race?.city} · {DISTANCE_LABEL[edition?.distance_category] ?? edition?.distance_category}
-                      {' · '}{CREDIBILITY_LABEL[r.source_credibility]}
+                      {' · '}{CREDIBILITY_LABEL[r.source_credibility] ?? '自填'}
                       {!r.is_public && ' · 私人'}
                     </p>
                   </div>

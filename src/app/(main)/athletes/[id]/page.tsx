@@ -13,7 +13,7 @@ const DIST_ORDER = ['full', '70.3', 'olympic', 'sprint']
 const DIST_SUMMARY = ['full', '70.3', 'olympic'] // 摘要只顯示 226 / 113 / 51.5
 
 const CREDIBILITY_LABEL: Record<string, string> = {
-  official: '官方成績', certificate: '已公證', self_reported: '自填',
+  official: '官方成績', self_reported: '自填',
 }
 
 const GENDER_LABEL: Record<string, string> = {
@@ -288,9 +288,9 @@ export default async function AthletePublicPage({ params }: Props) {
                         未認領
                       </span>
                     )}
-                    {r.source_credibility && r.source_credibility !== 'official' && (
+                    {r.source_credibility === 'self_reported' && (
                       <span className="text-xs px-1.5 py-0.5 rounded border border-border text-ink-4">
-                        {CREDIBILITY_LABEL[r.source_credibility]}
+                        自填
                       </span>
                     )}
                     {isSelf && !r.is_public && (

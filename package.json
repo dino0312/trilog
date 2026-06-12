@@ -1,13 +1,14 @@
 {
   "name": "trilog",
-  "version": "0.2.1",
+  "version": "0.2.002",
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "if [ \"$VERCEL\" = \"1\" ]; then node scripts/bump-minor.mjs; fi",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "version:patch": "npm version patch --no-git-tag-version",
+    "version:patch": "node scripts/bump-patch.mjs",
     "version:minor": "npm version minor --no-git-tag-version",
     "version:major": "npm version major --no-git-tag-version"
   },

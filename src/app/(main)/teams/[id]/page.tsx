@@ -102,12 +102,9 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
           </span>
           {result && (
             <span className={`text-xs px-2 py-0.5 rounded-full border ${
-              result.source_credibility === 'official' ? 'border-accent/40 text-accent' :
-              result.source_credibility === 'certificate' ? 'border-good/40 text-good' :
-              'border-border text-ink-4'
+              result.source_credibility === 'official' ? 'border-accent/40 text-accent' : 'border-border text-ink-4'
             }`}>
-              {result.source_credibility === 'official' ? '官方成績' :
-               result.source_credibility === 'certificate' ? '已公證' : '自填'}
+              {result.source_credibility === 'official' ? '官方成績' : '自填'}
             </span>
           )}
         </div>
