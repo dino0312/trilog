@@ -1,6 +1,6 @@
 {
   "name": "trilog",
-  "version": "0.2.007",
+  "version": "0.3.001",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "version:patch": "node scripts/bump-patch.mjs",
-    "version:minor": "npm version minor --no-git-tag-version",
-    "version:major": "npm version major --no-git-tag-version"
+    "version:minor": "node scripts/bump-minor.mjs",
+    "version:major": "node scripts/bump-major.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
