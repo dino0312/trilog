@@ -15,8 +15,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <AdminTabs />
       {children}
       <footer className="mt-auto px-6 py-3 text-right">
-        <span className="text-xs font-mono text-ink-4">
-          {process.env.NEXT_PUBLIC_GIT_HASH ?? 'dev'}
+        <span className="text-xs font-mono text-ink-4 select-none">
+          v{process.env.NEXT_PUBLIC_APP_VERSION ?? '?'} · {process.env.NEXT_PUBLIC_GIT_HASH ?? 'dev'}
         </span>
       </footer>
     </div>
