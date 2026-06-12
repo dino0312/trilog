@@ -15,6 +15,8 @@ export type Json =
 // ── Enum-like types ──────────────────────────────────────────
 
 export type Role               = 'athlete' | 'assistant' | 'admin'
+export type IssueCategory      = 'add_race' | 'result_error' | 'other'
+export type IssueStatus        = 'unread' | 'read' | 'resolved' | 'dismissed'
 export type RaceStatus         = 'active' | 'inactive' | 'cancelled' | 'pending_review'
 export type DistanceCategory   = 'sprint' | 'olympic' | '70.3' | 'full'
 export type WeatherSource      = 'open-meteo' | 'visual-crossing' | 'manual'
@@ -358,6 +360,39 @@ export type Database = {
           granted_by?: string | null
         }
         Update: Partial<Database['public']['Tables']['race_editors']['Insert']>
+        Relationships: []
+      }
+
+      // ── issue_reports ────────────────────────────────────
+      issue_reports: {
+        Row: {
+          id:              string
+          category:        IssueCategory
+          message:         string
+          submitted_by:    string | null
+          submitter_email: string | null
+          context_url:     string | null
+          context_data:    Record<string, unknown> | null
+          status:          IssueStatus
+          resolved_by:     string | null
+          resolved_at:     string | null
+          admin_note:      string | null
+          created_at:      string
+        }
+        Insert: {
+          id?:              string
+          category:         IssueCategory
+          message:          string
+          submitted_by?:    string | null
+          submitter_email?: string | null
+          context_url?:     string | null
+          context_data?:    Record<string, unknown> | null
+          status?:          IssueStatus
+          resolved_by?:     string | null
+          resolved_at?:     string | null
+          admin_note?:      string | null
+        }
+        Update: Partial<Database['public']['Tables']['issue_reports']['Insert']>
         Relationships: []
       }
 

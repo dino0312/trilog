@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { RaceInterestButtons } from '@/components/races/RaceInterestButtons'
 import { EditionResultsSection } from '@/components/races/EditionResultsSection'
+import { RaceReportButton } from '@/components/reports/RaceReportButton'
 
 const DISTANCE_LABEL: Record<string, string> = {
   sprint: 'Sprint', olympic: '51.5', '70.3': '113', full: '226',
@@ -307,6 +308,10 @@ export default async function EditionPage({
       </div>
 
       {/* ④ 成績列表 */}
+      <div className="mt-2 mb-4 text-center">
+        <RaceReportButton raceId={race.id} />
+      </div>
+
       <EditionResultsSection
         results={editionResults}
         currentUserId={user?.id ?? null}

@@ -10,6 +10,7 @@ const DIST_LABEL: Record<string, string> = {
   full: '226', '70.3': '113', olympic: '51.5', sprint: 'Sprint',
 }
 const DIST_ORDER = ['full', '70.3', 'olympic', 'sprint']
+const DIST_SUMMARY = ['full', '70.3', 'olympic'] // 摘要只顯示 226 / 113 / 51.5
 
 const CREDIBILITY_LABEL: Record<string, string> = {
   official: '官方成績', certificate: '已公證', self_reported: '自填',
@@ -230,8 +231,8 @@ export default async function AthletePublicPage({ params }: Props) {
       </div>
 
       {/* ② 成績摘要 */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
-        {DIST_ORDER.map(dist => (
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        {DIST_SUMMARY.map(dist => (
           <div key={dist} className="rounded-xl border border-border bg-bg-card p-4 text-center">
             <p className="text-xs text-ink-4 mb-1">{DIST_LABEL[dist]}</p>
             <p className="font-mono text-sm font-medium text-ink tabular-nums">
@@ -300,10 +301,21 @@ export default async function AthletePublicPage({ params }: Props) {
                   </div>
                 </div>
 
-                {/* 時間 */}
-                <p className="font-mono text-sm font-medium text-accent tabular-nums flex-shrink-0">
-                  {secondsToTime(r.total_seconds)}
-                </p>
+                {/* 時間：該距離最快用橘色標示 + 最速徽章 */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {r.distance_category && bests[r.distance_category] === r.total_seconds && (
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-[#FF6B3D] text-white font-medium">
+                      最速
+                    </span>
+                  )}
+                  <p className={`font-mono text-sm font-medium tabular-nums ${
+                    r.distance_category && bests[r.distance_category] === r.total_seconds
+                      ? 'text-accent'
+                      : 'text-ink'
+                  }`}>
+                    {secondsToTime(r.total_seconds)}
+                  </p>
+                </div>
               </div>
             ))}
           </div>

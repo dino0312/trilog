@@ -40,7 +40,7 @@ function InterestButton({
     return (
       <button
         type="button"
-        onClick={() => open(type === 'wishlist' ? 'race_wishlist' : 'race_attended')}
+        onClick={() => open(type === 'wishlist' ? 'race_wishlist' : 'race_attended', { raceId, year })}
         className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border border-border text-ink-4 hover:border-border-strong hover:text-ink-3 transition"
       >
         <span>{label}</span>

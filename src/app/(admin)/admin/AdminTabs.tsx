@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 
 const TABS = [
   { href: '/admin',                label: '審核中心' },
+  { href: '/admin/reports',        label: '問題回報' },
   { href: '/admin/races',          label: '賽事管理' },
   { href: '/admin/races/review',   label: '賽事審核' },
   { href: '/admin/results',        label: '官方成績' },

@@ -19,13 +19,14 @@ const DISTANCE_ORDER: Record<string, number> = {
 
 /* DB series → 顯示群組 key（IRONMAN_TAIWAN / IRONMAN_70_3 合併為 IRONMAN）*/
 const SERIES_GROUP: Record<string, string> = {
-  IRONMAN_TAIWAN: 'IRONMAN',
-  IRONMAN_70_3:   'IRONMAN',
-  CHALLENGE:      'CHALLENGE',
-  PUYUMA:         'PUYUMA',
-  CTTA_NATIONALS: 'CTTA_NATIONALS',
-  FORCE:          'FORCE',
-  LOCAL_EVENT:    'LOCAL_EVENT',
+  IRONMAN_TAIWAN:  'IRONMAN',
+  IRONMAN_70_3:    'IRONMAN',
+  CHALLENGE:       'CHALLENGE',
+  PUYUMA:          'PUYUMA',
+  WANSAILEYUAN:    'WANSAILEYUAN',
+  CTTA_NATIONALS:  'CTTA_NATIONALS',
+  FORCE:           'FORCE',
+  LOCAL_EVENT:     'LOCAL_EVENT',
 }
 
 /* 群組顯示名稱 */
@@ -33,6 +34,7 @@ const GROUP_LABEL: Record<string, string> = {
   IRONMAN:        'IRONMAN',
   CHALLENGE:      'Challenge',
   PUYUMA:         '普悠瑪',
+  WANSAILEYUAN:   '玩賽樂園',
   CTTA_NATIONALS: '全國錦標賽',
   FORCE:          'FORCE',
   LOCAL_EVENT:    '地方賽事',
@@ -42,6 +44,7 @@ const GROUP_COLOR: Record<string, string> = {
   IRONMAN:        'border-[#FF6B3D]/40 text-[#FF6B3D]',
   CHALLENGE:      'border-[#22C9C9]/40 text-[#22C9C9]',
   PUYUMA:         'border-[#A8E063]/40 text-[#A8E063]',
+  WANSAILEYUAN:   'border-[#C084FC]/40 text-[#C084FC]',
   CTTA_NATIONALS: 'border-border-strong text-ink-3',
   FORCE:          'border-[#F5C842]/40 text-[#F5C842]',
   LOCAL_EVENT:    'border-border-strong text-ink-4',
@@ -121,7 +124,7 @@ export default async function RacesPage() {
 
   // 依群組分組（IRONMAN_TAIWAN + IRONMAN_70_3 → IRONMAN）
   const groups: Record<string, typeof enriched> = {}
-  const ORDER = ['CHALLENGE', 'IRONMAN', 'PUYUMA', 'FORCE', 'CTTA_NATIONALS', 'LOCAL_EVENT']
+  const ORDER = ['CHALLENGE', 'IRONMAN', 'PUYUMA', 'FORCE', 'CTTA_NATIONALS', 'LOCAL_EVENT', 'WANSAILEYUAN']
   for (const race of enriched) {
     const key = SERIES_GROUP[race.series ?? ''] ?? 'LOCAL_EVENT'
     if (!groups[key]) groups[key] = []
@@ -136,8 +139,8 @@ export default async function RacesPage() {
   // 各群組內：台灣（country = 'TW'）優先，其次依名稱排
   for (const key of sortedKeys) {
     groups[key].sort((a, b) => {
-      const aTW = a.country === 'TW' ? 0 : 1
-      const bTW = b.country === 'TW' ? 0 : 1
+      const aTW = a.country === 'TWN' ? 0 : 1
+      const bTW = b.country === 'TWN' ? 0 : 1
       if (aTW !== bTW) return aTW - bTW
       return (a.name_zh ?? a.name).localeCompare(b.name_zh ?? b.name, 'zh-Hant')
     })
@@ -249,11 +252,6 @@ export default async function RacesPage() {
             </div>
           </section>
         ))}
-      </div>
-
-      {/* Phase 2 預告 */}
-      <div className="mt-10 rounded-xl border border-dashed border-border p-6 text-center">
-        <p className="text-sm text-ink-4">路線資訊、天氣資料、歷屆成績分佈 — 即將推出</p>
       </div>
 
     </main>

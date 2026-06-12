@@ -320,10 +320,10 @@ export function MemberDetail({ member, onClose, onUpdate }: Props) {
             <div className="flex gap-2">
               <button onClick={handleSuspend} disabled={saving}
                 className="flex-1 py-2 rounded-lg bg-orange-400 text-bg text-sm font-medium hover:bg-orange-300 transition disabled:opacity-50">
-                確認停權
+                {saving ? '處理中…' : '確認停權'}
               </button>
-              <button onClick={() => { setMode('view'); setError(null) }}
-                className="px-4 py-2 rounded-lg border border-border text-ink-3 text-sm hover:text-ink transition">
+              <button onClick={() => { setMode('view'); setError(null) }} disabled={saving}
+                className="px-4 py-2 rounded-lg border border-border text-ink-3 text-sm hover:text-ink transition disabled:opacity-40">
                 取消
               </button>
             </div>
@@ -345,10 +345,10 @@ export function MemberDetail({ member, onClose, onUpdate }: Props) {
             <div className="flex gap-2">
               <button onClick={handleDelete} disabled={saving || deleteConfirm !== member.email}
                 className="flex-1 py-2 rounded-lg bg-run text-white text-sm font-medium hover:bg-run/80 transition disabled:opacity-40">
-                確認刪除
+                {saving ? '刪除中…' : '確認刪除'}
               </button>
-              <button onClick={() => { setMode('view'); setDeleteConfirm(''); setError(null) }}
-                className="px-4 py-2 rounded-lg border border-border text-ink-3 text-sm hover:text-ink transition">
+              <button onClick={() => { setMode('view'); setDeleteConfirm(''); setError(null) }} disabled={saving}
+                className="px-4 py-2 rounded-lg border border-border text-ink-3 text-sm hover:text-ink transition disabled:opacity-40">
                 取消
               </button>
             </div>

@@ -49,6 +49,60 @@ export default async function UnclaimedPage({ searchParams }: { searchParams: Se
     return list
   })()
 
+  // 搜尋名字時，同時查未認領的接力隊員
+  let relayMembers: Array<{
+    id: string
+    athlete_name_snapshot: string
+    disciplines: string[]
+    split_seconds: number | null
+    team_id: string
+    team_name: string | null
+    race_name: string | null
+    year: number | null
+    distance_category: string | null
+  }> = []
+  if (q) {
+    const { data: rawRelay } = await supabase
+      .from('team_members')
+      .select(`
+        id, athlete_name_snapshot, disciplines, split_seconds,
+        teams (
+          id, team_name,
+          results (
+            race_editions (
+              year, distance_category,
+              races ( name )
+            )
+          )
+        )
+      `)
+      .is('athlete_id', null)
+      .eq('claim_status', 'unclaimed')
+      .ilike('athlete_name_snapshot', `%${q}%`)
+      .limit(50)
+    relayMembers = (rawRelay ?? []).map(m => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const team    = m.teams as any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res     = team?.results as any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const edition = res?.race_editions as any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const race    = edition?.races as any
+      return {
+        id:                   m.id,
+        athlete_name_snapshot: m.athlete_name_snapshot,
+        disciplines:           m.disciplines as string[],
+        split_seconds:         m.split_seconds as number | null,
+        team_id:               team?.id as string,
+        team_name:             team?.team_name as string | null,
+        race_name:             race?.name as string | null,
+        year:                  edition?.year as number | null,
+        distance_category:     edition?.distance_category as string | null,
+      }
+    })
+  }
+
   // 已登入者：取出 name + 已標記的 result_id
   let myTaggedIds = new Set<string>()
   let myName = ''
@@ -153,6 +207,52 @@ export default async function UnclaimedPage({ searchParams }: { searchParams: Se
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* 未認領接力隊員（僅在搜尋名字時顯示） */}
+      {relayMembers.length > 0 && (
+        <div className="mt-6">
+          <h2 className="text-sm font-semibold text-ink-3 mb-3">接力成績</h2>
+          <div className="flex flex-col gap-3">
+            {relayMembers.map(m => (
+              <div key={m.id} className="rounded-xl border border-border bg-bg-card p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <span className="font-semibold text-ink">{m.athlete_name_snapshot}</span>
+                    <p className="text-xs text-ink-4 mt-0.5">
+                      {m.race_name} {m.year}
+                      {m.distance_category && ` · ${DISTANCE_LABEL[m.distance_category] ?? m.distance_category}`}
+                      {' · '}{m.team_name ?? '未命名隊伍'}
+                      {' · 接力'}
+                    </p>
+                    <div className="flex gap-1.5 mt-1.5 flex-wrap">
+                      {m.disciplines.map(d => (
+                        <span key={d} className={`text-xs px-1.5 py-0.5 rounded border ${
+                          d === 'swim' ? 'border-swim/40 text-swim' :
+                          d === 'bike' ? 'border-bike/40 text-bike' :
+                          'border-run/40 text-run'
+                        }`}>
+                          {d === 'swim' ? '游泳' : d === 'bike' ? '自行車' : '跑步'}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    {m.split_seconds != null && (
+                      <span className="font-mono text-sm text-ink">{secondsToTime(m.split_seconds)}</span>
+                    )}
+                    <Link
+                      href={`/teams/${m.team_id}`}
+                      className="text-xs px-3 py-1.5 rounded-lg border border-accent/40 text-accent hover:bg-accent/10 transition"
+                    >
+                      前往認領 →
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

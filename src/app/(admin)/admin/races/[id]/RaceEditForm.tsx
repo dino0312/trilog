@@ -7,11 +7,24 @@ import { Button } from '@/components/ui/Button'
 
 const initial: RaceActionState = { error: null, success: false }
 
+const SERIES_OPTIONS = [
+  { value: '',               label: '（未分類）' },
+  { value: 'CHALLENGE',      label: 'Challenge' },
+  { value: 'IRONMAN_TAIWAN', label: 'IRONMAN Taiwan' },
+  { value: 'IRONMAN_70_3',   label: 'IRONMAN 70.3' },
+  { value: 'PUYUMA',         label: '普悠瑪' },
+  { value: 'WANSAILEYUAN',   label: '玩賽樂園' },
+  { value: 'FORCE',          label: 'FORCE' },
+  { value: 'CTTA_NATIONALS', label: '全國錦標賽' },
+  { value: 'LOCAL_EVENT',    label: '地方賽事' },
+]
+
 type Race = {
   id: string
   name: string
   slug: string
   status: string
+  series: string | null
   country: string | null
   city: string | null
   organizer: string | null
@@ -49,6 +62,20 @@ export function RaceEditForm({ race }: { race: Race }) {
             <option value="cancelled">已取消</option>
           </select>
         </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="re-series" className="text-sm font-medium text-ink-2">系列分類</label>
+        <select
+          id="re-series"
+          name="series"
+          defaultValue={race.series ?? ''}
+          className="w-full rounded-lg border border-border-strong bg-bg-elev px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+        >
+          {SERIES_OPTIONS.map(o => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

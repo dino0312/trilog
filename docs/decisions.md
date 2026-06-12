@@ -314,3 +314,46 @@
 | 15 | Slug 上線後不改（或要設 redirect）| 已分享連結失效 |
 | 16 | `leaderboard_entries` view 保留 nickname 過濾 | 匿名成績進榜，公信力受損 |
 | 17 | 新增 token 時 `:root {}` 和 `@theme inline {}` 同時更新 | Tailwind class 或 CSS 變數失效 |
+| 18 | 規格變更時 `trilog_spec.json` 的 `meta.version` 和 `revision_history` 必須同步更新 | 版本混亂，無法追蹤變更歷史 |
+
+---
+
+## ADR-020：產品規格書格式從 docx 改為 JSON
+
+**狀態**：🟢 Accepted（2026-06-12）
+
+**背景**：規格書原以 `trilog_spec_vXX.docx` 格式維護在 Claude.ai project。docx 格式有三個痛點：(1) 每次更新需要 unpack XML → 修改 → repack，token 消耗高；(2) 無法 diff 追蹤變更；(3) Claude Code 無法直接讀取。
+
+**決策**：產出 `trilog_spec.json` 作為主要規格書格式，同時保留最後一份 `trilog_spec_v46.docx` 供存檔。未來所有規格變更直接修改 `trilog_spec.json`。
+
+**JSON Schema 結構**：
+```json
+{
+  "meta": { "version", "date", "product", "url", "format_version" },
+  "revision_history": [...],
+  "_index": { "chapter_id": "title" },
+  "chapters": [
+    {
+      "id": "44",
+      "title": "...",
+      "sections": [
+        {
+          "id": "44.2",
+          "title": "...",
+          "content": "...",
+          "tables": [...],
+          "bullets": [...]
+        }
+      ]
+    }
+  ]
+}
+```
+
+**工作分工**：
+- Claude.ai：維護 `trilog_spec.json` 與 `docs/features.md`，規格討論確認後同步輸出
+- Claude Code：維護 `docs/devlog.md`，不修改 `trilog_spec.json` 與 `features.md`
+
+**不可改動的規則**：
+- 更新規格時必須同步更新 `meta.version`（格式：`vX.Y`）與 `revision_history`
+- Claude Code 不直接修改 `trilog_spec.json`，如發現規格與實作有出入，記錄在 `devlog.md`，由 Claude.ai 確認後更新

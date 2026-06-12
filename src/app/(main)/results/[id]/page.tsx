@@ -5,6 +5,7 @@ import { secondsToTime } from '@/lib/utils/time'
 import { ClaimButton } from '@/components/claims/ClaimButton'
 import { TagButton } from '@/components/claims/TagButton'
 import { FollowButton } from '@/components/athletes/FollowButton'
+import { ResultReportButton } from '@/components/reports/ResultReportButton'
 
 export const metadata: Metadata = { title: '成績詳情 · Tri·log' }
 
@@ -199,6 +200,10 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
           <p className="text-sm text-ink-3">{result.notes}</p>
         </div>
       )}
+
+      <div className="mt-6 text-center">
+        <ResultReportButton resultId={result.id} />
+      </div>
     </main>
   )
 }

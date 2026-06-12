@@ -19,7 +19,7 @@ export default async function RaceDetailPage({ params }: { params: Promise<{ id:
 
   const { data: race } = await supabase
     .from('races')
-    .select('id, name, slug, status, country, city, organizer, website, lat, lng')
+    .select('id, name, slug, status, series, country, city, organizer, website, lat, lng')
     .eq('id', id)
     .single()
 

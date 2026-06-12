@@ -18,9 +18,14 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
   const supabase = await createClient()
   const { error } = await supabase.auth.signUp({ email, password })
 
-  if (error) return { error: error.message }
+  if (error) {
+    const msg = error.message
+    if (!msg || msg === '{}' || msg.startsWith('{')) return { error: '此 Email 已被註冊，請直接登入' }
+    if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) return { error: '此 Email 已被註冊，請直接登入' }
+    return { error: msg }
+  }
 
-  redirect('/leaderboard')
+  redirect('/my/profile')
 }
 
 export async function signIn(_prev: AuthState, formData: FormData): Promise<AuthState> {

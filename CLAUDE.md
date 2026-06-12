@@ -23,7 +23,7 @@ Tri·log 是鐵人三項選手的**跨賽事成績記錄與排行榜平台**。
 | 系統架構圖、資料流 | `docs/architecture.md` |
 | UI 功能規格、頁面行為 | `docs/features.md` |
 | 實作進度、已知問題、技術決策 | `docs/devlog.md` |
-| 產品規格書（完整版，含決策背景）| `trilog_spec_v*.docx`（Claude.ai project）|
+| 產品規格書（完整版，含決策背景）| `trilog_spec.json`（Claude.ai project 同步輸出）|
 
 ---
 
@@ -216,12 +216,13 @@ npm run lint         ESLint
 | `src/types/database.ts` | `docs/database.md`（型別欄位）、`docs/api.md`（回傳格式）|
 | 新增/修改 Route Group 或 middleware | `docs/architecture.md`、`CLAUDE.md` |
 | `package.json` 新增依賴 | `docs/decisions.md`（若有新決策）、`CLAUDE.md`（第 3 節）|
-| Admin 功能新增或修改 | `docs/devlog.md` |
-| 角色權限規則變動 | `docs/domain.md`（第 9 節角色矩陣）+ `docs/devlog.md` |
+| UI 流程、Nav、頁面行為有變動 | `docs/devlog.md`（spec-sync 區塊，見第 14 節）|
+| Admin 功能新增或修改 | `docs/devlog.md`（spec-sync 區塊）|
+| 角色權限規則變動 | `docs/domain.md`（第 9 節角色矩陣）+ `docs/devlog.md`（spec-sync 區塊）|
 
-> ⚠️ **`docs/features.md` 由 Claude.ai 維護，Claude Code 不需要自行更新。**
-> UI 流程、Nav、頁面行為有變動時，記錄在 `docs/devlog.md` 即可，
-> Claude.ai 規格討論確認後會同步輸出新版 `features.md`。
+> ⚠️ **`docs/features.md` 與 `trilog_spec.json` 由 Claude.ai 維護，Claude Code 不需要自行更新。**
+> UI 流程、Nav、頁面行為有變動時，將決策記錄在 `docs/devlog.md` 的 `spec-sync` 區塊即可，
+> Claude.ai 規格討論確認後會同步輸出新版規格書。
 
 文件與程式碼不一致時，**永遠優先更新文件**。
 
@@ -291,14 +292,25 @@ npm run dev   # 啟動開發伺服器（localhost:3000）
 
 ---
 
-## 14. 實作日誌
+## 14. 實作日誌與 spec-sync 協議
 
-每次完成功能後，在 `docs/devlog.md` **最上方**新增一筆記錄，並依第 13 節 SOP 補上驗證紀錄：
+每次完成功能後，在 `docs/devlog.md` **最上方**新增一筆記錄。記錄格式如下，其中 `spec-sync` 區塊為必填：
 
-```markdown
+````markdown
 ### [YYYY-MM-DD] 功能標題
 
 **狀態**：✅ 完成 ／ 🔧 進行中 ／ ⚠️ 部分完成
+
+```spec-sync
+chapters: [38, 39]
+status: implemented
+decisions:
+  - id: D001
+    chapter: 38
+    content: "決策摘要，一句話"
+    spec_impact: true
+    synced: false
+```
 
 **完成內容**：
 - 具體做了什麼
@@ -309,23 +321,46 @@ npm run dev   # 啟動開發伺服器（localhost:3000）
 **已知問題 ／ TODO**：
 - 留給下一個 session 的注意事項
 
+**驗證紀錄**：（見第 13 節 SOP）
+
 **異動檔案**：
 - 主要新增或修改的路徑
+````
+
+### spec-sync 欄位規則
+
+| 欄位 | 規則 |
+|------|------|
+| `chapters` | 涉及的規格章節編號陣列；無對應章節填 `[]` |
+| `status` | `implemented` / `partial` / `superseded` |
+| `decisions[].id` | 同一 entry 內的流水號，格式 `D001` |
+| `decisions[].chapter` | 對應規格章節號；純實作細節填 `0` |
+| `decisions[].content` | 決策摘要，一句話，需足夠具體讓 Claude.ai 能定位到規格的哪一處 |
+| `decisions[].spec_impact` | `true` = 規格書需補充或修正；`false` = 純實作細節，規格不需動 |
+| `decisions[].synced` | **Claude Code 永遠寫 `false`**；由 Claude.ai 同步後改為 `true` |
+
+**判斷 spec_impact 的原則**：
+- 規格書沒寫到、但實作中做了決定 → `true`
+- 規格書描述與實作不符 → `true`
+- 純框架/DB 層的實作技巧，不影響功能行為 → `false`
+
+**沒有規格影響的 entry**（如 bug fix、視覺微調）也必須寫 spec-sync 區塊，`decisions` 填 `[]` 即可：
+
+```spec-sync
+chapters: []
+status: implemented
+decisions: []
 ```
 
-**新 session 開始時，先讀：**
+### 新 session 開始時，先讀：
+
 ```
-1. docs/devlog.md    → 目前進度與已知問題
-2. docs/features.md  → 目標功能的 UI 規格
+1. docs/devlog.md    → 目前進度與已知問題（重點掃描 spec-sync 的 synced: false 項目）
+2. trilog_spec.json  → 目標功能的完整規格（Claude.ai 維護）
 3. docs/database.md  → schema 與 RLS
 4. docs/api.md       → 端點設計
 ```
 
-**待實作優先序（截至 2026-06-07）：**
+**待實作優先序：**
 
-| 優先序 | 功能 | 說明 |
-|--------|------|------|
-| P1 | 幫他人新增成績 | `/records/new?for=other`，`athlete_id=null`，`claim_status=unclaimed` |
-| P1 | 賽事後台審核 | `/admin/races/review`，事後審查 + 舉報閾值 3 次 |
-| P2 | 賽事 Wish List | `RACE_INTEREST` 表，`wishlist` / `attended` 兩種類型 |
-| Phase 2 | 社群遊戲化 | 貢獻徽章、選手追蹤、朋友視角排行榜 |
+見 `trilog_spec.json` 各章節的 `impl_status` 欄位與 `docs/devlog.md` 最新狀態。

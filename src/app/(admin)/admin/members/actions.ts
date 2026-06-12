@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import type { Gender, Role } from '@/types/database'
 
 // ── 工具：確認操作者是 assistant 以上 ────────────────────────
@@ -130,11 +131,9 @@ export async function deleteMember(
   if (!target) return { error: '找不到此會員' }
   if (confirmEmail.trim() !== target.email) return { error: '確認 Email 不符' }
 
-  // 軟刪除
+  // 軟刪除（透過 SECURITY DEFINER 函式繞過 RLS）
   const { error: dbErr } = await supabase
-    .from('athletes')
-    .update({ deleted_at: new Date().toISOString() })
-    .eq('id', athleteId)
+    .rpc('admin_soft_delete_athlete', { target_id: athleteId })
 
   if (dbErr) return { error: dbErr.message }
 
@@ -144,6 +143,11 @@ export async function deleteMember(
     .update({ claim_status: 'unlinked', athlete_id: null })
     .eq('athlete_id', athleteId)
     .eq('claim_status', 'claimed')
+
+  // auth.users 硬刪除（需 service role）
+  const adminClient = createAdminClient()
+  const { error: authErr } = await adminClient.auth.admin.deleteUser(athleteId)
+  if (authErr) return { error: `帳號資料已刪除，但 auth 清除失敗：${authErr.message}` }
 
   return { error: null }
 }

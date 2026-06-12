@@ -12,9 +12,10 @@ type Tab = 'login' | 'register'
 
 export function AuthModal() {
   const { isOpen, intent, intentPayload, close } = useAuthModal()
-  const [tab, setTab]         = useState<Tab>('login')
-  const [error, setError]     = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [tab, setTab]               = useState<Tab>('login')
+  const [error, setError]           = useState<string | null>(null)
+  const [emailSent, setEmailSent]   = useState(false)
+  const [loading, setLoading]       = useState(false)
   const overlayRef            = useRef<HTMLDivElement>(null)
   const router                = useRouter()
 
@@ -23,6 +24,7 @@ export function AuthModal() {
     if (isOpen) {
       setTab('login')
       setError(null)
+      setEmailSent(false)
       setLoading(false)
     }
   }, [isOpen])
@@ -60,6 +62,22 @@ export function AuthModal() {
       } catch {
         // 靜默失敗
       }
+    } else if (
+      (intent === 'race_wishlist' || intent === 'race_attended') &&
+      intentPayload.raceId && intentPayload.year
+    ) {
+      // 登入後自動完成賽事互動標記，失敗則靜默（使用者可再點一次）
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await supabase.from('race_interest').insert({
+          athlete_id:    user.id,
+          race_id:       intentPayload.raceId,
+          year:          intentPayload.year,
+          interest_type: intent === 'race_wishlist' ? 'wishlist' : 'attended',
+        })  // 已存在時觸發 unique constraint，靜默忽略
+        router.refresh()
+      }
     }
   }
 
@@ -72,9 +90,18 @@ export function AuthModal() {
     const email    = form.get('email') as string
     const password = form.get('password') as string
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    setLoading(false)
-    if (error) { setError('電子郵件或密碼錯誤'); return }
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) { setError('電子郵件或密碼錯誤'); setLoading(false); return }
+    // 首次登入（未填姓名）且無特定 intent → 導到個人資料頁
+    if (data.user && (!intent || intent === 'login')) {
+      const { data: athlete } = await supabase
+        .from('athletes').select('name').eq('id', data.user.id).single()
+      if (!athlete?.name) {
+        close()
+        router.push('/my/profile')
+        return
+      }
+    }
     handleSuccess()
   }
 
@@ -91,9 +118,18 @@ export function AuthModal() {
     if (password.length < 8)  { setError('密碼至少 8 個字元'); setLoading(false); return }
     const supabase = createClient()
     const { error } = await supabase.auth.signUp({ email, password })
+    if (error) {
+      const msg = error.message
+      if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) {
+        setError('此 Email 已被註冊，請直接登入')
+      } else {
+        setError(msg || JSON.stringify(error))
+      }
+      return
+    }
+    // 需要 email 驗證（session 為 null）
+    setEmailSent(true)
     setLoading(false)
-    if (error) { setError(error.message); return }
-    handleSuccess()
   }
 
   return (
@@ -145,7 +181,7 @@ export function AuthModal() {
         )}
 
         {/* 註冊表單 */}
-        {tab === 'register' && (
+        {tab === 'register' && !emailSent && (
           <form onSubmit={handleRegister} className="flex flex-col gap-4">
             <Input label="電子郵件" id="modal-reg-email" name="email" type="email" autoComplete="email" required />
             <Input label="密碼" id="modal-reg-password" name="password" type="password" autoComplete="new-password" required />
@@ -153,6 +189,27 @@ export function AuthModal() {
             {error && <p className="text-sm text-red text-center">{error}</p>}
             <Button type="submit" loading={loading} className="mt-1">建立帳號</Button>
           </form>
+        )}
+
+        {/* 驗證信已寄出 */}
+        {tab === 'register' && emailSent && (
+          <div className="flex flex-col items-center gap-4 py-4 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+                <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+              </svg>
+            </div>
+            <div>
+              <p className="font-medium text-ink">驗證信已寄出</p>
+              <p className="mt-1 text-sm text-ink-3">請前往信箱點擊驗證連結，<br/>驗證後再回來登入即可。</p>
+            </div>
+            <button
+              onClick={() => { setEmailSent(false); setTab('login') }}
+              className="mt-2 text-sm text-accent hover:underline"
+            >
+              前往登入
+            </button>
+          </div>
         )}
 
         {/* 完整頁面連結 */}

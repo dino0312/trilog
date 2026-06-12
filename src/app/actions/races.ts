@@ -101,6 +101,7 @@ export async function updateRace(_prev: RaceActionState, formData: FormData): Pr
     name:      (formData.get('name')      as string).trim(),
     slug:      (formData.get('slug')      as string).trim(),
     status:    (formData.get('status')    as RaceStatus) || 'active',
+    series:    (formData.get('series')    as string) || null,
     country:   (formData.get('country')   as string) || null,
     city:      (formData.get('city')      as string) || null,
     organizer: (formData.get('organizer') as string) || null,

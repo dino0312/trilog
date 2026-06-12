@@ -4,14 +4,21 @@ import { createContext, useContext, useState, type ReactNode } from 'react'
 
 export type AuthModalIntent = 'login' | 'new_result' | 'claim' | 'follow' | 'race_wishlist' | 'race_attended' | null
 
+export interface AuthModalPayload {
+  resultId?:  string
+  athleteId?: string
+  raceId?:    string
+  year?:      number
+}
+
 interface AuthModalState {
   isOpen:        boolean
   intent:        AuthModalIntent
-  intentPayload: { resultId?: string; athleteId?: string }
+  intentPayload: AuthModalPayload
 }
 
 interface AuthModalContextValue extends AuthModalState {
-  open:  (intent?: AuthModalIntent, payload?: { resultId?: string; athleteId?: string }) => void
+  open:  (intent?: AuthModalIntent, payload?: AuthModalPayload) => void
   close: () => void
 }
 
@@ -24,7 +31,7 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
     intentPayload: {},
   })
 
-  function open(intent: AuthModalIntent = 'login', payload: { resultId?: string; athleteId?: string } = {}) {
+  function open(intent: AuthModalIntent = 'login', payload: AuthModalPayload = {}) {
     setState({ isOpen: true, intent, intentPayload: payload })
   }
 
