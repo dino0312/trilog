@@ -80,6 +80,48 @@ decisions:
 
 ## 記錄
 
+### [2026-06-12] Ch.45 成績記錄體驗優化
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: [45]
+status: implemented
+decisions:
+  - id: D045-01
+    chapter: 45
+    content: "§45.1 records 頁改 race_date DESC 排序；≥5 筆成績自動插入年份分組標題"
+    spec_impact: false
+    synced: false
+  - id: D045-02
+    chapter: 45
+    content: "§45.2 results 加 bib_number TEXT 欄位，新增表單可填，成績詳頁顯示 #號碼"
+    spec_impact: false
+    synced: false
+  - id: D045-03
+    chapter: 45
+    content: "§45.3 新增 /records/relay/:teamId/edit 頁面，含輸入隊名確認的刪除表單；/records 接力卡片加「編輯」按鈕"
+    spec_impact: false
+    synced: false
+  - id: D045-04
+    chapter: 45
+    content: "§45.4 賽事選單標籤從 '賽事 年份' 改為 '賽事（年份）'，覆蓋 NewResultForm、NewRelayResultForm、admin/results 篩選"
+    spec_impact: false
+    synced: false
+```
+
+**完成內容**：
+- 更改 `/records` 查詢排序為 `race_editions(race_date) DESC`，加 `created_at DESC` fallback
+- 成績 ≥5 筆時，在不同年份邊界插入年份標題
+- `supabase/migrations/20260612000002_bib_number.sql`：`ALTER TABLE results ADD COLUMN IF NOT EXISTS bib_number TEXT`
+- `createResult` action 傳遞 `bib_number`；`NewResultForm` 加號碼布輸入欄
+- `results/[id]/page.tsx` 在認領狀態列顯示 `#bib_number`
+- 建立 `src/app/(main)/records/relay/[teamId]/edit/` 頁面與 `DeleteRelayForm` 元件
+- 新增 `deleteRelayResult` server action，驗證使用者為隊員才可刪除
+- 賽事選單全面統一為 `名稱（年份）` 格式
+
+---
+
 ### [2026-06-12] 接力未認領搜尋 + 最速標籤橘色調整
 
 **狀態**：✅ 完成
