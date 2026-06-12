@@ -37,6 +37,7 @@
 | 路由 | 方法 | 說明 |
 |------|------|------|
 | `/api/auth/callback` | GET | OAuth callback，交換 code 換 session，redirect 回應用 |
+| `/api/auth/resend-verification` | POST | 重寄 Email 驗證信；body `{ email: string }`；60 秒 client-side rate limit |
 
 Supabase Auth 處理的流程（不需要自己實作）：
 - Email 登入：直接呼叫 `supabase.auth.signInWithPassword()`

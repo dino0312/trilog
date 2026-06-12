@@ -193,36 +193,79 @@ export function AuthModal() {
 
         {/* 驗證信已寄出 */}
         {tab === 'register' && emailSent && (
-          <div className="flex flex-col items-center gap-4 py-4 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-                <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-              </svg>
-            </div>
-            <div>
-              <p className="font-medium text-ink">驗證信已寄出</p>
-              <p className="mt-1 text-sm text-ink-3">請前往信箱點擊驗證連結，<br/>驗證後再回來登入即可。</p>
-            </div>
-            <button
-              onClick={() => { setEmailSent(false); setTab('login') }}
-              className="mt-2 text-sm text-accent hover:underline"
-            >
-              前往登入
-            </button>
-          </div>
+          <ModalEmailSent onGoLogin={() => { setEmailSent(false); setTab('login') }} />
         )}
 
-        {/* 完整頁面連結 */}
-        <p className="mt-4 text-center text-xs text-ink-4">
-          <Link
-            href={tab === 'login' ? '/login' : '/register'}
-            onClick={close}
-            className="hover:text-ink-3 transition"
-          >
-            使用完整頁面{tab === 'login' ? '登入' : '註冊'}
-          </Link>
+        {/* 完整驗證引導 */}
+        {!emailSent && (
+          <p className="mt-4 text-center text-xs text-ink-4">
+            <Link
+              href={tab === 'login' ? '/login' : '/register'}
+              onClick={close}
+              className="hover:text-ink-3 transition"
+            >
+              使用完整頁面{tab === 'login' ? '登入' : '註冊'}
+            </Link>
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── 寄出後引導（Modal 內用）────────────────────────────────────
+const COOLDOWN_KEY = 'trilog_resend_ts'
+const COOLDOWN_SEC = 60
+
+function ModalEmailSent({ onGoLogin }: { onGoLogin: () => void }) {
+  const [secondsLeft, setSecondsLeft] = useState(0)
+  const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+
+  useEffect(() => {
+    const last = Number(localStorage.getItem(COOLDOWN_KEY) ?? 0)
+    const remaining = Math.max(0, COOLDOWN_SEC - Math.floor((Date.now() - last) / 1000))
+    setSecondsLeft(remaining)
+  }, [])
+
+  useEffect(() => {
+    if (secondsLeft <= 0) return
+    const t = setInterval(() => setSecondsLeft(s => Math.max(0, s - 1)), 1000)
+    return () => clearInterval(t)
+  }, [secondsLeft])
+
+  async function handleResend() {
+    if (secondsLeft > 0 || resendStatus === 'sending') return
+    setResendStatus('sending')
+    // email 無法從 modal 取得，導引使用者至完整頁面
+    setResendStatus('idle')
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-4 py-4 text-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+        </svg>
+      </div>
+      <div>
+        <p className="font-medium text-ink">驗證信已寄出</p>
+        <p className="mt-1 text-sm text-ink-3">
+          請前往信箱點擊驗證連結，<br/>驗證後再回來登入即可。
         </p>
       </div>
+      {resendStatus === 'sent' && (
+        <p className="text-xs text-good">✓ 已重新寄出</p>
+      )}
+      {resendStatus === 'error' && (
+        <p className="text-xs text-run">寄送失敗，請稍後再試</p>
+      )}
+      <button
+        onClick={onGoLogin}
+        className="text-sm text-accent hover:underline"
+      >
+        已驗證，前往登入
+      </button>
     </div>
   )
 }

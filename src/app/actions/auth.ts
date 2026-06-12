@@ -25,7 +25,7 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
     return { error: msg }
   }
 
-  redirect('/my/profile')
+  redirect(`/register/verify?email=${encodeURIComponent(email)}`)
 }
 
 export async function signIn(_prev: AuthState, formData: FormData): Promise<AuthState> {
