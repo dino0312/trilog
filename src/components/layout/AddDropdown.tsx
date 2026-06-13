@@ -52,10 +52,7 @@ export function AddDropdown({ isAssistant }: Props) {
         >
           <div className="py-1">
             <Item href="/records/new" onClick={() => setOpen(false)}>
-              <IconSolo /> 自己的成績
-            </Item>
-            <Item href="/records/new?for=other" onClick={() => setOpen(false)}>
-              <IconOther /> 他人成績
+              <IconSolo /> 新增成績
             </Item>
             {isAssistant && (
               <>
@@ -89,17 +86,6 @@ function IconSolo() {
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-ink-4">
       <circle cx="12" cy="8" r="4"/>
       <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-    </svg>
-  )
-}
-
-function IconOther() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-ink-4">
-      <circle cx="9" cy="8" r="3.5"/>
-      <path d="M2 20c0-3.5 3.1-6 7-6s7 2.5 7 6"/>
-      <path d="M17 11c1.7 0 3 1.3 3 3"/>
-      <path d="M22 20c0-2.2-1.3-4-3-4"/>
     </svg>
   )
 }

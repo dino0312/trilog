@@ -37,7 +37,12 @@ export function NewRelayResultForm() {
   ])
 
   function updateMember(idx: number, field: keyof Member, value: unknown) {
-    setMembers(prev => prev.map((m, i) => i === idx ? { ...m, [field]: value } : m))
+    setMembers(prev => prev.map((m, i) => {
+      if (i === idx) return { ...m, [field]: value }
+      // radio 語意：勾選「這是我」時，取消其他成員的勾選
+      if (field === 'is_me' && value === true) return { ...m, is_me: false }
+      return m
+    }))
   }
 
   function toggleDiscipline(idx: number, disc: string) {

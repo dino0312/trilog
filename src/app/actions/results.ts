@@ -298,6 +298,58 @@ export async function createRelayResult(_prev: ResultState, formData: FormData):
   redirect('/records')
 }
 
+export async function updateRelayResult(_prev: ResultState, formData: FormData): Promise<ResultState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: '請先登入' }
+
+  const teamId   = formData.get('team_id') as string
+  const teamName = (formData.get('team_name') as string | null)?.trim() || null
+
+  // 確認使用者是隊伍成員
+  const { data: member } = await supabase
+    .from('team_members')
+    .select('id')
+    .eq('team_id', teamId)
+    .eq('athlete_id', user.id)
+    .maybeSingle()
+  if (!member) return { error: '你不是此接力隊伍的成員' }
+
+  const { error: teamError } = await supabase
+    .from('teams')
+    .update({ team_name: teamName })
+    .eq('id', teamId)
+  if (teamError) return { error: teamError.message }
+
+  // 更新各成員（格式：member_{id}_name / member_{id}_split）
+  const entries = [...formData.entries()]
+  for (const [key, value] of entries) {
+    const nameMatch  = key.match(/^member_(.+)_name$/)
+    const splitMatch = key.match(/^member_(.+)_split$/)
+    if (nameMatch) {
+      const memberId = nameMatch[1]
+      await supabase
+        .from('team_members')
+        .update({ athlete_name_snapshot: (value as string).trim() })
+        .eq('id', memberId)
+        .eq('team_id', teamId)
+        .is('athlete_id', null) // 只允許更新未認領成員的姓名
+    }
+    if (splitMatch) {
+      const memberId = splitMatch[1]
+      const seconds  = parseTime(value as string)
+      await supabase
+        .from('team_members')
+        .update({ split_seconds: seconds })
+        .eq('id', memberId)
+        .eq('team_id', teamId)
+    }
+  }
+
+  revalidatePath('/records')
+  redirect('/records')
+}
+
 export async function deleteRelayResult(_prev: ResultState, formData: FormData): Promise<ResultState> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

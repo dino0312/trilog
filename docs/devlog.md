@@ -80,6 +80,71 @@ decisions:
 
 ## 記錄
 
+### [2026-06-13] 統一成績新增頁面（§34.1–§34.8、§25.5、§45.1–§45.3、§20.11）
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: [20, 25, 34, 45]
+status: implemented
+decisions:
+  - id: D001
+    chapter: 34
+    content: "ResultEntryPage 三 Tab 完整實作：Tab label 改為「個人成績/他人成績/接力成績」，移除 other Tab 重複說明框（NewResultForm 自帶）"
+    spec_impact: false
+    synced: false
+  - id: D002
+    chapter: 34
+    content: "接力「這是我」勾選機制：radio 語意實作（勾選新的自動取消其他人），未勾選任何人亦合法"
+    spec_impact: false
+    synced: false
+  - id: D003
+    chapter: 20
+    content: "AddDropdown 簡化為兩選項：「新增成績」(→/records/new) + 「新增賽事」(assistant+ only)，移除獨立的「他人成績」入口"
+    spec_impact: true
+    synced: false
+  - id: D004
+    chapter: 45
+    content: "接力編輯頁加入實際編輯功能：隊名、未認領成員姓名、各成員分項時間；已認領成員姓名顯示為 readonly"
+    spec_impact: false
+    synced: false
+```
+
+**完成內容**：
+- `AddDropdown.tsx`：移除「他人成績」選項，「自己的成績」改為「新增成績」→ `/records/new`
+- `ResultEntryPage.tsx`：Tab label「幫他人新增」→「他人成績」；移除 other Tab 的重複說明框
+- `NewRelayResultForm.tsx`：`updateMember` 加入 radio 語意，勾選 `is_me=true` 時自動清除其他成員的勾選
+- `RelayEditForm.tsx`（新增）：隊名 + 各成員姓名（未認領可編輯，已認領 readonly）+ 分項時間
+- `relay/[teamId]/edit/page.tsx`：兩段查詢（teams 和 team_members 分開），傳入 RelayEditForm
+- `src/app/actions/results.ts`：新增 `updateRelayResult` server action
+
+**技術決策**：
+- Supabase 型別系統 `teams` table 的 `Relationships: []`，無法在單一 query 中 join `team_members`，改為兩段並行查詢（`Promise.all`）
+
+**已知問題 ／ TODO**：
+- relay edit page 的 `any` 型別轉換沿用原檔案既有模式，未修正（eslint @typescript-eslint/no-explicit-any）
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | `npx tsc --noEmit` | ✅ PASS | 零錯誤 |
+| 2 | AddDropdown DOM（snapshot） | ✅ PASS | 未登入 NavAuthButtons 正常；AddDropdown 邏輯修改已確認（靜態分析）|
+| 3 | RelayEditForm TypeScript 編譯 | ✅ PASS | 零錯誤 |
+| 4 | `/records/new` 三 Tab | ⚠️ 待驗證 | 需登入帳號確認 Tab 文字正確 |
+| 5 | 接力「這是我」radio 語意 | ⚠️ 待驗證 | 需登入帳號手動測試 |
+| 6 | 接力編輯儲存功能 | ⚠️ 待驗證 | 需有接力成績的登入帳號 |
+
+**異動檔案**：
+- `src/components/layout/AddDropdown.tsx`
+- `src/components/results/ResultEntryPage.tsx`
+- `src/components/relay/NewRelayResultForm.tsx`
+- `src/app/(main)/records/relay/[teamId]/edit/page.tsx`
+- `src/app/(main)/records/relay/[teamId]/edit/RelayEditForm.tsx`（新增）
+- `src/app/actions/results.ts`（新增 updateRelayResult）
+
+---
+
 ### [2026-06-13] Avatar 下拉選單重構（§30.2）
 
 **狀態**：✅ 完成

@@ -21,7 +21,7 @@ type Props = {
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'solo',  label: '個人成績' },
-  { key: 'other', label: '幫他人新增' },
+  { key: 'other', label: '他人成績' },
   { key: 'relay', label: '接力成績' },
 ]
 
@@ -55,10 +55,6 @@ export function ResultEntryPage({ profileComplete, profile, defaultTab = 'solo' 
           <NewResultForm profileComplete={profileComplete} profile={profile} forOther={false} />
         </div>
         <div className={activeTab === 'other' ? '' : 'hidden'}>
-          <div className="rounded-xl border border-accent/20 bg-accent/5 px-4 py-3 mb-5">
-            <p className="text-sm font-semibold text-ink">成績歸屬人</p>
-            <p className="text-xs text-ink-3 mt-0.5">成績將以「未認領」狀態建立，本人可稍後自行認領</p>
-          </div>
           <NewResultForm profileComplete={profileComplete} profile={profile} forOther={true} />
         </div>
         <div className={activeTab === 'relay' ? '' : 'hidden'}>
