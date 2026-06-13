@@ -1,6 +1,6 @@
 {
   "name": "trilog",
-  "version": "0.3.002",
+  "version": "0.3.003",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -14,6 +14,7 @@
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.2",
+    "@tabler/icons-react": "^3.44.0",
     "@vercel/analytics": "^2.0.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.17.0",

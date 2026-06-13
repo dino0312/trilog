@@ -89,6 +89,15 @@ html, body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ── Dropdown icon hover 色彩 ── */
+.dropdown-icon {
+  color: var(--ink-3);
+  transition: color 0.15s;
+}
+.dropdown-item:hover .dropdown-icon {
+  color: var(--accent);
+}
+
 /* ── Tri·log Logo 動態波浪 ── */
 @keyframes trilog-wave-run {
   from { transform: translateX(0); }

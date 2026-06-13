@@ -80,6 +80,45 @@ decisions:
 
 ## 記錄
 
+### [2026-06-13] Avatar 下拉選單重構（§30.2）
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: [30]
+status: implemented
+decisions:
+  - id: D001
+    chapter: 30
+    content: "Avatar 下拉選單重構：調整順序、加入 Tabler Icons（MIT），icon size=16 stroke=1.5，hover 時 icon 變 accent 色"
+    spec_impact: false
+    synced: false
+```
+
+**完成內容**：
+- 安裝 `@tabler/icons-react@^3.44.0`
+- 選單順序調整為：個人資料 → 我的公開頁 → 我的成績 → 關注名單 → （分隔線）→ 管理後台（assistant+）→ （分隔線）→ 登出
+- 每個選項左側加對應 icon：`IconUserEdit / IconUser / IconTrophy / IconHeart / IconSettings / IconLogout`，size=16 stroke=1.5
+- `.dropdown-icon` CSS class + `.dropdown-item:hover .dropdown-icon` 規則寫入 `globals.css`，hover 時 icon 由 `var(--ink-3)` 變 `var(--accent)`
+- 分隔線改為 `0.5px solid rgba(136,146,160,0.2)`，取代舊的 `border-t border-border`
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | `npx tsc --noEmit` | ✅ PASS | 零錯誤 |
+| 2 | 選單六個選項依序顯示 | ✅ PASS | DOM 驗證：個人資料/我的公開頁/我的成績/關注名單/管理後台/登出 |
+| 3 | 每個選項有 icon | ✅ PASS | 全部 `hasIcon: true` |
+| 4 | 管理後台顯示（assistant 帳號）| ✅ PASS | 確認出現 |
+| 5 | hover icon 變薄荷綠 | ⚠️ 待驗證 | CSS 已設定，preview 解析度限制無法截圖確認 |
+
+**異動檔案**：
+- `src/components/layout/AvatarDropdown.tsx`
+- `src/app/globals.css`
+- `package.json`（新增 `@tabler/icons-react`）
+
+---
+
 ### [2026-06-13] 「記錄」統一改為「成績」
 
 **狀態**：✅ 完成

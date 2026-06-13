@@ -3,10 +3,18 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import {
+  IconUserEdit,
+  IconUser,
+  IconTrophy,
+  IconHeart,
+  IconSettings,
+  IconLogout,
+} from '@tabler/icons-react'
 
 interface Props {
   email:          string
-  name:           string | null   // athlete.nickname ?? athlete.name（顯示優先順序）
+  name:           string | null
   avatarUrl:      string | null
   userId:         string
   isAssistant:    boolean
@@ -14,10 +22,9 @@ interface Props {
 }
 
 export function AvatarDropdown({ email, name, avatarUrl, userId, isAssistant, followingCount }: Props) {
-  const [open, setOpen]     = useState(false)
-  const ref                 = useRef<HTMLDivElement>(null)
+  const [open, setOpen] = useState(false)
+  const ref             = useRef<HTMLDivElement>(null)
 
-  /* 點擊外部關閉 */
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
@@ -26,7 +33,6 @@ export function AvatarDropdown({ email, name, avatarUrl, userId, isAssistant, fo
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
 
-  /* Escape 關閉 */
   useEffect(() => {
     function handler(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false) }
     if (open) window.addEventListener('keydown', handler)
@@ -36,16 +42,17 @@ export function AvatarDropdown({ email, name, avatarUrl, userId, isAssistant, fo
   async function handleLogout() {
     const supabase = createClient()
     await supabase.auth.signOut()
-    // 強制完整頁面重載，確保 middleware 以乾淨 session 重新驗證
     window.location.href = '/leaderboard'
   }
 
-  /* Avatar 顯示：頭像 → 姓名第一字 → Email 首字母 */
   const initial = name ? name[0] : email[0].toUpperCase()
+
+  const divider = (
+    <div style={{ borderTop: '0.5px solid rgba(136, 146, 160, 0.2)', margin: '4px 0' }} />
+  )
 
   return (
     <div ref={ref} className="relative ml-2">
-      {/* Avatar 按鈕 */}
       <button
         onClick={() => setOpen(v => !v)}
         className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-elev text-sm font-bold text-ink transition hover:bg-border-strong overflow-hidden"
@@ -60,7 +67,6 @@ export function AvatarDropdown({ email, name, avatarUrl, userId, isAssistant, fo
         }
       </button>
 
-      {/* 下拉選單 */}
       {open && (
         <div
           className="absolute right-0 top-full mt-2 w-52 rounded-xl border border-border bg-bg-card shadow-2xl"
@@ -72,10 +78,18 @@ export function AvatarDropdown({ email, name, avatarUrl, userId, isAssistant, fo
             <p className="text-xs text-ink-4 truncate">{email}</p>
           </div>
 
-          {/* 選單項目 */}
+          {/* 主選單 */}
           <div className="py-1">
-            <DropdownLink href="/records" onClick={() => setOpen(false)}>我的成績</DropdownLink>
-            <DropdownLink href="/my/following" onClick={() => setOpen(false)}>
+            <DropdownLink href="/profile" icon={<IconUserEdit size={16} stroke={1.5} />} onClick={() => setOpen(false)}>
+              個人資料
+            </DropdownLink>
+            <DropdownLink href={`/athletes/${userId}`} icon={<IconUser size={16} stroke={1.5} />} onClick={() => setOpen(false)}>
+              我的公開頁
+            </DropdownLink>
+            <DropdownLink href="/records" icon={<IconTrophy size={16} stroke={1.5} />} onClick={() => setOpen(false)}>
+              我的成績
+            </DropdownLink>
+            <DropdownLink href="/my/following" icon={<IconHeart size={16} stroke={1.5} />} onClick={() => setOpen(false)}>
               <span className="flex items-center justify-between w-full">
                 <span>關注名單</span>
                 {followingCount > 0 && (
@@ -85,23 +99,28 @@ export function AvatarDropdown({ email, name, avatarUrl, userId, isAssistant, fo
                 )}
               </span>
             </DropdownLink>
-            <DropdownLink href="/profile" onClick={() => setOpen(false)}>個人資料</DropdownLink>
-            <DropdownLink href={`/athletes/${userId}`} onClick={() => setOpen(false)}>我的公開頁</DropdownLink>
           </div>
 
           {/* 管理後台（助手以上） */}
           {isAssistant && (
-            <div className="border-t border-border py-1">
-              <DropdownLink href="/admin" onClick={() => setOpen(false)}>管理後台</DropdownLink>
-            </div>
+            <>
+              {divider}
+              <div className="py-1">
+                <DropdownLink href="/admin" icon={<IconSettings size={16} stroke={1.5} />} onClick={() => setOpen(false)}>
+                  管理後台
+                </DropdownLink>
+              </div>
+            </>
           )}
 
           {/* 登出 */}
-          <div className="border-t border-border py-1">
+          {divider}
+          <div className="py-1">
             <button
               onClick={handleLogout}
-              className="w-full px-4 py-2 text-left text-sm text-ink-3 transition hover:bg-bg-elev hover:text-ink"
+              className="dropdown-item w-full px-4 py-2 text-left text-sm text-ink-3 transition hover:bg-bg-elev hover:text-ink flex items-center gap-2.5"
             >
+              <IconLogout size={16} stroke={1.5} className="dropdown-icon shrink-0" />
               登出
             </button>
           </div>
@@ -111,13 +130,24 @@ export function AvatarDropdown({ email, name, avatarUrl, userId, isAssistant, fo
   )
 }
 
-function DropdownLink({ href, onClick, children }: { href: string; onClick: () => void; children: React.ReactNode }) {
+function DropdownLink({
+  href,
+  icon,
+  onClick,
+  children,
+}: {
+  href: string
+  icon: React.ReactNode
+  onClick: () => void
+  children: React.ReactNode
+}) {
   return (
     <Link
       href={href}
       onClick={onClick}
-      className="block px-4 py-2 text-sm text-ink-3 transition hover:bg-bg-elev hover:text-ink"
+      className="dropdown-item flex items-center gap-2.5 px-4 py-2 text-sm text-ink-3 transition hover:bg-bg-elev hover:text-ink"
     >
+      <span className="dropdown-icon shrink-0">{icon}</span>
       {children}
     </Link>
   )
