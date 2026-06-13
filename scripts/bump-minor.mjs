@@ -7,8 +7,9 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const pkgPath = resolve(root, 'package.json')
 const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'))
 
-const [major, minor] = pkg.version.split('.').map(Number)
-pkg.version = `${major}.${minor + 1}.000`
+const [major, minor, patch] = pkg.version.split('.').map(Number)
+const nextPatch = String(patch + 1).padStart(3, '0')
+pkg.version = `${major}.${minor + 1}.${nextPatch}`
 
 writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n')
 console.log(pkg.version)
