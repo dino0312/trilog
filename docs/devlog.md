@@ -80,6 +80,65 @@ decisions:
 
 ## 記錄
 
+### [2026-06-13] 我的貢獻頁面（Ch.47、§30.2）
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: [30, 47]
+status: implemented
+decisions:
+  - id: D001
+    chapter: 47
+    content: "實作 /my/contributions 頁面：統計卡三欄（貢獻積分/待認領/已認領）+ 個人/接力成績列表 + 編輯入口"
+    spec_impact: false
+    synced: false
+  - id: D002
+    chapter: 47
+    content: "GET /api/athletes/me/contributions：solo/relay 合併回傳，relay claim_status 三態（unclaimed/claimed/partial）；relay 以兩段查詢解決 results→teams 型別系統無關聯問題"
+    spec_impact: false
+    synced: false
+  - id: D003
+    chapter: 30
+    content: "AvatarDropdown 新增「我的貢獻」（IconHeartHandshake），Nav 層多查 unclaimed_count，待認領 > 0 顯示橘色數字 badge"
+    spec_impact: false
+    synced: false
+```
+
+**完成內容**：
+- `GET /api/athletes/me/contributions`：solo + relay 合併，relay 三態 claim_status（unclaimed / claimed / partial）
+- `/my/contributions/page.tsx`：Server Component，統計卡 + 成績列表 + 空狀態
+- `PageContextStrip`：新增 `/my/contributions` 條目
+- `AvatarDropdown`：新增「我的貢獻」選項（IconHeartHandshake），`contributionBadge > 0` 顯示橘色 badge（最大 99+）
+- `Nav.tsx`：新增 unclaimed_count 查詢，傳入 `contributionBadge` prop
+
+**技術決策**：
+- Supabase 型別系統 `results → teams` 無關聯（`Relationships: []`），改為兩段查詢：先取 relay result IDs，再查 teams `IN (ids)`
+- 個人成績「編輯」連結至 `/records`（行內編輯），因 `/results/:id/edit` 獨立頁尚未建立
+
+**已知問題 ／ TODO**：
+- `any` 型別轉換沿用既有模式（Supabase nested select 型別推斷缺失），eslint 已標記但為全專案一致問題
+- 個人成績編輯入口目前指向 `/records`，日後補 `/results/:id/edit` 後可更新
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | `npx tsc --noEmit` | ✅ PASS | 零錯誤 |
+| 2 | Nav 含 contributionBadge prop | ✅ PASS | 靜態分析確認 |
+| 3 | `/my/contributions` 頁面載入 | ⚠️ 待驗證 | 需登入帳號 |
+| 4 | 統計卡三欄數字正確 | ⚠️ 待驗證 | 需有貢獻成績的帳號 |
+| 5 | Avatar 選單「我的貢獻」+ badge | ⚠️ 待驗證 | 需登入後點擊 avatar |
+
+**異動檔案**：
+- `src/app/api/athletes/me/contributions/route.ts`（新增）
+- `src/app/(main)/my/contributions/page.tsx`（新增）
+- `src/components/layout/PageContextStrip.tsx`
+- `src/components/layout/AvatarDropdown.tsx`
+- `src/components/layout/Nav.tsx`
+
+---
+
 ### [2026-06-13] 統一成績新增頁面（§34.1–§34.8、§25.5、§45.1–§45.3、§20.11）
 
 **狀態**：✅ 完成

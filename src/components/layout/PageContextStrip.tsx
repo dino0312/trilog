@@ -11,6 +11,7 @@ const PAGE_CONTEXT: Record<string, { title: string; sub: string }> = {
   '/my/results':   { title: '我的成績',  sub: '個人成績歷史' },
   '/records':      { title: '我的成績',  sub: '個人成績歷史' },
   '/records/new':  { title: '新增成績',  sub: '個人成績 · 接力成績 · 幫他人新增' },
+  '/my/contributions': { title: '我的貢獻', sub: '你幫別人新增的成績 · 待認領追蹤' },
   '/my/following': { title: '關注名單',  sub: '你關注的選手 · 查看最佳成績' },
   '/my/profile':   { title: '個人資料',  sub: '帳號設定與公開資訊' },
   '/admin':       { title: '管理後台',   sub: '賽事資料 · 公證審核' },

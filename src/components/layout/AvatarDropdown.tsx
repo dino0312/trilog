@@ -8,20 +8,22 @@ import {
   IconUser,
   IconTrophy,
   IconHeart,
+  IconHeartHandshake,
   IconSettings,
   IconLogout,
 } from '@tabler/icons-react'
 
 interface Props {
-  email:          string
-  name:           string | null
-  avatarUrl:      string | null
-  userId:         string
-  isAssistant:    boolean
-  followingCount: number
+  email:               string
+  name:                string | null
+  avatarUrl:           string | null
+  userId:              string
+  isAssistant:         boolean
+  followingCount:      number
+  contributionBadge?:  number
 }
 
-export function AvatarDropdown({ email, name, avatarUrl, userId, isAssistant, followingCount }: Props) {
+export function AvatarDropdown({ email, name, avatarUrl, userId, isAssistant, followingCount, contributionBadge = 0 }: Props) {
   const [open, setOpen] = useState(false)
   const ref             = useRef<HTMLDivElement>(null)
 
@@ -95,6 +97,16 @@ export function AvatarDropdown({ email, name, avatarUrl, userId, isAssistant, fo
                 {followingCount > 0 && (
                   <span className="rounded-full bg-accent/20 px-1.5 py-0.5 text-[10px] font-semibold text-accent">
                     {followingCount}
+                  </span>
+                )}
+              </span>
+            </DropdownLink>
+            <DropdownLink href="/my/contributions" icon={<IconHeartHandshake size={16} stroke={1.5} />} onClick={() => setOpen(false)}>
+              <span className="flex items-center justify-between w-full">
+                <span>我的貢獻</span>
+                {contributionBadge > 0 && (
+                  <span className="rounded-full bg-[#FF6B3D] px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                    {contributionBadge > 99 ? '99+' : contributionBadge}
                   </span>
                 )}
               </span>

@@ -15,19 +15,22 @@ export async function Nav() {
   let isAssistant = false
 
   let followingCount = 0
-
+  let contributionBadge = 0
   let athleteAvatarUrl: string | null = null
 
   if (user) {
-    const [{ data: athlete }, { data: assistant }, { count }] = await Promise.all([
+    const [{ data: athlete }, { data: assistant }, { count: fCount }, { count: cCount }] = await Promise.all([
       supabase.from('athletes').select('nickname, name, avatar_url').eq('id', user.id).single(),
       supabase.rpc('is_assistant_or_above'),
       supabase.from('athlete_follows').select('*', { count: 'exact', head: true }).eq('follower_id', user.id),
+      supabase.from('results').select('*', { count: 'exact', head: true })
+        .eq('created_by', user.id).eq('claim_status', 'unclaimed').neq('athlete_id', user.id),
     ])
-    athleteName      = athlete?.nickname ?? athlete?.name ?? null
-    athleteAvatarUrl = athlete?.avatar_url ?? null
-    isAssistant      = assistant ?? false
-    followingCount   = count ?? 0
+    athleteName        = athlete?.nickname ?? athlete?.name ?? null
+    athleteAvatarUrl   = athlete?.avatar_url ?? null
+    isAssistant        = assistant ?? false
+    followingCount     = fCount ?? 0
+    contributionBadge  = cCount ?? 0
   }
 
   return (
@@ -60,6 +63,7 @@ export async function Nav() {
                   userId={user.id}
                   isAssistant={isAssistant}
                   followingCount={followingCount}
+                  contributionBadge={contributionBadge}
                 />
               </>
             ) : (
