@@ -10,6 +10,7 @@ const TABS = [
   { href: '/admin/races/review',   label: '賽事審核' },
   { href: '/admin/results',        label: '官方成績' },
   { href: '/admin/members',        label: '會員名單' },
+  { href: '/admin/manage-results', label: '成績維護' },
 ]
 
 export function AdminTabs() {

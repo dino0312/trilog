@@ -80,6 +80,47 @@ decisions:
 
 ## 記錄
 
+### [2026-06-13] Admin 成績維護頁面
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: []
+status: implemented
+decisions:
+  - id: D001
+    chapter: 0
+    content: "新增 /admin/manage-results：搜尋個人/接力成績 + 刪除功能，官方成績不可刪除，需 assistant+ 權限"
+    spec_impact: false
+    synced: false
+```
+
+**完成內容**：
+- `/admin/manage-results/page.tsx`：Server Component，支援 `?q=` 姓名/隊名搜尋 + `?type=` solo/relay 篩選，各限 50 筆
+- `ManageResultsClient.tsx`：搜尋欄 + 類型 select + 列表渲染，刪除需二次確認（確認/取消按鈕）
+- `actions.ts`：`deleteAdminResult`（solo）、`deleteAdminRelay`（relay via cascade），均驗證 `is_assistant_or_above`；官方成績拒絕刪除
+- `AdminTabs` 加入「成績維護」Tab
+
+**技術決策**：
+- 刪除 relay 走 `results.delete()` 讓 CASCADE 自動清理 `teams` + `team_members`
+- 搜尋為 Server-side（URL query param），避免一次載入全部資料
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | `npx tsc --noEmit` | ✅ PASS | 零錯誤 |
+| 2 | `/admin/manage-results` 未登入 redirect | ✅ PASS | 截圖確認 /login |
+| 3 | 搜尋 / 刪除功能 | ⚠️ 待驗證 | 需 assistant 帳號登入 |
+
+**異動檔案**：
+- `src/app/(admin)/admin/manage-results/page.tsx`（新增）
+- `src/app/(admin)/admin/manage-results/ManageResultsClient.tsx`（新增）
+- `src/app/(admin)/admin/manage-results/actions.ts`（新增）
+- `src/app/(admin)/admin/AdminTabs.tsx`
+
+---
+
 ### [2026-06-13] 我的貢獻頁面（Ch.47、§30.2）
 
 **狀態**：✅ 完成
