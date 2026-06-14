@@ -14,6 +14,7 @@ const PAGE_CONTEXT: Record<string, { title: string; sub: string }> = {
   '/my/contributions': { title: '我的貢獻', sub: '你幫別人新增的成績 · 待認領追蹤' },
   '/my/following': { title: '關注名單',  sub: '你關注的選手 · 查看最佳成績' },
   '/my/profile':   { title: '個人資料',  sub: '帳號設定與公開資訊' },
+  '/about':       { title: '關於 Tri·log', sub: '平台介紹 · 如何使用 · 常見問題' },
   '/admin':       { title: '管理後台',   sub: '賽事資料 · 公證審核' },
 }
 

@@ -11,7 +11,9 @@ import {
   IconHeartHandshake,
   IconSettings,
   IconLogout,
+  IconListCheck,
 } from '@tabler/icons-react'
+import { openOnboardingChecklist } from '@/components/onboarding/OnboardingChecklist'
 
 interface Props {
   email:               string
@@ -124,6 +126,18 @@ export function AvatarDropdown({ email, name, avatarUrl, userId, isAssistant, fo
               </div>
             </>
           )}
+
+          {/* 新手指南 */}
+          {divider}
+          <div className="py-1">
+            <button
+              onClick={() => { setOpen(false); openOnboardingChecklist() }}
+              className="dropdown-item w-full px-4 py-2 text-left text-sm text-ink-3 transition hover:bg-bg-elev hover:text-ink flex items-center gap-2.5"
+            >
+              <IconListCheck size={16} stroke={1.5} className="dropdown-icon shrink-0" />
+              新手指南
+            </button>
+          </div>
 
           {/* 登出 */}
           {divider}

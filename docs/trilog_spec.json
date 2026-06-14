@@ -2,13 +2,73 @@
   "meta": {
     "product": "Tri·log",
     "url": "trilog.run",
-    "version": "v4.9",
-    "date": "2026-06-12",
+    "version": "v5.9",
+    "date": "2026-06-13",
     "format_version": "1.0",
     "description": "Tri·log 鐵人三項成績記錄平台產品規格書",
     "source_docx": "trilog_spec_v46.docx"
   },
   "revision_history": [
+    {
+      "version": "v5.9",
+      "date": "2026-06-13",
+      "author": "Claude.ai",
+      "summary": "補充 §24.5 成績維護後台（/admin/manage-results）：搜尋個人/接力成績 + 刪除功能，官方成績不可刪除"
+    },
+    {
+      "version": "v5.8",
+      "date": "2026-06-13",
+      "author": "Claude.ai",
+      "summary": "新增第 48 章：用戶引導系統。§48.1 設計原則；§48.2 訪客 Banner（未登入永遠顯示，登入消失，連結 /about）；§48.3 新用戶 Checklist（登入後首次任何頁面觸發，右下浮動卡，4 項任務，has_completed_onboarding 控制，關閉後告知查看路徑）；§48.4 DB 變更（athletes.has_completed_onboarding）；§48.5 /about 頁面結構"
+    },
+    {
+      "version": "v5.7",
+      "date": "2026-06-13",
+      "author": "Claude.ai",
+      "summary": "同步 devlog 實作決策：§32.2 補充 PageContextStrip /my/following 路由對照"
+    },
+    {
+      "version": "v5.6",
+      "date": "2026-06-13",
+      "author": "Claude.ai",
+      "summary": "新增第 47 章：我的貢獻頁面（/my/contributions）；§47.1 設計背景；§47.2 資料範圍；§47.3 頁面結構（統計卡 + 列表）；§47.4 編輯路徑；§47.5 Avatar 選單更新（新增「我的貢獻」+ 待認領 badge）；§47.6 API 規格。同步修訂 §30.2 Avatar 選單。"
+    },
+    {
+      "version": "v5.5",
+      "date": "2026-06-13",
+      "author": "Claude.ai",
+      "summary": "§30.2 補充 Tabler Icons 授權說明（MIT License，可商用）與實作規格"
+    },
+    {
+      "version": "v5.4",
+      "date": "2026-06-13",
+      "author": "Claude.ai",
+      "summary": "修訂 §30.2：Avatar 下拉選單調整順序（個人資料/我的公開頁/我的成績/關注名單/管理後台/登出）並加入 Tabler icon 規格"
+    },
+    {
+      "version": "v5.3",
+      "date": "2026-06-13",
+      "author": "Claude.ai",
+      "summary": "修訂 §34.4：第二 Tab 名稱從「幫他人新增」改為「他人成績」，與「個人成績」、「接力成績」對稱"
+    },
+    {
+      "version": "v5.2",
+      "date": "2026-06-13",
+      "author": "Claude.ai",
+      "summary": "修訂 §34.4 接力成績 Tab：成員欄位改為「這是我」勾選機制（非固定成員 1），勾選者帶入登入者姓名並 claimed，未勾選者 unclaimed；未勾選任何人亦合法（幫整隊記錄）。同步修訂 §20.11。"
+    },
+    {
+      "version": "v5.1",
+      "date": "2026-06-13",
+      "author": "Claude.ai",
+      "summary": "修訂 §34.2：AddDropdown 簡化為「新增成績」+「新增賽事（assistant+）」兩選項，移除「登錄我的成績/幫別人記錄」分流；§34.5 移除 new_result_for_other intent"
+    },
+    {
+      "version": "v5.0",
+      "date": "2026-06-13",
+      "author": "Claude.ai",
+      "summary": "同步 2026-06-13 實作決策：全局 UI 文字「我的紀錄」→「我的成績」（URL /records 不動）；§34.4 修訂為三 Tab 設計（個人成績/幫他人新增/接力成績），?for=other 整合進第二 Tab；§30.2 補充 NavLinks isLoggedIn prop 實作細節；§34.3 更新空狀態說明（已移除新增按鈕與連結）"
+    },
     {
       "version": "v4.9",
       "date": "2026-06-12",
@@ -2719,6 +2779,11 @@
             ]
           ],
           "content": "管理區使用獨立的 (admin) route group，與一般用戶的 (main) route group 完全分離。兩者各有自己的 layout.tsx，未來調整各自版面不會互相影響。 [管理區內頁籤切換] 進入管理區後，透過 AdminTabs 元件在「審核中心」與「賽事管理」之間切換，不需再經由 Nav 下拉選單。"
+        },
+        {
+          "id": "24.5",
+          "title": "成績維護後台（/admin/manage-results）",
+          "content": "助手以上（assistant+）可進入成績維護頁面，搜尋並刪除個人與接力成績。\n\n[功能]\n搜尋：URL query param ?q=（比對 athlete_name_snapshot 或隊名），?type=solo|relay，各限 50 筆。\n刪除個人成績：需二次確認；source_credibility = official 的成績拒絕刪除。\n刪除接力成績：刪除對應 results 後 CASCADE 自動清理 teams + team_members。\n\n[權限]\nassistant+ 才可操作；未登入或一般用戶 redirect → /login。\n\n[AdminTabs 位置]\n後台導覽新增「成績維護」Tab，位於現有 Tab 之後。"
         }
       ]
     },
@@ -3377,12 +3442,12 @@
               }
             ]
           ],
-          "content": "「我的紀錄」與「關注名單」是登入用戶的高頻功能，直接放在 Nav 主連結讓用戶一步即達。\n兩個連結僅登入後才顯示，未登入狀態 Nav 保持精簡。\nAvatar 下拉選單維持原有結構不變，作為個人設定與低頻功能的收納位置。\n\n[修訂背景]\n原設計將兩者收進 Avatar 選單，實際使用上查看成績與關注名單是日常操作，\n多一層點擊造成明顯摩擦，故移至 Nav 主連結。"
+          "content": "「我的成績」與「關注名單」是登入用戶的高頻功能，直接放在 Nav 主連結讓用戶一步即達。\n兩個連結僅登入後才顯示，未登入狀態 Nav 保持精簡。\nAvatar 下拉選單維持原有結構不變，作為個人設定與低頻功能的收納位置。\n\n[修訂背景]\n原設計將兩者收進 Avatar 選單，實際使用上查看成績與關注名單是日常操作，\n多一層點擊造成明顯摩擦，故移至 Nav 主連結。"
         },
         {
           "id": "30.2",
           "title": "Nav 結構（修訂：我的紀錄與關注名單移至主連結）",
-          "content": "[未登入狀態]\n  最速榜　排行榜　未認領　賽事　　　　　　　　　　　　　　[登入]\n\n[已登入狀態]\n  最速榜　排行榜　未認領　賽事　我的紀錄　關注名單　[+]　[Avatar ▼]\n\n「我的紀錄」連結至 /records；「關注名單」連結至 /my/following。\n兩個連結僅已登入狀態顯示，未登入時不顯示。\n兩個頁面均為需登入頁面，未登入直接訪問時 redirect → /login。\n\n[Avatar 下拉選單維持不變]\n  我的公開頁　→ /athletes/:id\n  關注名單　　→ /my/following\n  個人資料　　→ /profile\n  管理後台　　→ /admin（assistant+ 才顯示）\n  ──────────\n  登出\n\nAvatar 下拉選單中「關注名單」項目保留，提供兩個入口（Nav 主連結 + Avatar 選單）。"
+          "content": "[未登入狀態]\n  最速榜　排行榜　未認領　賽事　　　　　　　　　　　　　　[登入]\n\n[已登入狀態]\n  最速榜　排行榜　未認領　賽事　我的成績　關注名單　[+]　[Avatar ▼]\n\n「我的成績」連結至 /records；「關注名單」連結至 /my/following。\n兩個連結僅已登入狀態顯示，未登入時不顯示。\n兩個頁面均為需登入頁面，未登入直接訪問時 redirect → /login。\nNavLinks 以 isLoggedIn prop（由 Nav.tsx Server Component 傳入）控制顯示，\n避免 Client Component 直接呼叫 Supabase。\n\n[Avatar 下拉選單]\n  順序與 icon（Tabler outline，16px，accent 色）：\n  1. 個人資料　　ti-user-edit　　　　→ /profile\n  2. 我的公開頁　ti-user　　　　　　→ /athletes/:id\n  3. 我的成績　　ti-trophy　　　　　→ /records\n  4. 關注名單　　ti-heart　　　　　 → /my/following\n  5. 我的貢獻　　ti-heart-handshake → /my/contributions（待認領 > 0 時顯示 badge）\n  ──────────（分隔線）\n  6. 管理後台　　ti-settings　　　　→ /admin（assistant+ 才顯示）\n  ──────────（分隔線）\n  7. 登出　　　　ti-logout　　　　　（無連結，執行登出 action）\n\n[Icon 規格]\n套件：Tabler Icons（MIT License，可商用，無需標註）\n風格：outline，1.5px stroke，16px\n色彩：預設 var(--ink-3)（#8892a0），hover var(--accent)（#66c6be）\n實作：<i class=\"ti ti-{name}\"> 或 Tabler React 元件\n\n[分隔線]\nborder-top: 0.5px solid，var(--ink-3) 20% opacity，margin: 4px 0\n\nAvatar 下拉選單中「關注名單」項目保留，提供雙入口（Nav 主連結 + Avatar 選單）。"
         },
         {
           "id": "30.3",
@@ -3709,7 +3774,7 @@
               }
             ]
           ],
-          "content": "採用方案 A——底線標示（Underline Active State）。以橘色（#FF6B3D，--run）底線標示當前頁面的 Nav 連結，與 Logo 底邊的橘色波浪語意一致，視覺最輕薄，不改變連結形狀，是目前最主流的技術平台做法。\n\n[登入後才顯示的連結 active state]\n/records 及其子路徑 → 「我的紀錄」active\n/my/following → 「關注名單」active"
+          "content": "採用方案 A——底線標示（Underline Active State）。以橘色（#FF6B3D，--run）底線標示當前頁面的 Nav 連結，與 Logo 底邊的橘色波浪語意一致，視覺最輕薄，不改變連結形狀，是目前最主流的技術平台做法。\n\n[登入後才顯示的連結 active state]\n/records 及其子路徑 → 「我的成績」active\n/my/following → 「關注名單」active\n\n[PageContextStrip 路由對照補充（2026-06-13）]\n/my/following → 顯示頁面標題「關注名單」\n最速榜（/leaderboard）以外的頁面，若有 PageContextStrip，均顯示對應頁面標題。\n未設定路由對照的頁面不顯示 PageContextStrip（不顯示空條帶）。"
         },
         {
           "id": "32.3",
@@ -3921,16 +3986,16 @@
               }
             ]
           ],
-          "content": "「+」按鈕展開 AddDropdown，包含兩個主要選項與一個 assistant+ 專屬選項：\n\n  登錄我的成績        → /records/new\n  幫別人記錄成績      → /records/new?for=other\n  ──────────────────\n  新增賽事（assistant+）→ /races/new\n\n原「接力成績」獨立選項移除，接力功能整合進表單 Tab。\n\n未登入點擊「登錄我的成績」：Auth Modal，intent new_result，登入後導向 /records/new。\n未登入點擊「幫別人記錄成績」：Auth Modal，intent new_result_for_other，登入後導向 /records/new?for=other。\n點擊選單外側或按 Escape 自動關閉。"
+          "content": "「+」按鈕展開 AddDropdown，包含兩個選項：\n\n  新增成績        → /records/new\n  ──────────────────\n  新增賽事（assistant+）→ /races/new\n\n「新增成績」進入三 Tab 統一表單（§34.4），\n用戶在表單內選擇「個人成績 / 幫他人新增 / 接力成績」。\n原「登錄我的成績」與「幫別人記錄成績」兩個獨立選項合併為單一入口。\n\n未登入點擊「新增成績」：Auth Modal，intent new_result，登入後導向 /records/new。\n點擊選單外側或按 Escape 自動關閉。"
         },
         {
           "id": "34.3",
-          "title": "「我的紀錄」頁面新增入口（移除）",
-          "content": "「我的紀錄」頁面（/records）不設置獨立的新增成績按鈕。\nNav 的「+」下拉選單已提供完整的新增入口，頁面內重複設置造成冗餘。\n用戶若要新增成績，統一從 Nav「+」進入，維持單一入口原則。\n\n[移除項目]\n• 頁面右上角的「+ 新增成績」按鈕 — 移除\n• 頁面內的「+ 新增接力成績」快捷按鈕（若有）— 移除\n\n[空狀態引導]\n成績列表為空時（新用戶），顯示引導文字：\n「還沒有成績記錄，點擊上方「+」開始登錄你的第一筆成績！」\n搭配視覺提示指向 Nav 的「+」按鈕位置。"
+          "title": "「我的成績」頁面新增入口（移除）",
+          "content": "「我的成績」頁面（/records）不設置獨立的新增成績按鈕。\nNav 的「+」下拉選單已提供完整的新增入口，頁面內重複設置造成冗餘。\n用戶若要新增成績，統一從 Nav「+」進入，維持單一入口原則。\n\n[移除項目（已實作）]\n• 頁面右上角的「+ 新增成績」按鈕 — 已移除\n• 頁面內的「+ 接力成績」快捷按鈕 — 已移除\n• 空狀態的「新增第一筆成績」連結 — 已移除\n\n[空狀態顯示]\n成績列表為空時，顯示計數「0 筆成績」，不提供快捷新增連結。\n（視覺引導文字待後續討論是否補充）"
         },
         {
           "id": "34.4",
-          "title": "統一成績登錄表單規格（/records/new）",
+          "title": "統一成績登錄表單規格（/records/new，三 Tab）",
           "tables": [
             [
               {
@@ -3997,7 +4062,7 @@
               }
             ]
           ],
-          "content": "兩個路徑（/records/new 與 /records/new?for=other）共用同一個頁面元件（ResultEntryPage），以 for 參數區分「自己 / 別人」模式。\n\n[Tab 結構]\n頁面頂部兩個 Tab：「個人成績」（預設選中）和「接力成績」。\nTab 切換不重置已填欄位（賽事選擇、時間等），但姓名欄位依 Tab 與 for 參數重新套用帶入規則。\n\n[個人成績 Tab]\n• 姓名欄位\n  - /records/new（自己）：自動帶入登入者的 name，欄位設為 readonly\n  - /records/new?for=other（別人）：空白，手動填寫，placeholder「選手真實姓名」\n• 賽事：RaceEditionPicker（§25.5）\n• 完賽時間（swim / t1 / bike / t2 / run）\n• 號碼布（選填，§45.2）\n• 備注（選填）\n\n[接力成績 Tab]\n• 隊名（必填）\n• 賽事：RaceEditionPicker（同上）\n• 成員列表（1–3 名）\n  - /records/new（自己）：成員 1 自動帶入登入者姓名，設為 readonly；其餘成員空白手填\n  - /records/new?for=other（別人）：所有成員欄位空白，手動填寫\n  每位成員：姓名 + 負責分項（swim / bike / run，可多選）+ 分項時間 + 號碼布（選填）\n• T1 / T2 換區時間（隊伍層級，選填）\n• 備注（選填）\n\n[送出後狀態]\n個人成績 — 自己：claim_status = claimed，athlete_id = 登入者，source_credibility = self_reported\n個人成績 — 別人：claim_status = unclaimed，athlete_id = null，athlete_name_snapshot = 填入姓名\n接力成績 — 自己：成員 1 的 claim_status = claimed，其餘 = unclaimed\n接力成績 — 別人：所有成員 claim_status = unclaimed\n送出後 redirect：個人 → /records；接力 → /records（含接力區塊）\n\n[?for=other 與 /records/new 為同一頁面元件]\n/records/new 與 /records/new?for=other 使用同一個 ResultEntryPage 元件，兩者都有「個人成績」與「接力成績」Tab。\nfor 參數只影響姓名欄位的帶入邏輯與送出後的 claim_status，不影響頁面結構。\n\n[Tab 預設行為]\n兩個路徑預設都選中「個人成績」Tab。\n?tab=relay query param 可預選「接力成績」Tab（供 /records/relay/new redirect 使用）。\n\n[實作注意]\n目前 ?for=other 實作為獨立版面（無 Tab），需補上 ResultEntryPage 整合，\n確保與 /records/new 完全對稱。"
+          "content": "成績登錄頁（/records/new）採三 Tab 設計，統一入口，消除獨立的 ?for=other 版面。\n\n[Tab 結構]\n  個人成績　｜　他人成績　｜　接力成績\n  (solo)        (other)       (relay)\n\n預設選中「個人成績」Tab。\n?for=other query param 向後相容，進入頁面後自動切換至「他人成績」Tab。\n?tab=relay 預選「接力成績」Tab（供 /records/relay/new redirect 使用）。\nTab 切換不重置已填欄位（RaceEditionPicker 等）。\n\n[個人成績 Tab（solo）]\n姓名：自動帶入登入者 name，readonly\n賽事：RaceEditionPicker（§25.5）\n完賽時間（swim / t1 / bike / t2 / run）\n號碼布（選填，§45.2）\n備注（選填）\n送出：claim_status = claimed，athlete_id = 登入者，source_credibility = self_reported\n\n[他人成績 Tab（other）]\n姓名：空白，手動填寫，placeholder「選手真實姓名」\n其餘欄位與個人成績 Tab 相同\n送出：claim_status = unclaimed，athlete_id = null，athlete_name_snapshot = 填入姓名\n\n[接力成績 Tab（relay）]\n隊名（必填）\n賽事：RaceEditionPicker（同上）\n成員列表（1–3 名）：\n  每位成員欄位：姓名（手填）+ 「這是我」勾選框 + 負責分項（swim/bike/run）+ 分項時間 + 號碼布（選填）\n  勾選「這是我」的成員：姓名自動帶入登入者 name，readonly\n  一次只能勾選一位（radio 語意，勾選新的自動取消舊的）\n  未勾選任何人亦合法（幫整支別人的隊伍記錄）\nT1 / T2 換區時間（隊伍層級，選填）\n備注（選填）\n\n[接力送出後的 claim_status]\n  勾選「這是我」的成員：claim_status = claimed，athlete_id = 登入者\n  未勾選的成員：claim_status = unclaimed，athlete_id = null\n  無任何人勾選：所有成員 unclaimed（適用幫整隊記錄的情境）\n\n[送出後 redirect]\n個人成績 / 幫他人新增 → /records\n接力成績 → /records（含接力區塊）"
         },
         {
           "id": "34.5",
@@ -4026,7 +4091,7 @@
               }
             ]
           ],
-          "content": "Auth Modal intent 對應：\n  new_result          → 登入後導向 /records/new\n  new_result_for_other → 登入後導向 /records/new?for=other\nnew_relay_result intent 移除（接力已整合進統一表單）。"
+          "content": "Auth Modal intent 對應：\n  new_result → 登入後導向 /records/new（預設個人成績 Tab）\nnew_result_for_other intent 移除（幫他人新增已整合進統一表單第二 Tab）。"
         },
         {
           "id": "34.6",
@@ -4155,7 +4220,7 @@
               }
             ]
           ],
-          "content": "[US-01　已登入選手，登錄自己的成績] 身為一位已登入的選手，當我點擊 Nav 的「+」按鈕時，我希望看到「登錄我的成績」和「幫朋友新增成績」兩個選項，選擇前者後進入成績表單，姓名欄位自動帶入我的帳號名稱，完成後成績直接出現在我的個人紀錄頁。 [US-02　已登入選手，幫練友新增未認領成績] 身為一位已登入的選手，我想幫最近一起比賽的練友記錄他的成績，讓他日後可以在平台上認領。我選擇「幫朋友新增成績」，填入他的姓名與完賽時間，送出後成績以未認領狀態出現在未認領列表，等待他本人認領。 [US-03　未登入訪客，點擊「+」想登錄成績] 身為一位尚未登入的訪客，當我點擊「+」選擇「登錄我的成績」時，我希望系統先彈出登入 Modal，完成登入後自動進入成績登錄表單，不需要重新操作一次。 [US-04　選手新增成績，但賽事不在列表中] 身為一位要記錄海外賽事成績的選手，我在賽事選擇步驟找不到想要的賽事。系統提示「找不到賽事？立即新增」，點擊後進入賽事新增表單，填寫完成後自動返回成績表單並帶入剛新增的賽事。 [US-05　幫朋友新增後，通知對方認領] 身為一位幫練友建立未認領成績的選手，我希望送出後系統提供一個可以直接傳給對方的分享連結或文字，讓他點擊連結就能找到這筆成績並完成認領，不需要自己去未認領列表慢慢搜尋。 [US-06　選手在「我的紀錄」頁快速新增] 身為一位已在「我的紀錄」頁面的選手，我希望在這個頁面就能直接新增成績，不需要返回首頁點擊 Nav 的「+」按鈕，讓操作動線更流暢。 [US-07　新增賽事入口（賽事列表頁）] 身為一位發現平台缺少某場賽事的選手，我在瀏覽賽事頁面（/races）時看到「新增賽事」按鈕，點擊後進入賽事新增表單，填寫賽事基本資料（名稱、舉辦地點、日期、距離）後送出，賽事立即出現在列表中等待助手審核。"
+          "content": "[US-01　已登入選手，登錄自己的成績] 身為一位已登入的選手，當我點擊 Nav 的「+」按鈕時，我希望看到「登錄我的成績」和「幫朋友新增成績」兩個選項，選擇前者後進入成績表單，姓名欄位自動帶入我的帳號名稱，完成後成績直接出現在我的個人紀錄頁。 [US-02　已登入選手，幫練友新增未認領成績] 身為一位已登入的選手，我想幫最近一起比賽的練友記錄他的成績，讓他日後可以在平台上認領。我選擇「幫朋友新增成績」，填入他的姓名與完賽時間，送出後成績以未認領狀態出現在未認領列表，等待他本人認領。 [US-03　未登入訪客，點擊「+」想登錄成績] 身為一位尚未登入的訪客，當我點擊「+」選擇「登錄我的成績」時，我希望系統先彈出登入 Modal，完成登入後自動進入成績登錄表單，不需要重新操作一次。 [US-04　選手新增成績，但賽事不在列表中] 身為一位要記錄海外賽事成績的選手，我在賽事選擇步驟找不到想要的賽事。系統提示「找不到賽事？立即新增」，點擊後進入賽事新增表單，填寫完成後自動返回成績表單並帶入剛新增的賽事。 [US-05　幫朋友新增後，通知對方認領] 身為一位幫練友建立未認領成績的選手，我希望送出後系統提供一個可以直接傳給對方的分享連結或文字，讓他點擊連結就能找到這筆成績並完成認領，不需要自己去未認領列表慢慢搜尋。 [US-06　選手在「我的成績」頁快速新增] 身為一位已在「我的成績」頁面的選手，我希望在這個頁面就能直接新增成績，不需要返回首頁點擊 Nav 的「+」按鈕，讓操作動線更流暢。 [US-07　新增賽事入口（賽事列表頁）] 身為一位發現平台缺少某場賽事的選手，我在瀏覽賽事頁面（/races）時看到「新增賽事」按鈕，點擊後進入賽事新增表單，填寫賽事基本資料（名稱、舉辦地點、日期、距離）後送出，賽事立即出現在列表中等待助手審核。"
         },
         {
           "id": "34.7",
@@ -7783,6 +7848,73 @@
           "id": "46.7",
           "title": "管理員查詢與撤銷",
           "content": "[後台查詢]\n成績詳情的管理員檢視頁（/admin/results 或成績 popup）顯示 created_by 的選手姓名與連結，\n方便資料有誤時快速聯繫新增者。\n\n[撤銷積分]\n管理員可在 /admin/members 的會員詳情中查看該會員的 contribution_events 明細，\n並對個別事件執行「撤銷」，撤銷後 trigger 自動扣回 contribution_score。\n撤銷操作需輸入原因，記錄於 contribution_events.revoke_reason（新增欄位）。\n\n[濫用偵測]\n同一 created_by 對同一 athlete_name_snapshot 在 24 小時內新增超過 5 筆，\n系統在後台顯示警告標記（不自動封鎖，由助手人工判斷）。"
+        }
+      ]
+    },
+    {
+      "id": "47",
+      "title": "我的貢獻頁面（/my/contributions）",
+      "sections": [
+        {
+          "id": "47.1",
+          "title": "設計背景",
+          "content": "「我的貢獻」頁面讓用戶集中管理自己幫別人新增的成績，並提供編輯入口修正資料錯誤。\n同時整合 §46.6 的貢獻積分總覽，形成「貢獻行為 → 管理 → 回饋」的完整閉環。\n\n[與其他頁面的定位差異]\n/unclaimed：全平台所有未認領成績（策展層視角）\n/my/contributions：只有我幫別人新增的成績（個人貢獻視角）"
+        },
+        {
+          "id": "47.2",
+          "title": "資料範圍",
+          "content": "顯示條件：results.created_by = 登入者 AND results.athlete_id ≠ 登入者\n（即我幫別人新增的成績，不含自己的成績）\n\n個人成績與接力成績均包含：\n  個人：claim_status IN (unclaimed, claimed)\n  接力：teams.created_by = 登入者（以隊伍為單位查詢）\n\n排序：created_at DESC（最新新增的在最上方）"
+        },
+        {
+          "id": "47.3",
+          "title": "頁面結構",
+          "content": "[頂部統計卡（三欄）]\n  貢獻積分　　athletes.contribution_score\n  待認領　　　results WHERE created_by=我 AND claim_status=unclaimed AND athlete_id≠我 的筆數\n  已認領　　　results WHERE created_by=我 AND claim_status=claimed AND athlete_id≠我 的筆數\n\n[成績列表]\n每列顯示：\n  個人成績：ti-user icon + 姓名 + 賽事名稱（年份）+ 狀態 badge + 操作\n  接力成績：ti-users icon + 隊名 + 「接力 · N 人」標記 + 賽事名稱（年份）+ 狀態 badge + 操作\n\n[狀態 badge]\n  unclaimed → 「待認領」黃色 badge\n  claimed   → 「已認領」綠色 badge\n\n[操作欄]\n  待認領：「編輯」按鈕\n  已認領：「不可編輯」灰色文字（無按鈕）\n\n[空狀態]\n尚無貢獻記錄時顯示：\n「還沒有幫別人新增過成績，從 Nav「+」開始新增他人成績！」"
+        },
+        {
+          "id": "47.4",
+          "title": "編輯路徑",
+          "content": "[個人成績編輯]\n點擊「編輯」→ 導向現有的成績編輯頁（/results/:id/edit 或 inline 編輯）。\n可編輯欄位：姓名（athlete_name_snapshot）、賽事、時間、號碼布、備注。\n已認領成績（claim_status = claimed）不提供編輯入口。\n\n[接力成績編輯]\n點擊「編輯」→ 導向 /records/relay/:team_id/edit（§45.3）。\n部分成員已認領時，已認領成員欄位 readonly，未認領成員可編輯。\n\n[刪除]\n編輯頁內提供刪除入口（非列表頁），需二次確認。\n已認領成績不提供刪除。"
+        },
+        {
+          "id": "47.5",
+          "title": "Avatar 下拉選單更新（修訂 §30.2）",
+          "content": "「我的貢獻」加入 Avatar 下拉選單，位置在「關注名單」之後：\n\n  1. 個人資料　　ti-user-edit　　→ /profile\n  2. 我的公開頁　ti-user　　　　 → /athletes/:id\n  3. 我的成績　　ti-trophy　　　 → /records\n  4. 關注名單　　ti-heart　　　　→ /my/following\n  5. 我的貢獻　　ti-heart-handshake → /my/contributions\n  ──────────（分隔線）\n  6. 管理後台　　ti-settings　　 → /admin（assistant+ 才顯示）\n  ──────────（分隔線）\n  7. 登出　　　　ti-logout\n\n[待認領 badge]\n待認領筆數 > 0 時，「我的貢獻」選項右側顯示數字 badge（橘色圓點，最多顯示 99+）。\nbadge 數值來源：contribution_score 載入時同步查詢待認領筆數，\n存於 auth context 或在 Nav Server Component 層查詢。"
+        },
+        {
+          "id": "47.6",
+          "title": "API",
+          "content": "GET /api/athletes/me/contributions\n需登入（401 if unauthenticated）\n\n回傳：\n  contribution_score: number\n  unclaimed_count: number\n  claimed_count: number\n  items: Array<{\n    type: \"solo\" | \"relay\"\n    id: string               solo: result_id；relay: team_id\n    name: string             solo: athlete_name_snapshot；relay: team.name\n    member_count?: number    relay only\n    race_name: string        races.name_zh\n    race_year: number\n    claim_status: \"unclaimed\" | \"claimed\" | \"partial\"  relay 可能部分認領\n    created_at: string\n  }>\n\n排序：items 依 created_at DESC"
+        }
+      ]
+    },
+    {
+      "id": "48",
+      "title": "用戶引導系統（訪客 Banner + 新用戶 Checklist）",
+      "sections": [
+        {
+          "id": "48.1",
+          "title": "設計原則",
+          "content": "引導系統分兩個層次，各自針對不同目標用戶：\n\n1. 訪客 Banner：向未登入訪客介紹平台定位，觸發「想了解更多」或「去登入」的動機。\n2. 新用戶 Checklist：向剛登入的新用戶指引第一個有意義的操作，縮短「到達第一個成果」的時間。\n\n兩者都遵循「不強迫、可跳過、告知後路」原則：\n不以 Modal 阻斷用戶操作，不重複打擾已完成引導的用戶，\n關閉後告知用戶可在何處找回相關資訊。"
+        },
+        {
+          "id": "48.2",
+          "title": "訪客介紹 Banner",
+          "content": "[顯示條件]\n未登入狀態下，所有 (main) Route Group 頁面的 Nav 正下方顯示。\n登入後自動消失（Server Component 依 session 判斷，不依賴 localStorage）。\n\n[Banner 內容]\n「🏊 Tri·log 是鐵人三項選手的跨賽事成績記錄平台。\n找到你的成績 → 認領它 → 出現在排行榜上。」\n右側連結：「了解更多 →」→ /about\n\n[樣式]\n背景：var(--bg-card)，上下 padding 10px，文字 var(--ink-3)，\n「了解更多」用 var(--accent) 色。\n無關閉按鈕（登入即消失，不需手動關閉）。\n位置：Nav 正下方，PageContextStrip 之上，GlobalVerifyBanner 之下。\n\n[關於頁面 /about]\n靜態頁面，說明平台定位、核心功能（認領機制、排行榜、策展層）、常見問題。\nNav Footer 與登入頁加入 /about 連結。"
+        },
+        {
+          "id": "48.3",
+          "title": "新用戶入門 Checklist",
+          "content": "[觸發條件]\n已登入 AND has_completed_onboarding = false（athletes 表新增欄位，預設 false）。\n登入後第一次進入任何 (main) 頁面時立即顯示。\n\n[Checklist 項目（共 4 項）]\n1. ✓ 建立帳號（已完成，預設打勾）\n2. ○ 完成個人資料　→ /profile（填寫真實姓名）\n3. ○ 認領你的成績　→ /unclaimed（搜尋並認領）\n4. ○ 登錄一筆成績　→ /records/new（自填成績）\n\n[顯示形式]\n右下角固定浮動卡片（position: fixed，right: 1.5rem，bottom: 1.5rem）。\n不遮蓋主要內容，不阻斷操作。\n寬度約 260px，含進度條（N/4 已完成）。\n\n[完成判斷]\n項目 2（完成個人資料）：athletes.name IS NOT NULL\n項目 3（認領成績）：EXISTS 任一 results WHERE athlete_id = 登入者\n項目 4（登錄成績）：EXISTS 任一 results WHERE created_by = 登入者 AND athlete_id = 登入者\n各項目每次頁面載入時重新判斷，打勾後不可取消。\n\n[全部完成後]\n顯示「🎉 入門完成！開始探索 Tri·log」2 秒後自動消失，\n同時將 athletes.has_completed_onboarding 設為 true，往後不再顯示。\n\n[手動關閉]\nChecklist 右上角有「✕」關閉鈕，點擊後收合。\n關閉後顯示提示文字：「可在個人資料頁隨時查看入門進度。」\n收合狀態用 sessionStorage 記錄（重新登入後復原，提醒尚未完成的用戶）。\nhas_completed_onboarding = true 後永遠不再顯示，不受 sessionStorage 影響。\n\n[不顯示條件]\nhas_completed_onboarding = true → 永遠不顯示\n管理後台頁面（/admin/*）→ 不顯示"
+        },
+        {
+          "id": "48.4",
+          "title": "資料庫變更（修訂第 16 章）",
+          "content": "athletes 表新增欄位：\n  has_completed_onboarding BOOLEAN NOT NULL DEFAULT false\n\n設為 true 的時機：\n  Checklist 四項全部完成後，由 server action 更新。\n  不提供手動重設（避免 Checklist 重複出現干擾老用戶）。"
+        },
+        {
+          "id": "48.5",
+          "title": "/about 頁面結構",
+          "content": "路徑：/about（(main) Route Group，無需登入）\n\n[建議章節]\n1. 一句話定位：「鐵人三項選手的跨賽事成績記錄與排行榜平台」\n2. 三步驟說明：找到成績 → 認領 → 出現在榜上\n3. 策展層說明：助手預建官方成績，選手逐步認領\n4. 排行榜說明：最速榜（個人最佳）vs 排行榜（單場成績）\n5. 常見問題（FAQ）：\n   「我的成績不在上面怎麼辦？」→ 自己登錄\n   「認領是什麼意思？」→ 說明 claimed/unclaimed\n   「成績會被修改嗎？」→ 說明公信力政策\n\n[連結位置]\n訪客 Banner 的「了解更多 →」\n頁面 Footer\n登入頁底部次要連結"
         }
       ]
     }

@@ -80,6 +80,120 @@ decisions:
 
 ## 記錄
 
+### [2026-06-14] 用戶引導系統 — Checklist 優化（Ch.48 修訂）
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: [48]
+status: implemented
+decisions:
+  - id: D001
+    chapter: 48
+    content: "Checklist 第 4 步從「認領成績」改為「瀏覽最速榜」，因為並非所有新用戶都有可認領的官方成績"
+    spec_impact: true
+    synced: false
+  - id: D002
+    chapter: 48
+    content: "最速榜造訪狀態用 localStorage 追蹤（tl_visited_leaderboard），在 usePathname 偵測到 /leaderboard 時寫入"
+    spec_impact: false
+    synced: false
+  - id: D003
+    chapter: 48
+    content: "Checklist dismiss 改用 localStorage（原 sessionStorage），關閉後重新整理不會重新出現"
+    spec_impact: false
+    synced: false
+  - id: D004
+    chapter: 48
+    content: "AvatarDropdown 新增「新手指南」入口，透過 custom event（trilog:open-onboarding）重新打開 Checklist"
+    spec_impact: true
+    synced: false
+```
+
+**完成內容**：
+- Checklist 第 4 步改為「瀏覽最速榜」，所有用戶皆可完成，不依賴助手是否已預先輸入成績
+- Dismiss 改用 `localStorage`，關閉後跨 session 都不再出現
+- 新增 `openOnboardingChecklist()` 工具函式，透過 `CustomEvent` 觸發重開
+- `AvatarDropdown` 加入「新手指南」按鈕（`IconListCheck`），登入用戶可隨時重新打開
+- `OnboardingChecklistLoader` 移除 `claimedCount` 查詢（不再需要）
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | `npx tsc --noEmit` | ✅ PASS | 無型別錯誤 |
+| 2 | 瀏覽最速榜後 task 4 勾選 | ⚠️ 待驗證 | 需瀏覽器確認 localStorage |
+| 3 | AvatarDropdown 新手指南重開 | ⚠️ 待驗證 | 需瀏覽器確認 custom event |
+| 4 | localStorage dismiss 跨 session | ⚠️ 待驗證 | 需瀏覽器確認 |
+
+**異動檔案**：
+- `src/components/onboarding/OnboardingChecklist.tsx`
+- `src/components/onboarding/OnboardingChecklistLoader.tsx`
+- `src/components/layout/AvatarDropdown.tsx`
+
+---
+
+### [2026-06-14] 用戶引導系統（Ch.48）
+
+**狀態**：⚠️ 部分完成
+
+```spec-sync
+chapters: [48]
+status: partial
+decisions:
+  - id: D001
+    chapter: 48
+    content: "GuestBanner 插在 Nav 與 GlobalVerifyBanner 之間，以 Server Component 判斷登入狀態"
+    spec_impact: false
+    synced: false
+  - id: D002
+    chapter: 48
+    content: "OnboardingChecklist 以 Server Loader + Client 元件拆分：Loader 取資料，Client 負責互動與 sessionStorage"
+    spec_impact: false
+    synced: false
+  - id: D003
+    chapter: 48
+    content: "has_completed_onboarding 欄位加在 athletes 表，completeOnboarding server action 在 allDone useEffect 觸發"
+    spec_impact: false
+    synced: false
+```
+
+**完成內容**：
+- `supabase/migrations/20260614000001_athletes_onboarding.sql`：`athletes.has_completed_onboarding BOOLEAN NOT NULL DEFAULT false`
+- `src/types/database.ts`：Row/Insert 加入 `has_completed_onboarding`
+- `src/components/onboarding/GuestBanner.tsx`：未登入時頁面頂部引導橫幅，連結 `/about` 與 `/login`
+- `src/app/(main)/about/page.tsx`：Hero + 三步驟 + 策展層說明 + 排行榜差異 + FAQ + CTA
+- `src/app/actions/onboarding.ts`：`completeOnboarding` server action
+- `src/components/onboarding/OnboardingChecklist.tsx`：固定右下角，4 步驟，進度條，sessionStorage dismiss
+- `src/components/onboarding/OnboardingChecklistLoader.tsx`：Server Component，載入狀態後渲染 Client Checklist
+- `src/app/(main)/layout.tsx`：加入 GuestBanner + OnboardingChecklistLoader
+
+**待驗證**（需套用 migration 至 Supabase 後才能完整測試）：
+- ⚠️ `has_completed_onboarding` 欄位需手動在 Supabase Dashboard 執行 migration
+- ⚠️ OnboardingChecklist 全部完成後自動標記 `completeOnboarding`
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | `npx tsc --noEmit` | ✅ PASS | 無型別錯誤 |
+| 2 | `npm run build` | ✅ PASS | `/about` 路由已產生 |
+| 3 | GuestBanner 未登入顯示 | ⚠️ 待驗證 | 需瀏覽器確認 |
+| 4 | OnboardingChecklist dismiss | ⚠️ 待驗證 | 需瀏覽器確認 |
+
+**異動檔案**：
+- `supabase/migrations/20260614000001_athletes_onboarding.sql`（新增）
+- `src/types/database.ts`
+- `src/app/(main)/layout.tsx`
+- `src/app/(main)/about/page.tsx`（新增）
+- `src/app/actions/onboarding.ts`（新增）
+- `src/components/onboarding/GuestBanner.tsx`（新增）
+- `src/components/onboarding/OnboardingChecklist.tsx`（新增）
+- `src/components/onboarding/OnboardingChecklistLoader.tsx`（新增）
+- `src/components/layout/PageContextStrip.tsx`
+
+---
+
 ### [2026-06-13] Admin 成績維護頁面
 
 **狀態**：✅ 完成
@@ -92,7 +206,7 @@ decisions:
     chapter: 0
     content: "新增 /admin/manage-results：搜尋個人/接力成績 + 刪除功能，官方成績不可刪除，需 assistant+ 權限"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -133,17 +247,17 @@ decisions:
     chapter: 47
     content: "實作 /my/contributions 頁面：統計卡三欄（貢獻積分/待認領/已認領）+ 個人/接力成績列表 + 編輯入口"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D002
     chapter: 47
     content: "GET /api/athletes/me/contributions：solo/relay 合併回傳，relay claim_status 三態（unclaimed/claimed/partial）；relay 以兩段查詢解決 results→teams 型別系統無關聯問題"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D003
     chapter: 30
     content: "AvatarDropdown 新增「我的貢獻」（IconHeartHandshake），Nav 層多查 unclaimed_count，待認領 > 0 顯示橘色數字 badge"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -192,22 +306,22 @@ decisions:
     chapter: 34
     content: "ResultEntryPage 三 Tab 完整實作：Tab label 改為「個人成績/他人成績/接力成績」，移除 other Tab 重複說明框（NewResultForm 自帶）"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D002
     chapter: 34
     content: "接力「這是我」勾選機制：radio 語意實作（勾選新的自動取消其他人），未勾選任何人亦合法"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D003
     chapter: 20
     content: "AddDropdown 簡化為兩選項：「新增成績」(→/records/new) + 「新增賽事」(assistant+ only)，移除獨立的「他人成績」入口"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D004
     chapter: 45
     content: "接力編輯頁加入實際編輯功能：隊名、未認領成員姓名、各成員分項時間；已認領成員姓名顯示為 readonly"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -257,7 +371,7 @@ decisions:
     chapter: 30
     content: "Avatar 下拉選單重構：調整順序、加入 Tabler Icons（MIT），icon size=16 stroke=1.5，hover 時 icon 變 accent 色"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -329,17 +443,17 @@ decisions:
     chapter: 20
     content: "Nav 加入「我的紀錄」(/records) 和「關注名單」(/my/following) 連結，僅登入後顯示"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D002
     chapter: 20
     content: "PageContextStrip 補 /my/following 條目；除最速榜外，有 PageContextStrip 的頁面移除 content 區的 <h1> 重複主標"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D003
     chapter: 20
     content: "/records 頁移除「+ 新增成績」與「+ 接力成績」按鈕，以及空狀態的「新增第一筆成績」連結"
     spec_impact: true
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -388,17 +502,17 @@ decisions:
     chapter: 46
     content: "撤銷積分用 DELETE contribution_events，trigger 自動扣回，不需獨立 revoke API"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D002
     chapter: 46
     content: "other_claimed 由 results UPDATE trigger 觸發，不需修改 approve_claim function"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D003
     chapter: 46
     content: "claimedByMeCount 於個人頁即時計算（SELECT COUNT），不做反正規化快取，避免多一個 trigger"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -454,7 +568,7 @@ decisions:
     chapter: 0
     content: "results 表新增 created_by 欄位，記錄新增該筆成績的使用者（auth.uid()），方便未來稽核與 admin 追蹤"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -494,17 +608,17 @@ decisions:
     chapter: 20
     content: "ResultEntryPage 加入第三個 Tab「幫他人新增」，?for=other 與 ?tab=other 皆導向此 Tab，不再有獨立版面"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D-UI-02
     chapter: 34
     content: "NavLinks 登入後顯示「我的紀錄」與「關注名單」主連結，Nav.tsx 傳入 isLoggedIn prop"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D-UI-03
     chapter: 20
     content: "/records 頁移除頁面內新增按鈕與空狀態連結，入口統一由 Nav +新增 下拉負責"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -545,12 +659,12 @@ decisions:
     chapter: 20
     content: "§20.11 新增成績入口統一為 /records/new，個人／接力以 Tab 切換；/records/relay/new 設 308 permanentRedirect 至 /records/new?tab=relay"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D-ENTRY-02
     chapter: 20
     content: "Tab 切換採雙表單同時 mount + CSS hidden 方案，確保切換 Tab 不重置 RaceEditionPicker 等已填欄位"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -589,12 +703,12 @@ decisions:
     chapter: 25
     content: "RaceEditionPicker 下拉清單改為台灣優先排序：已知品牌（Challenge Taiwan / IRONMAN / 普悠瑪 / Force / 玩賽樂園）→ 其他台灣地區賽事 → 國外賽事"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D-RACESORT-02
     chapter: 25
     content: "台灣場次判斷目前用 heuristic（名稱含中文、含 Taiwan、city 含台灣城市）；暫不加 country 欄位，等賽事資料量增加後補"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -637,7 +751,7 @@ decisions:
     chapter: 25
     content: "§25.5 RaceEditionPicker 實作為獨立 Client Component，取代兩個表單的 select。新增 GET /api/races/search?q= 與 GET /api/races/:id/editions 兩支 API"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -683,22 +797,22 @@ decisions:
     chapter: 8
     content: "新增 §8.3：註冊後導向 /register/verify 頁，顯示 masked email + 操作說明 + 60s 重發 cooldown"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D-VERIFY-02
     chapter: 28
     content: "Ch.28 新增 open:email_sent 狀態對應 AuthModal 的 emailSent 流程；ModalEmailSent 元件提供已驗證→登入快速路徑"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D-VERIFY-03
     chapter: 8
     content: "GlobalVerifyBanner：server component 檢查 email_confirmed_at，未驗證登入者在 (main) 頁面頂部顯示 warn bar，可 dismiss（sessionStorage）"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D-VERIFY-04
     chapter: 0
     content: "POST /api/auth/resend-verification 呼叫 supabase.auth.resend({ type: 'signup', email })；rate limit 60s 由 client localStorage 管理"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -749,22 +863,22 @@ decisions:
     chapter: 0
     content: "Admin footer 顯示 'v{semver} · {git-hash}'，build 時注入 NEXT_PUBLIC_APP_VERSION / NEXT_PUBLIC_GIT_HASH"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D-VER-02
     chapter: 0
     content: "Patch 版號格式為三位數零補齊（0.2.001…0.2.999），每次 git commit 由 pre-commit hook 自動遞增"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D-VER-03
     chapter: 0
     content: "Minor / major 版號由開發者手動執行 npm run version:minor / version:major 控制，不自動觸發"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D-VER-04
     chapter: 0
     content: "使用者頁面移除『已公證』/『公證』顯示標籤；certificate 型別與資料庫欄位保留，Admin 頁面仍顯示"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -789,22 +903,22 @@ decisions:
     chapter: 45
     content: "§45.1 records 頁改 race_date DESC 排序；≥5 筆成績自動插入年份分組標題"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D045-02
     chapter: 45
     content: "§45.2 results 加 bib_number TEXT 欄位，新增表單可填，成績詳頁顯示 #號碼"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D045-03
     chapter: 45
     content: "§45.3 新增 /records/relay/:teamId/edit 頁面，含輸入隊名確認的刪除表單；/records 接力卡片加「編輯」按鈕"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D045-04
     chapter: 45
     content: "§45.4 賽事選單標籤從 '賽事 年份' 改為 '賽事（年份）'，覆蓋 NewResultForm、NewRelayResultForm、admin/results 篩選"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -836,7 +950,7 @@ decisions:
     chapter: 0
     content: "選手公開頁「最速」標籤改為橘色實心（#FF6B3D），與最速榜規範色一致"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -873,7 +987,7 @@ decisions:
     chapter: 0
     content: "Button 元件 loading 狀態改為 spinner SVG + 文字，AuthModal 登入成功時保持 loading 直到 modal 關閉"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -910,17 +1024,17 @@ decisions:
     chapter: 43
     content: "ISSUE_REPORT 表允許匿名提交（submitted_by nullable），RLS INSERT WITH CHECK true"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D002
     chapter: 43
     content: "Footer 回報入口作為 Client Component 獨立於 Server layout，ReportModal 共用元件覆蓋所有入口"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D003
     chapter: 43
     content: "Admin /admin/reports 以 Server Component 一次撈全部，前端 client-side 篩選狀態 / 類別，避免多次 API 請求"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -994,7 +1108,7 @@ decisions:
     chapter: 0
     content: "birth_year 分支提前 return，避免 Supabase .update() 不接受 Record<string, unknown> 的型別衝突"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -1033,12 +1147,12 @@ decisions:
     chapter: 39
     content: "雙搜尋框：A 全站搜尋（API，debounce 300ms）+ B client-side 過濾已追蹤清單"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D004
     chapter: 44
     content: "屆次頁成績列表設計為獨立 Client Component（EditionResultsSection），Server Component 查詢後傳入，避免 client-side fetch 延遲"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D005
     chapter: 44
     content: "停權或已刪除選手的公開頁 API 回傳 error 欄位，前端顯示對應狀態"
@@ -1119,7 +1233,7 @@ decisions:
     chapter: 0
     content: "重複標記由 unique constraint (athlete_id, race_id, year, interest_type) 自然去重，不額外擋錯誤訊息"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -1166,7 +1280,7 @@ decisions:
     chapter: 40
     content: "admin 對他人資料的寫入操作一律走 SECURITY DEFINER RPC，不依賴 UPDATE policy 的同表子查詢（遞迴 RLS 問題）"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D002
     chapter: 40
     content: "被刪除帳號同步硬刪除 auth.users，被刪 email 可重新註冊"
@@ -1176,12 +1290,12 @@ decisions:
     chapter: 0
     content: "service role client 獨立檔案 lib/supabase/admin.ts，僅 import 進 server actions"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D004
     chapter: 0
     content: "國家代碼統一 ISO 3166-1 alpha-3（TWN／DEU…），系列內排序國碼改為三碼"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -1239,7 +1353,7 @@ decisions:
     chapter: 0
     content: "移除 /races 與 /races/[slug]/[year] 底部預告區塊，歷屆成績分佈待實作時直接加入"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -1282,7 +1396,7 @@ decisions:
     chapter: 41
     content: "Open-Meteo Historical Archive API 免費、無需 API Key"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -1344,7 +1458,7 @@ decisions:
     chapter: 0
     content: "樂觀計數：delta = state.active !== initialActive ? (state.active ? 1 : -1) : 0，只在狀態真正改變時調整"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -1405,7 +1519,7 @@ decisions:
     chapter: 42
     content: "刪除成功後用 Server Action 內的 redirect() 而非客戶端 router.push，避免已刪除資料重新 render 造成 404"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D002
     chapter: 42
     content: "刪除前先查關聯成績數量，有成績則回傳錯誤，無成績才刪除（屆次因 CASCADE 自動刪除）"
@@ -1448,7 +1562,7 @@ decisions:
     chapter: 23
     content: "「台灣選手」改為 Syne 800 副標字體，視覺上作為「最速榜」的前綴副標，移除裝飾線"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D002
     chapter: 23
     content: "卡片英雄區移除品牌標題，改以距離標籤為主視覺（fontSize 40），DISTANCE_LABEL mapping：full→226全距離、70.3→113半程、olympic→51.5奧林匹克"
@@ -1501,7 +1615,7 @@ decisions:
     chapter: 0
     content: "DistanceTabs 新增 hidden 欄位，用 .filter(tab => !tab.hidden) 在 render 前過濾"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -1579,7 +1693,7 @@ decisions:
     chapter: 40
     content: "停權：assistant+ 可操作，需輸入原因；刪除：admin only，需輸入 email 確認；復原：admin only，30 天內"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D002
     chapter: 40
     content: "刪除帳號時 claimed 成績改為 unlinked"
@@ -1630,7 +1744,7 @@ decisions:
     chapter: 0
     content: "登出改用 window.location.href 強制完整頁面重載，避免 Next.js 沿用快取的 Server Component 結果"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **問題**：登出後 Navbar 仍顯示已登入狀態。
@@ -1679,7 +1793,7 @@ decisions:
     chapter: 38
     content: "Optimistic update：點擊即切換 UI，API 失敗再回滾"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -1743,7 +1857,7 @@ decisions:
     chapter: 42
     content: "疑似重複偵測在 server render 時做（非即時），比較正規化後名稱是否互相包含（長度 ≥ 4 字元）"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -1869,12 +1983,12 @@ decisions:
     chapter: 40
     content: "Popup 用 client-side state（無路由變更），保持 URL 乾淨"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D002
     chapter: 40
     content: "is_assistant_or_above() RPC 在 Server Action 層驗證（middleware + action 雙重保護）"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -1901,17 +2015,17 @@ decisions:
     chapter: 16
     content: "保留 nickname，新增 name（非重命名）；display_name = COALESCE(nickname, name, athlete_name_snapshot)"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D002
     chapter: 16
     content: "進榜條件改為 a.name IS NOT NULL（取代原 nickname IS NOT NULL）"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D003
     chapter: 16
     content: "現有會員遷移：migration 內 UPDATE athletes SET name = nickname WHERE nickname IS NOT NULL"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -1954,7 +2068,7 @@ decisions:
     chapter: 30
     content: "AvatarDropdown 含「我的紀錄 / 個人資料 / 管理後台 / 登出」"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -1983,7 +2097,7 @@ decisions:
     chapter: 28
     content: "Auth Modal intent 支援 login / new_result / claim / follow / race_wishlist / race_attended"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -2011,12 +2125,12 @@ decisions:
     chapter: 21
     content: "首次成績後 profile 不完整（缺 gender / birth_year / nationality）時顯示補填提示"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D002
     chapter: 21
     content: "解除關聯：official + claimed 成績顯示 UnlinkButton，需二次確認"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -2042,12 +2156,12 @@ decisions:
     chapter: 15
     content: "姓名模糊比對（正規化）用於認領比對"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D002
     chapter: 14
     content: "最速榜升級：DistanceTabs（226/113/51.5/Sprint）、Sub 分界線、badge 顯示（未認領/認領中）"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -2070,12 +2184,12 @@ decisions:
     chapter: 25
     content: "以 race.series 欄位做系列分組；slug 作為 URL 識別碼，SEO 友善"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D002
     chapter: 25
     content: "IRONMAN_TAIWAN 與 IRONMAN_70_3 合併顯示為同一 IRONMAN 群組；台灣場地優先排列"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -2101,17 +2215,17 @@ decisions:
     chapter: 20
     content: "T1/T2 存 TEAM 層級，不歸屬個別成員"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D002
     chapter: 20
     content: "成員 split_seconds 只計純運動時間，不含換區"
     spec_impact: false
-    synced: false
+    synced: true
   - id: D003
     chapter: 20
     content: "claim_status 狀態轉換僅透過 RPC 函式，不直接 UPDATE"
     spec_impact: false
-    synced: false
+    synced: true
 ```
 
 **完成內容**：

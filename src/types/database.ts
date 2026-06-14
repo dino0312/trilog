@@ -62,6 +62,7 @@ export type Database = {
           avatar_url:  string | null
           is_minor:       boolean
           is_searchable:  boolean
+          has_completed_onboarding: boolean
           role:               Role
           contribution_score: number
           created_at:         string
@@ -83,6 +84,7 @@ export type Database = {
           avatar_url?:     string | null
           is_minor?:       boolean
           is_searchable?:  boolean
+          has_completed_onboarding?: boolean
           role?:           Role
           deleted_at?:     string | null
           suspended_at?:   string | null
