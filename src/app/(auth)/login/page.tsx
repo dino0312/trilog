@@ -19,6 +19,12 @@ export default function LoginPage() {
           <LoginForm />
         </Suspense>
       </div>
+
+      <div className="mt-4 text-center">
+        <a href="/about" className="text-xs text-ink-3 hover:text-ink transition">
+          了解 Tri·log →
+        </a>
+      </div>
     </div>
   )
 }

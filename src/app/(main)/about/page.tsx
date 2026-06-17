@@ -1,131 +1,171 @@
 import Link from 'next/link'
-import { IconTrophy, IconUser, IconUsers, IconChevronRight, IconSearch, IconPlus, IconShieldCheck } from '@tabler/icons-react'
+import {
+  IconSwimming, IconBike, IconRun,
+  IconSearch, IconFlag, IconTrophy,
+} from '@tabler/icons-react'
 
 export const metadata = { title: '關於 Tri·log' }
 
 export default function AboutPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12 space-y-16">
+    <main>
 
       {/* Hero */}
-      <section className="text-center space-y-4">
-        <h1 className="text-4xl font-bold text-ink">Tri·log</h1>
-        <p className="text-xl text-ink-3 leading-relaxed">
-          鐵人三項選手的跨賽事成績記錄平台
-        </p>
-        <p className="text-ink-3 max-w-lg mx-auto leading-relaxed">
-          不論是鐵人 51.5、70.3 還是 226 全程，Tri·log 讓你在同一個地方看見所有成績，
-          與其他選手比較，追蹤個人進步曲線。
-        </p>
-        <div className="flex justify-center gap-3 pt-2">
-          <Link
-            href="/register"
-            className="px-5 py-2.5 rounded-lg bg-accent text-bg font-semibold hover:bg-accent/90 transition"
-          >
-            免費註冊
-          </Link>
-          <Link
-            href="/leaderboard"
-            className="px-5 py-2.5 rounded-lg border border-border text-ink hover:bg-bg-card transition"
-          >
-            瀏覽排行榜
-          </Link>
+      <section style={{ position: 'relative', width: '100%', aspectRatio: '16/7', overflow: 'hidden' }}>
+        <img
+          src="/about-hero.jpg"
+          alt="選手衝過 Challenge Taiwan 終點線，雙手高舉"
+          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 55%', display: 'block' }}
+        />
+        {/* 左深→右淡漸層遮罩 */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(11,15,20,0.82) 0%, rgba(11,15,20,0.55) 45%, rgba(11,15,20,0.18) 100%)' }} />
+        {/* 底部遮罩 */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(11,15,20,0.6) 0%, transparent 50%)' }} />
+        {/* 左側文字 */}
+        <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '55%', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '2rem 2.5rem' }}>
+          <p style={{ fontSize: '11px', fontWeight: 500, letterSpacing: '0.14em', color: 'rgba(102,198,190,0.9)', margin: '0 0 0.875rem', textTransform: 'uppercase' }}>
+            關於 Tri·log
+          </p>
+          <h1 style={{ fontSize: '24px', fontWeight: 500, lineHeight: 1.4, color: '#ffffff', margin: '0 0 1rem' }}>
+            每一場鐵人賽，<br />你都拚盡了全力。<br />那些成績，應該有個家。
+          </h1>
+          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.7, margin: '0 0 1.5rem', maxWidth: '320px' }}>
+            台灣鐵人三項選手的跨賽事成績記錄平台，讓每一場成績都被好好保存下來。
+          </p>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <Link href="/unclaimed" style={{ fontSize: '13px', padding: '7px 18px', borderRadius: '8px', background: 'rgba(102,198,190,0.15)', border: '0.5px solid rgba(102,198,190,0.5)', color: 'rgba(102,198,190,1)', textDecoration: 'none' }}>
+              查看未認領成績 →
+            </Link>
+            <Link href="/login" style={{ fontSize: '13px', padding: '7px 18px', borderRadius: '8px', color: 'rgba(255,255,255,0.7)', border: '0.5px solid rgba(255,255,255,0.25)', textDecoration: 'none' }}>
+              登入 / 註冊
+            </Link>
+          </div>
         </div>
-      </section>
-
-      {/* 3-step flow */}
-      <section className="space-y-6">
-        <h2 className="text-xl font-semibold text-ink text-center">三步驟開始</h2>
-        <div className="grid sm:grid-cols-3 gap-4">
+        {/* 右下角三項距離 tag */}
+        <div style={{ position: 'absolute', bottom: '1rem', right: '1.25rem', display: 'flex', gap: '8px' }}>
           {[
-            { icon: <IconUser size={28} stroke={1.5} />, step: '1', title: '建立帳號', desc: '填寫基本資料，設定你的公開個人頁' },
-            { icon: <IconSearch size={28} stroke={1.5} />, step: '2', title: '找到你的成績', desc: '搜尋賽事，認領助手已預先建立的官方成績' },
-            { icon: <IconTrophy size={28} stroke={1.5} />, step: '3', title: '上榜！', desc: '成績驗證後自動計入排行榜與個人統計' },
-          ].map(({ icon, step, title, desc }) => (
-            <div key={step} className="bg-bg-card rounded-xl p-5 border border-border space-y-3">
-              <div className="text-accent">{icon}</div>
-              <div>
-                <span className="text-xs text-ink-3 font-medium">步驟 {step}</span>
-                <h3 className="text-base font-semibold text-ink mt-0.5">{title}</h3>
-              </div>
-              <p className="text-sm text-ink-3 leading-relaxed">{desc}</p>
+            { Icon: IconSwimming, color: '#4ea1ff', label: '3.8 km' },
+            { Icon: IconBike,     color: '#66c6be', label: '180 km' },
+            { Icon: IconRun,      color: '#ff685e', label: '42.2 km' },
+          ].map(({ Icon, color, label }) => (
+            <div key={label} style={{ background: 'rgba(11,15,20,0.55)', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: '8px', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Icon size={14} color={color} aria-hidden="true" />
+              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>{label}</span>
             </div>
           ))}
         </div>
       </section>
 
-      {/* 策展層說明 */}
-      <section className="bg-bg-card rounded-xl border border-border p-6 space-y-4">
-        <div className="flex items-center gap-2">
-          <IconShieldCheck size={22} stroke={1.5} className="text-accent" />
-          <h2 className="text-lg font-semibold text-ink">策展層：成績從第一天就在這裡</h2>
-        </div>
-        <p className="text-ink-3 text-sm leading-relaxed">
-          Tri·log 的核心特色是「策展層」。我們的助手會預先輸入賽事官方成績，
-          讓平台上線的第一天就有完整的成績資料庫。你只需要搜尋你的名字，
-          點一下「認領」，成績就正式與你的帳號綁定。
-        </p>
-        <p className="text-ink-3 text-sm leading-relaxed">
-          沒找到自己的成績？你也可以自行新增，或幫隊友記錄成績。
-          自行新增的成績標示為「自申報」，上傳完賽證書後可升級驗證狀態。
+      {/* 1. 痛點 */}
+      <section style={{ padding: '2.5rem 2rem' }}>
+        <p style={{ fontSize: '12px', fontWeight: 500, letterSpacing: '0.12em', color: 'var(--ink-3)', margin: '0 0 1.25rem', textTransform: 'uppercase' }}>痛點</p>
+        <blockquote style={{ borderLeft: '2px solid var(--border)', margin: 0, padding: '0.5rem 0 0.5rem 1.25rem' }}>
+          <p style={{ fontSize: '17px', lineHeight: 1.75, color: 'var(--ink)', margin: 0 }}>
+            完賽之後，照片發了、獎牌掛了，<br />
+            但那個時間——你游了多久、騎了多快、最後衝線的感覺——<br />
+            幾年後，還記得嗎？
+          </p>
+        </blockquote>
+        <p style={{ fontSize: '15px', color: 'var(--ink-3)', lineHeight: 1.7, margin: '1.5rem 0 0' }}>
+          Tri·log 想做一件簡單的事：讓你的每一場成績，都被好好保存下來。不只是這一場，是你從第一場到現在的完整歷程。
         </p>
       </section>
 
-      {/* 排行榜差異說明 */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold text-ink text-center">排行榜怎麼計算？</h2>
-        <div className="grid sm:grid-cols-2 gap-4">
+      <hr style={{ border: 'none', borderTop: '0.5px solid var(--border)', margin: '0 2rem' }} />
+
+      {/* 2. 三步驟 */}
+      <section style={{ padding: '2.5rem 2rem' }}>
+        <p style={{ fontSize: '12px', fontWeight: 500, letterSpacing: '0.12em', color: 'var(--ink-3)', margin: '0 0 1.5rem', textTransform: 'uppercase' }}>三步驟開始</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
           {[
-            {
-              icon: <IconTrophy size={20} stroke={1.5} />,
-              title: '最速榜（Leaderboard）',
-              desc: '每位選手在同一距離級別的「最佳單次成績」。同一選手只會出現一次，凸顯巔峰表現。',
-            },
-            {
-              icon: <IconUsers size={20} stroke={1.5} />,
-              title: '排行榜（Rankings）',
-              desc: '特定賽事或系列賽的所有成績排名。一位選手可能出現多次，忠實呈現每場比賽的競爭狀況。',
-            },
-          ].map(({ icon, title, desc }) => (
-            <div key={title} className="bg-bg-card rounded-xl border border-border p-5 space-y-2">
-              <div className="flex items-center gap-2 text-accent">{icon}<span className="text-sm font-semibold text-ink">{title}</span></div>
-              <p className="text-sm text-ink-3 leading-relaxed">{desc}</p>
+            { Icon: IconSearch, color: 'var(--accent)', step: '01', title: '找到成績', desc: '搜尋賽事，找到你的名字' },
+            { Icon: IconFlag,   color: 'var(--accent)', step: '02', title: '認領它',   desc: '一鍵認領，成績與帳號綁定' },
+            { Icon: IconTrophy, color: 'var(--accent)', step: '03', title: '出現在榜上', desc: '自動計入排行榜與個人統計' },
+          ].map(({ Icon, color, step, title, desc }) => (
+            <div key={step} style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '12px', padding: '1.25rem' }}>
+              <Icon size={24} color={color} style={{ marginBottom: '0.75rem' }} />
+              <p style={{ fontSize: '11px', color: 'var(--ink-3)', margin: '0 0 0.25rem', fontWeight: 500 }}>步驟 {step}</p>
+              <p style={{ fontSize: '15px', color: 'var(--ink)', margin: '0 0 0.5rem', fontWeight: 500 }}>{title}</p>
+              <p style={{ fontSize: '13px', color: 'var(--ink-3)', lineHeight: 1.6, margin: 0 }}>{desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold text-ink text-center">常見問題</h2>
-        <div className="divide-y divide-border border border-border rounded-xl overflow-hidden">
-          {[
-            { q: '免費嗎？', a: 'Tri·log 目前完全免費。' },
-            { q: '只有台灣賽事嗎？', a: '目前以台灣賽事為主，未來會逐步擴充海外賽事資料。' },
-            { q: '我的成績被認領後還能修改嗎？', a: '官方成績認領後不可修改，以確保資料可信度。自申報成績可隨時編輯。' },
-            { q: '接力賽怎麼記錄？', a: '接力成績以「隊伍」為單位建立，每位成員可分別認領自己的棒次成績。' },
-          ].map(({ q, a }) => (
-            <div key={q} className="px-5 py-4 flex gap-3">
-              <IconChevronRight size={16} className="text-accent mt-0.5 shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-ink">{q}</p>
-                <p className="text-sm text-ink-3 mt-1">{a}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <hr style={{ border: 'none', borderTop: '0.5px solid var(--border)', margin: '0 2rem' }} />
 
-      {/* CTA */}
-      <section className="text-center space-y-3">
-        <p className="text-ink-3">準備好了嗎？</p>
-        <Link
-          href="/register"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-accent text-bg font-semibold hover:bg-accent/90 transition"
-        >
-          <IconPlus size={18} />
-          建立帳號，開始記錄
+      {/* 3. 認領機制 */}
+      <section style={{ padding: '2.5rem 2rem' }}>
+        <p style={{ fontSize: '12px', fontWeight: 500, letterSpacing: '0.12em', color: 'var(--ink-3)', margin: '0 0 1rem', textTransform: 'uppercase' }}>認領機制</p>
+        <p style={{ fontSize: '15px', color: 'var(--ink)', lineHeight: 1.75, margin: '0 0 0.75rem' }}>
+          Tri·log 的助手會預先輸入官方賽事成績，讓平台第一天就有完整資料。你只需要找到你的成績，點「認領」，就正式與帳號綁定。
+        </p>
+        <p style={{ fontSize: '15px', color: 'var(--ink-3)', lineHeight: 1.75, margin: '0 0 1.25rem' }}>
+          找不到？你也可以自行新增成績，上傳完賽證書後升級驗證狀態。
+        </p>
+        <Link href="/unclaimed" style={{ fontSize: '13px', color: 'var(--accent)', textDecoration: 'none' }}>
+          查看未認領成績 →
         </Link>
+      </section>
+
+      <hr style={{ border: 'none', borderTop: '0.5px solid var(--border)', margin: '0 2rem' }} />
+
+      {/* 4. 最速榜 */}
+      <section style={{ padding: '2.5rem 2rem' }}>
+        <p style={{ fontSize: '12px', fontWeight: 500, letterSpacing: '0.12em', color: 'var(--ink-3)', margin: '0 0 1rem', textTransform: 'uppercase' }}>最速榜</p>
+        <p style={{ fontSize: '17px', color: 'var(--ink)', lineHeight: 1.6, margin: '0 0 0.75rem', fontWeight: 500 }}>
+          你在台灣全距離鐵人圈排第幾？
+        </p>
+        <p style={{ fontSize: '15px', color: 'var(--ink-3)', lineHeight: 1.75, margin: '0 0 1.25rem' }}>
+          最速榜取每位選手在同一距離的最佳成績，讓你一眼看出自己的位置。從 51.5 到 226，找到屬於你的排名。
+        </p>
+        <Link href="/leaderboard" style={{ fontSize: '13px', color: 'var(--accent)', textDecoration: 'none' }}>
+          前往最速榜 →
+        </Link>
+      </section>
+
+      <hr style={{ border: 'none', borderTop: '0.5px solid var(--border)', margin: '0 2rem' }} />
+
+      {/* 5. FAQ */}
+      <section style={{ padding: '2.5rem 2rem' }}>
+        <p style={{ fontSize: '12px', fontWeight: 500, letterSpacing: '0.12em', color: 'var(--ink-3)', margin: '0 0 1.5rem', textTransform: 'uppercase' }}>常見問題</p>
+        <div style={{ display: 'grid', gap: '1rem' }}>
+          {[
+            {
+              q: '我的成績不在上面怎麼辦？',
+              a: '你可以自行新增成績，或回報給我們，助手會盡快補充官方資料。',
+            },
+            {
+              q: '認領是什麼意思？',
+              a: '助手預先建立官方成績後，成績尚未與任何帳號綁定。「認領」就是把那筆成績正式連結到你的帳號。',
+            },
+            {
+              q: '成績會被修改嗎？',
+              a: '官方成績認領後不可修改，以確保資料可信度。自申報成績可隨時編輯，上傳完賽證書後可升級驗證狀態。',
+            },
+          ].map(({ q, a }) => (
+            <div key={q} style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '12px', padding: '1.25rem' }}>
+              <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--ink)', margin: '0 0 0.5rem' }}>{q}</p>
+              <p style={{ fontSize: '13px', color: 'var(--ink-3)', lineHeight: 1.65, margin: 0 }}>{a}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <hr style={{ border: 'none', borderTop: '0.5px solid var(--border)', margin: '0 2rem' }} />
+
+      {/* 6. 底部 CTA */}
+      <section style={{ padding: '2.5rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', textAlign: 'center' }}>
+        <p style={{ fontSize: '17px', color: 'var(--ink)', fontWeight: 500, margin: 0 }}>準備好了嗎？</p>
+        <p style={{ fontSize: '14px', color: 'var(--ink-3)', margin: 0 }}>找到你的成績，讓每一次完賽都被記住。</p>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <Link href="/unclaimed" style={{ fontSize: '13px', padding: '8px 20px', borderRadius: '8px', background: 'var(--accent)', color: 'var(--bg)', textDecoration: 'none', fontWeight: 500 }}>
+            查看未認領成績
+          </Link>
+          <Link href="/login" style={{ fontSize: '13px', padding: '8px 20px', borderRadius: '8px', border: '0.5px solid var(--border)', color: 'var(--ink-3)', textDecoration: 'none' }}>
+            登入 / 註冊
+          </Link>
+        </div>
       </section>
 
     </main>

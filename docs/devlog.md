@@ -80,6 +80,69 @@ decisions:
 
 ## 記錄
 
+### [2026-06-17] Ch.48 用戶引導系統 + /about 頁面（補完）
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: [48]
+status: implemented
+decisions:
+  - id: D001
+    chapter: 48
+    content: "GuestBanner Server Component：未登入顯示，登入消失，無關閉按鈕，位置在 GlobalVerifyBanner 之後"
+    spec_impact: false
+    synced: false
+  - id: D002
+    chapter: 48
+    content: "/about Hero：全寬照片 16/7，object-position center 30%，左側漸層遮罩，右下角三項距離 tag（IconSwimming/IconBike/IconRun from @tabler/icons-react）"
+    spec_impact: false
+    synced: false
+  - id: D003
+    chapter: 48
+    content: "/about 六段內容：痛點 blockquote、三步驟卡片、認領機制、最速榜介紹、FAQ 三卡片、底部雙 CTA"
+    spec_impact: false
+    synced: false
+  - id: D004
+    chapter: 48
+    content: "Footer 加入 /about 連結；登入頁底部加「了解 Tri·log →」次要連結"
+    spec_impact: false
+    synced: false
+```
+
+**完成內容**：
+- Hero 照片 `/about-hero.jpg`（來源：ALLDATAx1_1-1-30.JPG）複製至 `public/`
+- `/about` 頁面全寬 Hero + 六段內容完整實作
+- Footer 加 `/about` 連結
+- 登入頁加「了解 Tri·log →」次要連結
+- Layout 順序調整：`GlobalVerifyBanner` → `GuestBanner`
+- 確認已完成：Migration、database.ts 型別、GuestBanner、OnboardingChecklist、OnboardingChecklistLoader、Server Action
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | `/about` Hero 照片顯示 | ✅ PASS | 漸層遮罩、文字清晰、三項 tag 三色正確 |
+| 2 | `/about` 六段內容依序顯示 | ✅ PASS | 痛點、三步驟、認領機制、最速榜、FAQ、CTA |
+| 3 | GuestBanner 未登入顯示 | ✅ PASS | 「了解更多 →」連結至 /about |
+| 4 | Footer 關於連結 | ✅ PASS | |
+| 5 | OnboardingChecklist 右下角出現 | ✅ PASS | |
+| 6 | `npx tsc --noEmit` | ✅ PASS | 零錯誤 |
+
+**待驗證**（需登入狀態）：
+- ⚠️ GuestBanner 登入後消失（Server Component，需真實登入測試）
+- ⚠️ OnboardingChecklist 全部完成 → has_completed_onboarding = true
+- ⚠️ 登入頁「了解 Tri·log →」連結（需導覽至 /login）
+
+**異動檔案**：
+- `public/about-hero.jpg`（新增）
+- `src/app/(main)/about/page.tsx`（重寫）
+- `src/components/layout/Footer.tsx`（加 /about 連結）
+- `src/app/(auth)/login/page.tsx`（加「了解 Tri·log →」）
+- `src/app/(main)/layout.tsx`（調整 Banner 順序）
+
+---
+
 ### [2026-06-14] 用戶引導系統 — Checklist 優化（Ch.48 修訂）
 
 **狀態**：✅ 完成

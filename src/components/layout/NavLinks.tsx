@@ -7,9 +7,13 @@ const PUBLIC_LINKS = [
   { href: '/leaderboard', label: '最速榜' },
   { href: '/unclaimed',   label: '未認領' },
   { href: '/races',       label: '賽事' },
+  { href: '/about',       label: '關於' },
 ]
 
 const AUTH_LINKS = [
+  { href: '/leaderboard', label: '最速榜' },
+  { href: '/unclaimed',   label: '未認領' },
+  { href: '/races',       label: '賽事' },
   { href: '/records',      label: '我的成績' },
   { href: '/my/following', label: '關注名單' },
 ]
@@ -18,7 +22,7 @@ type Props = { isLoggedIn?: boolean }
 
 export function NavLinks({ isLoggedIn = false }: Props) {
   const pathname = usePathname()
-  const links = isLoggedIn ? [...PUBLIC_LINKS, ...AUTH_LINKS] : PUBLIC_LINKS
+  const links = isLoggedIn ? AUTH_LINKS : PUBLIC_LINKS
 
   return (
     <>
