@@ -15,7 +15,7 @@ export default function AboutPage() {
         <img
           src="/about-hero.jpg"
           alt="選手衝過 Challenge Taiwan 終點線，雙手高舉"
-          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 55%', display: 'block' }}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', display: 'block' }}
         />
         {/* 左深→右淡漸層遮罩 */}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(11,15,20,0.82) 0%, rgba(11,15,20,0.55) 45%, rgba(11,15,20,0.18) 100%)' }} />

@@ -19,6 +19,7 @@ export default async function ManageResultsPage({ searchParams }: { searchParams
     .select(`
       id, athlete_name_snapshot, total_seconds, claim_status, source_credibility,
       created_at, athlete_id,
+      athletes ( name ),
       race_editions ( year, distance_category, races ( name ) )
     `)
     .eq('result_type', 'solo')
@@ -52,7 +53,7 @@ export default async function ManageResultsPage({ searchParams }: { searchParams
     const race    = edition?.races as any
     return {
       id:           r.id,
-      name:         r.athlete_name_snapshot ?? '—',
+      name:         r.athlete_name_snapshot ?? (r.athletes as any)?.name ?? '—',
       total:        r.total_seconds ? secondsToTime(r.total_seconds) : '—',
       race:         `${race?.name ?? '—'} ${edition?.year ?? ''}`.trim(),
       distance:     edition?.distance_category ?? '—',
