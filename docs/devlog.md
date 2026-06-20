@@ -80,6 +80,35 @@ decisions:
 
 ## 記錄
 
+### [2026-06-20] 成績維護頁選手姓名修正
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: []
+status: implemented
+decisions: []
+```
+
+**完成內容**：
+- 管理後台「成績維護」頁面：自申報且已認領的成績（`claim_status = claimed`）因 `athlete_name_snapshot` 未填入，顯示為「—」
+- 修正：query 加入 `athletes ( name )` join，fallback 順序改為 `athlete_name_snapshot ?? athletes.name ?? '—'`
+
+**技術決策**：
+- `athlete_name_snapshot` 的設計語意是「無 athlete_id 時的名字備份」（unclaimed / 幫他人新增），不適合用在 claimed 成績
+- 有 `athlete_id` 的成績名字應永遠從 `athletes.name` join，不需在 insert 時寫入 snapshot，也不需要日後同步
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 |
+|---|---------|------|
+| 1 | 管理後台成績維護，已認領自申報成績顯示姓名 | ⚠️ 待驗證（需登入管理後台確認） |
+
+**異動檔案**：
+- `src/app/(admin)/admin/manage-results/page.tsx`
+
+---
+
 ### [2026-06-17] Ch.48 用戶引導系統 + /about 頁面（補完）
 
 **狀態**：✅ 完成
