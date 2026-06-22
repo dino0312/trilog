@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { autoCompleteRaceFollow } from './race-follows'
 
 export type AdminActionState = {
   error: string | null
@@ -12,12 +13,24 @@ export async function approveClaim(_prev: AdminActionState, formData: FormData):
   const supabase = await createClient()
   const resultId = formData.get('result_id') as string
 
+  // 取得 result 資訊（認領者 + edition）用於自動完賽觸發
+  const { data: result } = await supabase
+    .from('results')
+    .select('athlete_id, race_edition_id')
+    .eq('id', resultId)
+    .single()
+
   const { error } = await supabase.rpc('approve_claim', {
     p_result_id: resultId,
     p_approve: true,
   })
 
   if (error) return { error: error.message, success: false }
+
+  // 自動完賽：認領者若有 registered 追蹤，標記為 completed
+  if (result?.athlete_id && result?.race_edition_id) {
+    await autoCompleteRaceFollow(result.athlete_id, result.race_edition_id, resultId)
+  }
 
   revalidatePath('/admin')
   revalidatePath('/leaderboard')

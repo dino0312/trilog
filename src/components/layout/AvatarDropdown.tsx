@@ -9,11 +9,13 @@ import {
   IconTrophy,
   IconHeart,
   IconHeartHandshake,
+  IconCalendarEvent,
   IconSettings,
   IconLogout,
   IconListCheck,
 } from '@tabler/icons-react'
 import { openOnboardingChecklist } from '@/components/onboarding/OnboardingChecklist'
+import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 
 interface Props {
   email:               string
@@ -113,6 +115,9 @@ export function AvatarDropdown({ email, name, avatarUrl, userId, isAssistant, fo
                 )}
               </span>
             </DropdownLink>
+            <DropdownLink href="/my/races" icon={<IconCalendarEvent size={16} stroke={1.5} />} onClick={() => setOpen(false)}>
+              我的賽事
+            </DropdownLink>
           </div>
 
           {/* 管理後台（助手以上） */}
@@ -137,6 +142,13 @@ export function AvatarDropdown({ email, name, avatarUrl, userId, isAssistant, fo
               <IconListCheck size={16} stroke={1.5} className="dropdown-icon shrink-0" />
               新手指南
             </button>
+          </div>
+
+          {/* 外觀 */}
+          {divider}
+          <div style={{ padding: '6px 16px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+            <span style={{ fontSize: '11px', color: 'var(--ink-4)' }}>外觀</span>
+            <ThemeSwitcher />
           </div>
 
           {/* 登出 */}

@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { autoCompleteRaceFollow } from './race-follows'
 
 export type ResultState = {
   error: string | null
@@ -93,7 +94,7 @@ export async function createResult(_prev: ResultState, formData: FormData): Prom
     }
   }
 
-  const { error } = await supabase.from('results').insert({
+  const { data: newResult, error } = await supabase.from('results').insert({
     race_edition_id:       raceEditionId,
     athlete_id:            user.id,
     result_type:           'solo',
@@ -110,9 +111,14 @@ export async function createResult(_prev: ResultState, formData: FormData): Prom
     claimed_at:            new Date().toISOString(),
     bib_number:            bibNumber,
     created_by:            user.id,
-  })
+  }).select('id').single()
 
   if (error) return { error: error.message }
+
+  // 自動完賽：若已追蹤此屆次（status = 'registered'），標記為 completed
+  if (newResult) {
+    await autoCompleteRaceFollow(user.id, raceEditionId, newResult.id)
+  }
 
   redirect('/records')
 }
@@ -178,6 +184,14 @@ export async function deleteResult(_prev: ResultState, formData: FormData): Prom
 
   const id = formData.get('id') as string
 
+  // 刪成績前先查對應的 race_follow
+  const { data: follow } = await supabase
+    .from('race_follows')
+    .select('id, completion_source')
+    .eq('athlete_id', user.id)
+    .eq('result_id', id)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('results')
     .delete()
@@ -187,7 +201,19 @@ export async function deleteResult(_prev: ResultState, formData: FormData): Prom
 
   if (error) return { error: error.message }
 
+  // 同步處理 race_follow
+  if (follow) {
+    if (follow.completion_source === 'auto') {
+      // 系統自動建立的 → 整筆刪除
+      await supabase.from('race_follows').delete().eq('id', follow.id)
+    } else {
+      // 手動標記的 → 只清除 result_id 連結，保留完賽狀態
+      await supabase.from('race_follows').update({ result_id: null }).eq('id', follow.id)
+    }
+  }
+
   revalidatePath('/records')
+  revalidatePath('/my/races')
   return { error: null }
 }
 

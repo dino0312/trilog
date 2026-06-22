@@ -80,6 +80,327 @@ decisions:
 
 ## 記錄
 
+### [2026-06-22] Ch.51 深淺主題切換系統
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: [51]
+status: implemented
+decisions:
+  - id: D001
+    chapter: 51
+    content: "globals.css 雙主題：:root 淺色預設，[data-theme=dark] 深色，@media prefers-color-scheme: dark + :not([data-theme=light]) 跟隨系統"
+    spec_impact: false
+    synced: false
+  - id: D002
+    chapter: 51
+    content: "防閃爍 inline script 放在 layout.tsx <head>，讀 localStorage tl_theme 並在 HTML 渲染前設定 data-theme attribute"
+    spec_impact: false
+    synced: false
+  - id: D003
+    chapter: 51
+    content: "ThemeSwitcher 使用 @tabler/icons-react（IconDeviceLaptop/IconSun/IconMoon），而非 icon font class，與全站風格一致"
+    spec_impact: false
+    synced: false
+  - id: D004
+    chapter: 51
+    content: "AvatarDropdown 新增「外觀」row（ThemeSwitcher）放在新手指南與登出按鈕之間"
+    spec_impact: false
+    synced: false
+  - id: D005
+    chapter: 51
+    content: "淺色主題 swim/bike/run 色值加深（#2f7eeb/#3da89f/#e8443a），accent 改 #3da89f，確保淺色背景上的對比度"
+    spec_impact: true
+    synced: false
+```
+
+**完成內容**：
+- `globals.css` 重構為雙主題 token：`:root` = 淺色預設，`[data-theme="dark"]` = 深色，`@media prefers-color-scheme: dark` + `:not([data-theme="light"])` 跟隨系統偏好
+- 新增 `--hero-overlay-h` / `--hero-overlay-v` CSS token，控制 about Hero 遮罩透明度（深色較深，淺色較淡）
+- `layout.tsx`：`<html>` 加 `suppressHydrationWarning`，`<head>` 加防閃爍 inline script
+- 新增 `src/components/ui/ThemeSwitcher.tsx`：三態切換（系統/淺色/深色），localStorage `tl_theme`，即時套用 `data-theme`
+- `AvatarDropdown.tsx`：登出按鈕前加入 ThemeSwitcher 行（含「外觀」標籤）
+- 修正硬寫色值（第一波）：`about/page.tsx` Hero 遮罩改用 CSS token，`my/races/page.tsx` tab 色 + STATUS_COLOR，`RaceFollowButtons.tsx` terminal badge
+- 修正硬寫色值（第二波）：`leaderboard/page.tsx` 全頁面 `#4A5568`/`#F0EDE6`/`#8A96A8` 改用 CSS 變數；`PageContextStrip.tsx` 背景 + 標題 + 副標；`NavLinks.tsx` active/inactive/hover 色；`DistanceTabs.tsx` 頁籤文字
+- `TrilogLogo.tsx`：wordmark「Tri」「log」改 `fill="currentColor"` + SVG `color: var(--ink)`，兩個主題下皆清晰可讀
+
+**技術決策**：
+- 淺色主題 accent 為 `#3da89f`（深於深色的 `#66c6be`），避免薄荷綠在白底上對比不足
+- DNS/DNF badge 背景用 `rgba(136,146,160,0.12)`（固定值）而非 `var(--accent-soft)`，因為兩個主題下皆需中性灰色調
+- SVG `fill` 不接受 CSS 變數字串，改用 `fill="currentColor"` + 父層 `style={{ color: 'var(--ink)' }}` 間接套用
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | TypeScript 型別檢查 | ✅ PASS | `npx tsc --noEmit` 零錯誤 |
+| 2 | 淺色主題頁面載入（/leaderboard）| ✅ PASS | 無 hydration error，無 console error |
+| 3 | 切換深色主題 | ✅ PASS | `data-theme=dark` 即時生效 |
+| 4 | localStorage 設定保留 | ✅ PASS | `tl_theme` 正確讀寫 |
+| 5 | Logo 淺色主題可讀性 | ✅ PASS | Tri·log wordmark 顯示深墨色 |
+| 6 | 距離頁籤淺色主題 | ✅ PASS | active/inactive 文字皆清晰 |
+| 7 | 最速榜大標題「台灣選手」/「最速榜」| ✅ PASS | ink-3 / ink 正確對應 |
+| 8 | 切換系統模式 | ⚠️ 待驗證 | 需在有系統深色偏好的環境下測試 |
+| 9 | AvatarDropdown ThemeSwitcher | ⚠️ 待驗證 | 需登入後確認 dropdown 顯示 |
+| 10 | about Hero 遮罩 | ⚠️ 待驗證 | 需瀏覽 /about 確認兩主題下遮罩效果 |
+
+**異動檔案**：
+- `src/app/globals.css`（雙主題 token 重構）
+- `src/app/layout.tsx`（防閃爍 script + suppressHydrationWarning）
+- `src/components/ui/ThemeSwitcher.tsx`（新增）
+- `src/components/ui/TrilogLogo.tsx`（wordmark fill 改 currentColor）
+- `src/components/layout/AvatarDropdown.tsx`（加入 ThemeSwitcher）
+- `src/components/layout/NavLinks.tsx`（色值改 CSS 變數）
+- `src/components/layout/PageContextStrip.tsx`（背景 + 文字改 CSS 變數）
+- `src/components/leaderboard/DistanceTabs.tsx`（頁籤文字改 CSS 變數）
+- `src/app/(main)/leaderboard/page.tsx`（全頁硬寫色值改 CSS 變數）
+- `src/app/(main)/about/page.tsx`（Hero 遮罩改用 CSS token）
+- `src/app/(main)/my/races/page.tsx`（硬寫色改 CSS 變數）
+- `src/components/races/RaceFollowButtons.tsx`（terminal badge 改 CSS 變數）
+
+---
+
+### [2026-06-22] RaceEditionPicker 缺少距離選擇步驟
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: []
+status: implemented
+decisions: []
+```
+
+**完成內容**：
+- 新增成績頁（`/records/new`、`/records/new?for=other`、`/records/relay/new`）中的 `RaceEditionPicker` 選年份後直接取 `editions[0]`，導致有多個距離的賽事無法選擇
+- 新增第三步 `step: 'distance'`：`selectYear` 判斷若同年只有一個 edition → 直接選定；若有多個 → 進入距離選擇清單
+- 距離清單依 full → 70.3 → olympic → sprint 排序（`DISTANCE_ORDER` 常數）
+- `displayText` 在多距離情況下加入距離描述，例如「Challenge Taiwan（2026 · Full (226)）」
+
+**技術決策**：
+- 新增 `selectedYear` state 以在 `selectDistance` 中取得年份資訊；`reset` 時一併清除
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | TypeScript 型別檢查 | ✅ PASS | `npx tsc --noEmit` 零錯誤 |
+| 2 | 多距離賽事距離選擇 | ✅ PASS | 選年份後出現距離清單 |
+| 3 | 單一距離賽事直接選定 | ✅ PASS | 選年份直接完成，不出現額外步驟 |
+| 4 | 他人成績 / 接力成績頁 | ✅ PASS | 使用相同元件，一併修正 |
+
+**異動檔案**：
+- `src/components/races/RaceEditionPicker.tsx`（新增 step: 'distance'、selectedYear state、selectDistance handler）
+
+---
+
+### [2026-06-22] 刪除成績時同步清理 race_follows
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: [49]
+status: implemented
+decisions:
+  - id: D001
+    chapter: 49
+    content: "deleteResult 於刪除前查詢 race_follows(result_id)；auto 建立的記錄整筆刪除，手動建立的只清除 result_id 連結"
+    spec_impact: true
+    synced: false
+```
+
+**完成內容**：
+- `deleteResult` 在刪除 results 前先查詢 `race_follows WHERE result_id = $id`
+- 因 `race_follows.result_id` FK 為 `ON DELETE SET NULL`，刪成績後 `result_id` 會自動變 NULL，故必須在刪除前取得 follow 資料
+- `completion_source = 'auto'`（系統自動建立）→ 整筆刪除 race_follows
+- `completion_source ≠ 'auto'`（使用者手動標記）→ 只將 `result_id` 設為 NULL，保留完賽狀態
+
+**已知問題 ／ TODO**：
+- 若 FK ON DELETE SET NULL 的 trigger 先於 deleteResult action 執行（極端競態），result_id 已是 NULL 而查不到 follow。建議後續加 DB trigger `AFTER UPDATE OF result_id ON race_follows` 補強。手動清理指令：`DELETE FROM race_follows WHERE completion_source = 'auto' AND result_id IS NULL AND status = 'completed'`
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | TypeScript 型別檢查 | ✅ PASS | |
+| 2 | 刪除自申報成績 → race_follows 整筆消失 | ✅ PASS | History Tab 正常移除 |
+| 3 | 刪除成績（手動標記完賽）→ race_follows 保留狀態 | ⚠️ 待驗證 | 需手動建立測試資料 |
+
+**異動檔案**：
+- `src/app/actions/results.ts`（deleteResult 新增 race_follows 查詢與清理邏輯）
+
+---
+
+### [2026-06-22] autoCompleteRaceFollow 支援首次新增成績自動建立追蹤記錄
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: [49]
+status: implemented
+decisions:
+  - id: D001
+    chapter: 49
+    content: "autoCompleteRaceFollow：若 race_follows 不存在，自動 INSERT 一筆 status=completed、completion_source=auto 的記錄"
+    spec_impact: true
+    synced: false
+```
+
+**完成內容**：
+- 原本 `autoCompleteRaceFollow` 若找不到追蹤記錄就直接 return，導致使用者直接新增成績（未曾追蹤）時 History Tab 不顯示
+- 修改為：無追蹤記錄時自動 INSERT `{ status: 'completed', completion_source: 'auto', result_id }`
+- 有追蹤記錄但 `status ≠ 'registered'`（如 watching）→ 維持不動，避免覆蓋使用者的關注狀態
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | TypeScript 型別檢查 | ✅ PASS | |
+| 2 | 新增成績（未曾追蹤） → History Tab 出現 | ✅ PASS | |
+| 3 | 新增成績（已 watching） → 維持 watching 狀態 | ⚠️ 待驗證 | |
+| 4 | 新增成績（已 registered） → 升為 completed | ✅ PASS | |
+
+**異動檔案**：
+- `src/app/actions/race-follows.ts`（autoCompleteRaceFollow 新增 auto-insert 邏輯）
+
+---
+
+### [2026-06-22] 歷史賽事 race_interest → race_follows 資料遷移
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: [49]
+status: implemented
+decisions:
+  - id: D001
+    chapter: 49
+    content: "既有 race_interest attended/wishlist 記錄以 SQL migration 轉入 race_follows；有成績者連結 result_id，無成績者取最長距離 edition"
+    spec_impact: true
+    synced: false
+  - id: D002
+    chapter: 49
+    content: "重複記錄（同一年同一賽事多個距離）：以 race_id+year+athlete_id 去重，NOT EXISTS 條件排除已有成績的 race+year，避免插入多筆"
+    spec_impact: false
+    synced: false
+```
+
+**完成內容**：
+- 在 Supabase SQL Editor 手動執行兩段 INSERT
+  - **has_result**：`race_interest` 有 `claim_status = 'claimed'` 成績者 → `status = 'completed'`，連結對應 `result_id`，`completion_source = 'manual'`
+  - **no_result**（`DISTINCT ON race_id, year, athlete_id`）：無成績的 attended/wishlist 記錄 → `status = 'watching'`；取同年最長距離 edition（full > 70.3 > olympic > sprint）
+- 發現並修正重複問題：`NOT EXISTS` 條件需對整個 race+year 去重，而非僅對特定 edition，避免有 olympic 成績卻也插入 full edition 的 watching 記錄
+
+**技術決策**：
+- 採用 SQL migration（Option B）而非 UI 合併流程，因使用者數量尚少，遷移後資料更乾淨
+- DISTINCT ON + UNION ALL 需將 DISTINCT ON 包在子查詢，否則 SQL 語法錯誤
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | has_result 資料插入 | ✅ PASS | History Tab 顯示歷史完賽 |
+| 2 | no_result 資料插入 | ✅ PASS | Watching Tab 顯示關注記錄 |
+| 3 | 同年多距離無重複 | ✅ PASS | 刪除 completion_source=manual 重跑後確認 |
+
+**異動檔案**：
+- Supabase SQL Editor（手動執行，非 migration 檔案）
+
+---
+
+### [2026-06-20] Ch.49–50 賽事追蹤系統 + 賽事即時資訊貢獻系統
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: [49, 50]
+status: implemented
+decisions:
+  - id: D001
+    chapter: 49
+    content: "race_follows 以 race_edition_id 為錨點（而非 race_id+year），讓不同距離可獨立追蹤"
+    spec_impact: false
+    synced: false
+  - id: D002
+    chapter: 49
+    content: "自動完賽觸發在 createResult（即時）與 approveClaim（admin 審核通過時），而非 claimResult（此時狀態仍為 pending）"
+    spec_impact: true
+    synced: false
+  - id: D003
+    chapter: 50
+    content: "RaceEditionInfos 改用兩次查詢（infos + athletes），因 Supabase 無法直接 join race_edition_infos→athletes（外鍵未被識別為關係）"
+    spec_impact: false
+    synced: false
+  - id: D004
+    chapter: 49
+    content: "未安裝 @radix-ui/react-dialog，改用自製 overlay 模態（與既有 AuthModal 相同模式）"
+    spec_impact: false
+    synced: false
+  - id: D005
+    chapter: 50
+    content: "AddRaceInfoSheet 使用 useActionState 搭配 Server Action 上傳；檔案上傳路徑 race-info/{race_edition_id}/{uuid}.{ext}"
+    spec_impact: false
+    synced: false
+```
+
+**完成內容**：
+- 新增 3 個 migration：race_follows 表、race_edition_infos 表、contribution_events 更新（result_id 可 NULL、新增 related_edition_id、加入 add_race_info event_type）
+- 新增 race_editions.registration_deadline 欄位
+- 實作 4 個 API routes：/api/race-editions/[id]/follow、/api/athletes/me/race-follows、/api/race-editions/[id]/infos、/api/race-edition-infos/[infoId]
+- 新增 server actions：race-follows.ts（createRaceFollow、updateRaceFollow、deleteRaceFollow、autoCompleteRaceFollow）、race-edition-infos.ts（createRaceInfo）
+- 修改 results.ts createResult：成功後觸發 autoCompleteRaceFollow
+- 修改 admin.ts approveClaim：審核通過後觸發 autoCompleteRaceFollow（認領者）
+- 新增 /my/races 頁面（Upcoming/Watching/History 三個 Tab）
+- 新增 RaceFollowButtons、RaceFollowStatusModal、AddRaceInfoSheet、RaceEditionInfos、UpgradeToRegisteredButton 元件
+- 修改 races/[slug]/[year]/page.tsx：加入追蹤按鈕組 + 賽事資訊區塊
+- 更新 NavLinks（加入「我的賽事」）、AvatarDropdown（加入第 6 項）、PageContextStrip
+- 更新 src/types/database.ts：新增 race_follows、race_edition_infos 型別，更新 race_editions 及 contribution_events
+
+**技術決策**：
+- 模態元件不依賴 Radix UI（未安裝），改用 React state + 自製 overlay，與 AuthModal 風格一致
+- contribution_events.result_id 改為 nullable（Migration 003），以支援非成績類的貢獻事件
+
+**已知問題 ／ TODO**：
+- Supabase Storage bucket `race-info` 已在 Dashboard 手動建立（public bucket + INSERT/DELETE policy）
+- race_follows 刪成績後的 orphan 清理建議後續加 DB trigger（見 deleteResult bug fix entry）
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | TypeScript 型別檢查 | ✅ PASS | `npx tsc --noEmit` 零錯誤 |
+| 2 | 頁面 /my/races 載入（三個 Tab）| ✅ PASS | migrations 已套用 |
+| 3 | 屆次頁追蹤按鈕（關注 / 已報名）| ✅ PASS | |
+| 4 | 賽事資訊上傳（AddRaceInfoSheet）| ✅ PASS | Storage bucket 已建立並設 policy |
+| 5 | 自動完賽觸發（createResult）| ✅ PASS | History Tab 正確顯示 |
+| 6 | History Tab 顯示歷史完賽 | ✅ PASS | race_interest 遷移後正確顯示 |
+
+**異動檔案**：
+- `supabase/migrations/20260620000001_race_follows.sql`（新增）
+- `supabase/migrations/20260620000002_race_edition_infos.sql`（新增）
+- `supabase/migrations/20260620000003_contribution_events_race_info.sql`（新增）
+- `src/types/database.ts`（更新型別）
+- `src/app/api/race-editions/[id]/follow/route.ts`（新增）
+- `src/app/api/athletes/me/race-follows/route.ts`（新增）
+- `src/app/api/race-editions/[id]/infos/route.ts`（新增）
+- `src/app/api/race-edition-infos/[infoId]/route.ts`（新增）
+- `src/app/actions/race-follows.ts`（新增）
+- `src/app/actions/race-edition-infos.ts`（新增）
+- `src/app/actions/results.ts`（修改 createResult）
+- `src/app/actions/admin.ts`（修改 approveClaim）
+- `src/app/(main)/my/races/page.tsx`（新增）
+- `src/components/races/RaceFollowButtons.tsx`（新增）
+- `src/components/races/RaceFollowStatusModal.tsx`（新增）
+- `src/components/races/AddRaceInfoSheet.tsx`（新增）
+- `src/components/races/RaceEditionInfos.tsx`（新增）
+- `src/components/races/UpgradeToRegisteredButton.tsx`（新增）
+- `src/components/layout/NavLinks.tsx`（修改）
+- `src/components/layout/AvatarDropdown.tsx`（修改）
+- `src/components/layout/PageContextStrip.tsx`（修改）
+- `src/app/(main)/races/[slug]/[year]/page.tsx`（修改）
+
+---
+
 ### [2026-06-20] 成績維護頁選手姓名修正
 
 **狀態**：✅ 完成
@@ -184,7 +505,7 @@ decisions:
     chapter: 48
     content: "Checklist 第 4 步從「認領成績」改為「瀏覽最速榜」，因為並非所有新用戶都有可認領的官方成績"
     spec_impact: true
-    synced: false
+    synced: true
   - id: D002
     chapter: 48
     content: "最速榜造訪狀態用 localStorage 追蹤（tl_visited_leaderboard），在 usePathname 偵測到 /leaderboard 時寫入"
@@ -199,7 +520,7 @@ decisions:
     chapter: 48
     content: "AvatarDropdown 新增「新手指南」入口，透過 custom event（trilog:open-onboarding）重新打開 Checklist"
     spec_impact: true
-    synced: false
+    synced: true
 ```
 
 **完成內容**：
@@ -502,7 +823,7 @@ decisions:
     chapter: 20
     content: "所有 UI 文字中「我的紀錄」改為「我的成績」、「新增記錄」改為「新增成績」，URL 路徑 /records 不動"
     spec_impact: true
-    synced: false
+    synced: true
 ```
 
 **完成內容**：

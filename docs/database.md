@@ -408,3 +408,51 @@ UPDATE results r
 SET claim_tag_count = (SELECT COUNT(*) FROM claim_tags WHERE result_id = r.id)
 WHERE id = '...';
 ```
+
+---
+
+## Ch.49–50 新增表格（2026-06-20）
+
+### `race_follows`
+選手對特定屆次的追蹤狀態（私人資料）。
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| id | uuid | PK |
+| athlete_id | uuid | FK → athletes |
+| race_edition_id | uuid | FK → race_editions |
+| status | text | watching/registered/completed/dns/dnf |
+| completion_source | text | auto/manual（nullable） |
+| result_id | uuid | FK → results（nullable，completed 時連結） |
+| dns_dnf_reason | text | 原因（nullable） |
+| dns_dnf_public | boolean | 是否公開原因 |
+
+**RLS**：athlete_id = auth.uid()（select/insert/update/delete 均限本人）  
+**狀態機**：watching → registered → completed/dns/dnf（單向，終態不可回退）  
+**UNIQUE**：(athlete_id, race_edition_id)
+
+### `race_edition_infos`
+社群貢獻的賽前即時資訊。
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| id | uuid | PK |
+| race_edition_id | uuid | FK → race_editions |
+| athlete_id | uuid | FK → athletes（貢獻者） |
+| info_type | text | route_map/aid_station/external_link/note |
+| title | text | 標題（必填） |
+| content | text | 文字內容（nullable） |
+| file_url | text | Storage 公開 URL（nullable） |
+| file_type | text | pdf/image（nullable） |
+| is_public | boolean | 預設 true |
+
+**RLS**：SELECT is_public=true（公開）；INSERT/DELETE 限貢獻者本人  
+**Storage**：bucket `race-info`，路徑 `race-info/{race_edition_id}/{uuid}.{ext}`
+
+### `race_editions.registration_deadline`（新增欄位）
+報名截止日（DATE 型別），用於 Watching tab 的倒數顯示。
+
+### `contribution_events` 異動
+- `result_id` 改為 nullable（支援非成績類貢獻）
+- 新增 `related_edition_id`（UUID，FK → race_editions，nullable）
+- event_type 新增 `add_race_info`（+2 分/次，上限 10 分/edition）

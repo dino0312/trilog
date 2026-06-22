@@ -2,12 +2,53 @@
 @import "tailwindcss";
 
 /* ── Tri·log Design Tokens (Variation C · Modern Sport Tech) ── */
+
+/* 淺色主題（預設） */
 :root {
+  --bg:           #f5f7fa;
+  --bg-alt:       #eef1f6;
+  --bg-card:      #ffffff;
+  --bg-elev:      #eef1f5;
+  --border:       rgba(0, 0, 0, 0.10);
+  --border-strong:rgba(0, 0, 0, 0.16);
+
+  --ink:          #0f172a;
+  --ink-2:        #475569;
+  --ink-3:        #64748b;
+  --ink-4:        #94a3b8;
+
+  --accent:       #3da89f;   /* teal（淺色主題較深以確保對比）*/
+  --accent-soft:  rgba(61, 168, 159, 0.12);
+  --accent-ink:   #ffffff;
+
+  --blue:         #2f7eeb;
+  --red:          #e8443a;
+
+  --swim:         #2f7eeb;
+  --bike:         #3da89f;
+  --run:          #e8443a;
+
+  --good:         #3da89f;
+  --warn:         #d97706;
+  --bad:          #e8443a;
+
+  /* about Hero 遮罩（淺色主題稍淡） */
+  --hero-overlay-h: rgba(11, 15, 20, 0.65);
+  --hero-overlay-v: rgba(11, 15, 20, 0.50);
+
+  --font-body:    'Manrope', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, monospace;
+  --font-syne:    'Syne', system-ui, sans-serif;
+  --font-dm:      'DM Mono', ui-monospace, monospace;
+}
+
+/* 深色主題 */
+[data-theme="dark"] {
   --bg:           #0b0f14;
   --bg-alt:       #101418;
   --bg-card:      #161b22;
   --bg-elev:      #1b222b;
-  --border:       #1f2731;
+  --border:       rgba(255, 255, 255, 0.08);
   --border-strong:#2a3441;
 
   --ink:          #ffffff;
@@ -15,7 +56,7 @@
   --ink-3:        #8892a0;
   --ink-4:        #5a6573;
 
-  --accent:       #66c6be;   /* mint teal */
+  --accent:       #66c6be;
   --accent-soft:  rgba(102, 198, 190, 0.12);
   --accent-ink:   #0b0f14;
 
@@ -30,10 +71,43 @@
   --warn:         #ffb547;
   --bad:          #ff685e;
 
-  --font-body:    'Manrope', system-ui, sans-serif;
-  --font-mono:    'JetBrains Mono', ui-monospace, monospace;
-  --font-syne:    'Syne', system-ui, sans-serif;
-  --font-dm:      'DM Mono', ui-monospace, monospace;
+  --hero-overlay-h: rgba(11, 15, 20, 0.82);
+  --hero-overlay-v: rgba(11, 15, 20, 0.60);
+}
+
+/* 系統深色偏好（用戶未手動設定時跟隨系統） */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:           #0b0f14;
+    --bg-alt:       #101418;
+    --bg-card:      #161b22;
+    --bg-elev:      #1b222b;
+    --border:       rgba(255, 255, 255, 0.08);
+    --border-strong:#2a3441;
+
+    --ink:          #ffffff;
+    --ink-2:        #d1d5db;
+    --ink-3:        #8892a0;
+    --ink-4:        #5a6573;
+
+    --accent:       #66c6be;
+    --accent-soft:  rgba(102, 198, 190, 0.12);
+    --accent-ink:   #0b0f14;
+
+    --blue:         #4ea1ff;
+    --red:          #ff685e;
+
+    --swim:         #4ea1ff;
+    --bike:         #66c6be;
+    --run:          #ff685e;
+
+    --good:         #66c6be;
+    --warn:         #ffb547;
+    --bad:          #ff685e;
+
+    --hero-overlay-h: rgba(11, 15, 20, 0.82);
+    --hero-overlay-v: rgba(11, 15, 20, 0.60);
+  }
 }
 
 @theme inline {

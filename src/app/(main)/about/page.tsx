@@ -18,9 +18,9 @@ export default function AboutPage() {
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', display: 'block' }}
         />
         {/* 左深→右淡漸層遮罩 */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(11,15,20,0.82) 0%, rgba(11,15,20,0.55) 45%, rgba(11,15,20,0.18) 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, var(--hero-overlay-h) 0%, rgba(11,15,20,0.45) 45%, rgba(11,15,20,0.12) 100%)' }} />
         {/* 底部遮罩 */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(11,15,20,0.6) 0%, transparent 50%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, var(--hero-overlay-v) 0%, transparent 50%)' }} />
         {/* 左側文字 */}
         <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '55%', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '2rem 2.5rem' }}>
           <p style={{ fontSize: '11px', fontWeight: 500, letterSpacing: '0.14em', color: 'rgba(102,198,190,0.9)', margin: '0 0 0.875rem', textTransform: 'uppercase' }}>
@@ -48,7 +48,7 @@ export default function AboutPage() {
             { Icon: IconBike,     color: '#66c6be', label: '180 km' },
             { Icon: IconRun,      color: '#ff685e', label: '42.2 km' },
           ].map(({ Icon, color, label }) => (
-            <div key={label} style={{ background: 'rgba(11,15,20,0.55)', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: '8px', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div key={label} style={{ background: 'var(--hero-overlay-h)', border: '0.5px solid rgba(255,255,255,0.15)', borderRadius: '8px', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Icon size={14} color={color} aria-hidden="true" />
               <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>{label}</span>
             </div>

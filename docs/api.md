@@ -393,3 +393,45 @@ API 端點本身不依賴 middleware 做授權，各端點自行呼叫 `supabase
 **授權**：公開  
 **Query params**：`?distance=full&gender_category=male&race_id=uuid`  
 **說明**：接力排行榜，回傳 `{ entries, members }` 兩層結構
+
+---
+
+## Ch.49–50 新增端點（2026-06-20）
+
+### `GET /api/race-editions/:id/follow`
+**授權**：需登入  
+**說明**：回傳登入者對此屆次的 race_follow 記錄（無記錄回傳 `{ data: null }`）
+
+### `POST /api/race-editions/:id/follow`
+**授權**：需登入  
+**Body**：`{ status: 'watching' | 'registered' }`  
+**說明**：新增追蹤記錄
+
+### `PATCH /api/race-editions/:id/follow`
+**授權**：需登入  
+**Body**：`{ status, dns_dnf_reason?, dns_dnf_public? }`  
+**說明**：更新追蹤狀態。completed/dns/dnf 為最終態，嘗試更改回傳 409
+
+### `DELETE /api/race-editions/:id/follow`
+**授權**：需登入  
+**說明**：取消追蹤（僅 watching/registered 可執行）
+
+### `GET /api/athletes/me/race-follows`
+**授權**：需登入  
+**Query params**：`?status=watching,registered`（逗號分隔，可多值）  
+**說明**：回傳登入者所有追蹤記錄，join race_editions + races
+
+### `GET /api/race-editions/:id/infos`
+**授權**：公開  
+**Query params**：`?info_type=route_map`（可選）  
+**說明**：回傳所有公開 infos，join athletes 取貢獻者名稱
+
+### `POST /api/race-editions/:id/infos`
+**授權**：需登入  
+**Content-Type**：`multipart/form-data`  
+**Fields**：`info_type, title, content, file`  
+**說明**：新增賽事資訊，可上傳圖片/PDF 至 Storage bucket `race-info`。每筆成功貢獻 +2 分（上限 10 分/edition）
+
+### `DELETE /api/race-edition-infos/:infoId`
+**授權**：需登入（貢獻者本人或 admin/assistant）  
+**說明**：刪除資訊，同時刪除 Storage 檔案

@@ -37,7 +37,7 @@ export function DistanceTabs({ current }: { current: string }) {
               padding: '12px 22px',
               fontSize: 14,
               fontWeight: 500,
-              color: active ? '#F0EDE6' : '#4A5568',
+              color: active ? 'var(--ink)' : 'var(--ink-3)',
               borderBottom: active ? '2px solid #FF6B3D' : '2px solid transparent',
               opacity: tab.enabled ? 1 : 0.35,
               cursor: tab.enabled ? 'pointer' : 'not-allowed',

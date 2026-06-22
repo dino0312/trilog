@@ -2,18 +2,36 @@
   "meta": {
     "product": "Tri·log",
     "url": "trilog.run",
-    "version": "v5.9",
-    "date": "2026-06-13",
+    "version": "v6.1",
+    "date": "2026-06-22",
     "format_version": "1.0",
     "description": "Tri·log 鐵人三項成績記錄平台產品規格書",
     "source_docx": "trilog_spec_v46.docx"
   },
   "revision_history": [
     {
-      "version": "v5.9",
-      "date": "2026-06-13",
+      "version": "v6.1",
+      "date": "2026-06-22",
       "author": "Claude.ai",
-      "summary": "補充 §24.5 成績維護後台（/admin/manage-results）：搜尋個人/接力成績 + 刪除功能，官方成績不可刪除"
+      "summary": "補充 Ch.51 深淺主題切換完整規格：§51.1 三態邏輯；§51.2 完整 CSS token 對照（淺色 :root、深色 data-theme、系統 @media，含 About Hero 遮罩 token）；§51.3 ThemeSwitcher 元件、SSR inline script、AvatarDropdown 位置；§51.4 元件掃描替換對照、特別注意元件、Tailwind v4 注意事項"
+    },
+    {
+      "version": "v6.0",
+      "date": "2026-06-22",
+      "author": "Claude.ai",
+      "summary": "同步 devlog 實作決策並新增三個章節：Ch.49 賽事追蹤系統（race_follows，三態、autoComplete、刪除清理、歷史遷移）；Ch.50 賽事資訊貢獻系統（race_edition_infos、contribution_events 修訂）；Ch.51 深淺主題切換系統（data-theme、CSS token 雙層、防閃爍 inline script）；§25.5 補充 RaceEditionPicker 距離步驟；§48.3 Checklist 第 4 步改為瀏覽最速榜、dismiss 改 localStorage、新手指南入口；§30.2 AvatarDropdown 補充我的賽事、新手指南"
+    },
+    {
+      "version": "v5.9",
+      "date": "2026-06-17",
+      "author": "Claude.ai",
+      "summary": "修訂 §30.2：Nav 未登入狀態加入「關於」連結，登入後消失；修訂 §48.2：GuestBanner 移除「了解更多」連結（Nav 已有）；修訂 §48.5：/about 連結位置改為 Nav 主連結"
+    },
+    {
+      "version": "v5.8",
+      "date": "2026-06-17",
+      "author": "Claude.ai",
+      "summary": "新增第 48 章：用戶引導系統；§48.5 /about 頁面補充完整視覺規格：全寬 Hero 背景照片（16/7，左側漸層遮罩 + 文字，右下角三項距離 tag），後續六個段落結構，照片授權說明"
     },
     {
       "version": "v5.8",
@@ -2842,7 +2860,7 @@
         {
           "id": "25.5",
           "title": "使用者新增成績的賽事選擇（方案 A：兩步驟，無距離步驟）",
-          "content": "成績登錄表單的賽事選擇採兩步驟設計：第一步選賽事品牌，第二步選年份。距離由成績表單的分項時間欄位另行填寫，不在賽事選擇步驟處理。\n\n[Step 1：賽事品牌搜尋]\n文字輸入框，placeholder「搜尋賽事名稱…」，debounce 300ms 後呼叫搜尋 API。\n搜尋結果清單最多顯示 8 筆，每列顯示賽事名稱（name_zh 優先，無則 name_en）。\n比對欄位：name_zh 與 name_en（ILIKE）。\n點擊某個賽事後進入 Step 2；輸入框上方顯示「← 賽事名稱」返回鍵，可回到 Step 1。\n\n[Step 2：年份選擇]\n列出該賽事所有有 race_edition 記錄的年份，依年份降冪排列（最新在上）。\n每列格式：年份（主文字）＋距離 tags（輔助文字，如「226 · 113 · 51.5」），距離 tags 不可點擊。\n最新年份加「最新」小標籤。\n點擊年份後完成選擇：\n  displayText 更新為「賽事名稱（YYYY）」，例：「Challenge Taiwan（2025）」\n  selectedEditionId 寫入對應的 race_edition_id\n  選擇區塊收合，顯示已選 Chip + 「更改」連結\n\n[已選狀態]\n顯示「Challenge Taiwan（2025）  ✕」\n點「✕」或「更改」重設所有 state，回到 Step 1 空白搜尋框。\n用戶手動修改 displayText 後 selectedEditionId 同步清除，防止帶入舊選擇。\n\n[必選驗證]\n表單送出時若 selectedEditionId 為 null，欄位顯示紅色提示「請選擇賽事與年份」並阻止送出。\n\n[找不到賽事]\n搜尋無結果時顯示「找不到「XXX」，新增這個賽事 →」，\n導向 /races/new?name=XXX，填寫完成後返回表單並帶入剛新增的賽事。\n\n[適用表單]\n/records/new、/records/new?for=other、/records/relay/new、\n/records/relay/:team_id/edit、/admin/results\n\n[Step 1 搜尋結果排序]\n搜尋結果依以下優先順序排列（client-side，mount 時執行）：\n  1. Challenge Taiwan\n  2. IRONMAN 台灣場\n  3. 普悠瑪\n  4. Force 系列（台灣場）\n  5. 玩賽樂園\n  6. 其他台灣地區賽事（名稱含中文字、含「Taiwan」、或 city 含台灣城市關鍵字）\n  7. 國外賽事\n台灣賽事判斷目前以 heuristic（名稱含中文字、名稱含 Taiwan、city 含台灣城市）；\n長期解法為在 races 表加 country 欄位（ISO 3166-1 alpha-3），暫緩至賽事資料量增加後補。"
+          "content": "成績登錄表單的賽事選擇採兩步驟設計：第一步選賽事品牌，第二步選年份。距離由成績表單的分項時間欄位另行填寫，不在賽事選擇步驟處理。\n\n[Step 1：賽事品牌搜尋]\n文字輸入框，placeholder「搜尋賽事名稱…」，debounce 300ms 後呼叫搜尋 API。\n搜尋結果清單最多顯示 8 筆，每列顯示賽事名稱（name_zh 優先，無則 name_en）。\n比對欄位：name_zh 與 name_en（ILIKE）。\n點擊某個賽事後進入 Step 2；輸入框上方顯示「← 賽事名稱」返回鍵，可回到 Step 1。\n\n[Step 2：年份選擇]\n列出該賽事所有有 race_edition 記錄的年份，依年份降冪排列（最新在上）。\n每列格式：年份（主文字）＋距離 tags（輔助文字，如「226 · 113 · 51.5」），距離 tags 不可點擊。\n最新年份加「最新」小標籤。\n點擊年份後完成選擇：\n  displayText 更新為「賽事名稱（YYYY）」，例：「Challenge Taiwan（2025）」\n  selectedEditionId 寫入對應的 race_edition_id\n  選擇區塊收合，顯示已選 Chip + 「更改」連結\n\n[已選狀態]\n顯示「Challenge Taiwan（2025）  ✕」\n點「✕」或「更改」重設所有 state，回到 Step 1 空白搜尋框。\n用戶手動修改 displayText 後 selectedEditionId 同步清除，防止帶入舊選擇。\n\n[必選驗證]\n表單送出時若 selectedEditionId 為 null，欄位顯示紅色提示「請選擇賽事與年份」並阻止送出。\n\n[找不到賽事]\n搜尋無結果時顯示「找不到「XXX」，新增這個賽事 →」，\n導向 /races/new?name=XXX，填寫完成後返回表單並帶入剛新增的賽事。\n\n[適用表單]\n/records/new、/records/new?for=other、/records/relay/new、\n/records/relay/:team_id/edit、/admin/results\n\n[Step 1 搜尋結果排序]\n搜尋結果依以下優先順序排列（client-side，mount 時執行）：\n  1. Challenge Taiwan\n  2. IRONMAN 台灣場\n  3. 普悠瑪\n  4. Force 系列（台灣場）\n  5. 玩賽樂園\n  6. 其他台灣地區賽事（名稱含中文字、含「Taiwan」、或 city 含台灣城市關鍵字）\n  7. 國外賽事\n台灣賽事判斷目前以 heuristic（名稱含中文字、名稱含 Taiwan、city 含台灣城市）；\n長期解法為在 races 表加 country 欄位（ISO 3166-1 alpha-3），暫緩至賽事資料量增加後補。\n\n[Step 3：距離選擇（多距離屆次才出現）]\n選年份後，若同年只有一個 edition → 直接完成選擇。\n若同年有多個 edition（不同距離）→ 進入第三步距離清單。\n距離清單排序：full → 70.3 → olympic → sprint（DISTANCE_ORDER 常數）。\ndisplayText 格式：「Challenge Taiwan（2026 · Full (226)）」"
         }
       ]
     },
@@ -3447,7 +3465,7 @@
         {
           "id": "30.2",
           "title": "Nav 結構（修訂：我的紀錄與關注名單移至主連結）",
-          "content": "[未登入狀態]\n  最速榜　排行榜　未認領　賽事　　　　　　　　　　　　　　[登入]\n\n[已登入狀態]\n  最速榜　排行榜　未認領　賽事　我的成績　關注名單　[+]　[Avatar ▼]\n\n「我的成績」連結至 /records；「關注名單」連結至 /my/following。\n兩個連結僅已登入狀態顯示，未登入時不顯示。\n兩個頁面均為需登入頁面，未登入直接訪問時 redirect → /login。\nNavLinks 以 isLoggedIn prop（由 Nav.tsx Server Component 傳入）控制顯示，\n避免 Client Component 直接呼叫 Supabase。\n\n[Avatar 下拉選單]\n  順序與 icon（Tabler outline，16px，accent 色）：\n  1. 個人資料　　ti-user-edit　　　　→ /profile\n  2. 我的公開頁　ti-user　　　　　　→ /athletes/:id\n  3. 我的成績　　ti-trophy　　　　　→ /records\n  4. 關注名單　　ti-heart　　　　　 → /my/following\n  5. 我的貢獻　　ti-heart-handshake → /my/contributions（待認領 > 0 時顯示 badge）\n  ──────────（分隔線）\n  6. 管理後台　　ti-settings　　　　→ /admin（assistant+ 才顯示）\n  ──────────（分隔線）\n  7. 登出　　　　ti-logout　　　　　（無連結，執行登出 action）\n\n[Icon 規格]\n套件：Tabler Icons（MIT License，可商用，無需標註）\n風格：outline，1.5px stroke，16px\n色彩：預設 var(--ink-3)（#8892a0），hover var(--accent)（#66c6be）\n實作：<i class=\"ti ti-{name}\"> 或 Tabler React 元件\n\n[分隔線]\nborder-top: 0.5px solid，var(--ink-3) 20% opacity，margin: 4px 0\n\nAvatar 下拉選單中「關注名單」項目保留，提供雙入口（Nav 主連結 + Avatar 選單）。"
+          "content": "[未登入狀態]\n  最速榜　排行榜　未認領　賽事　關於　　　　　　　　　　　　[登入]\n\n[已登入狀態]\n  最速榜　排行榜　未認領　賽事　我的成績　關注名單　[+]　[Avatar ▼]\n\n「關於」連結至 /about，僅未登入狀態顯示，登入後自動消失。\n登入用戶已是平台成員，不需要平台介紹連結。\n\n[NavLinks 實作]\nNavLinks Client Component 接收 isLoggedIn prop：\n  isLoggedIn = false → 顯示「關於」連結，隱藏「我的成績」、「關注名單」\n  isLoggedIn = true  → 隱藏「關於」連結，顯示「我的成績」、「關注名單」\n\n[Avatar 下拉選單]\n  1. 個人資料　　ti-user-edit　　　　→ /profile\n  2. 我的公開頁　ti-user　　　　　　→ /athletes/:id\n  3. 我的成績　　ti-trophy　　　　　→ /records\n  4. 關注名單　　ti-heart　　　　　 → /my/following\n  5. 我的貢獻　　ti-heart-handshake → /my/contributions（待認領 > 0 時顯示 badge）\n  6. 我的賽事　　ti-calendar-event → /my/races\n  ──────────（分隔線）\n  7. 新手指南　　ti-list-check     → 觸發 CustomEvent trilog:open-onboarding（重開 Checklist）\n  ──────────（分隔線）\n  8. 管理後台　　ti-settings　　　　→ /admin（assistant+ 才顯示）\n  ──────────（分隔線）\n  9. 登出　　　　ti-logout\n\nIcon 規格：Tabler Icons MIT License，outline 16px stroke 1.5，\n預設 var(--ink-3)，hover var(--accent)。\n分隔線：border-top 0.5px，var(--ink-3) 20% opacity，margin 4px 0。"
         },
         {
           "id": "30.3",
@@ -7899,12 +7917,12 @@
         {
           "id": "48.2",
           "title": "訪客介紹 Banner",
-          "content": "[顯示條件]\n未登入狀態下，所有 (main) Route Group 頁面的 Nav 正下方顯示。\n登入後自動消失（Server Component 依 session 判斷，不依賴 localStorage）。\n\n[Banner 內容]\n「🏊 Tri·log 是鐵人三項選手的跨賽事成績記錄平台。\n找到你的成績 → 認領它 → 出現在排行榜上。」\n右側連結：「了解更多 →」→ /about\n\n[樣式]\n背景：var(--bg-card)，上下 padding 10px，文字 var(--ink-3)，\n「了解更多」用 var(--accent) 色。\n無關閉按鈕（登入即消失，不需手動關閉）。\n位置：Nav 正下方，PageContextStrip 之上，GlobalVerifyBanner 之下。\n\n[關於頁面 /about]\n靜態頁面，說明平台定位、核心功能（認領機制、排行榜、策展層）、常見問題。\nNav Footer 與登入頁加入 /about 連結。"
+          "content": "[顯示條件]\n未登入狀態下，所有 (main) Route Group 頁面的 Nav 正下方顯示。\n登入後自動消失（Server Component 依 session 判斷，不依賴 localStorage）。\n\n[Banner 內容]\n「🏊 Tri·log 是鐵人三項選手的跨賽事成績記錄平台。\n找到你的成績 → 認領它 → 出現在排行榜上。」\n右側連結：移除（Nav 已有「關於」連結，Banner 無需重複）\n\n[樣式]\n背景：var(--bg-card)，上下 padding 10px，文字 var(--ink-3)，\n「了解更多」用 var(--accent) 色。\n無關閉按鈕（登入即消失，不需手動關閉）。\n位置：Nav 正下方，PageContextStrip 之上，GlobalVerifyBanner 之下。\n\n[關於頁面 /about]\n靜態頁面，說明平台定位、核心功能（認領機制、排行榜、策展層）、常見問題。\nNav 未登入狀態加入「關於」連結（見 §30.2）；Footer 可選擇性加入。"
         },
         {
           "id": "48.3",
           "title": "新用戶入門 Checklist",
-          "content": "[觸發條件]\n已登入 AND has_completed_onboarding = false（athletes 表新增欄位，預設 false）。\n登入後第一次進入任何 (main) 頁面時立即顯示。\n\n[Checklist 項目（共 4 項）]\n1. ✓ 建立帳號（已完成，預設打勾）\n2. ○ 完成個人資料　→ /profile（填寫真實姓名）\n3. ○ 認領你的成績　→ /unclaimed（搜尋並認領）\n4. ○ 登錄一筆成績　→ /records/new（自填成績）\n\n[顯示形式]\n右下角固定浮動卡片（position: fixed，right: 1.5rem，bottom: 1.5rem）。\n不遮蓋主要內容，不阻斷操作。\n寬度約 260px，含進度條（N/4 已完成）。\n\n[完成判斷]\n項目 2（完成個人資料）：athletes.name IS NOT NULL\n項目 3（認領成績）：EXISTS 任一 results WHERE athlete_id = 登入者\n項目 4（登錄成績）：EXISTS 任一 results WHERE created_by = 登入者 AND athlete_id = 登入者\n各項目每次頁面載入時重新判斷，打勾後不可取消。\n\n[全部完成後]\n顯示「🎉 入門完成！開始探索 Tri·log」2 秒後自動消失，\n同時將 athletes.has_completed_onboarding 設為 true，往後不再顯示。\n\n[手動關閉]\nChecklist 右上角有「✕」關閉鈕，點擊後收合。\n關閉後顯示提示文字：「可在個人資料頁隨時查看入門進度。」\n收合狀態用 sessionStorage 記錄（重新登入後復原，提醒尚未完成的用戶）。\nhas_completed_onboarding = true 後永遠不再顯示，不受 sessionStorage 影響。\n\n[不顯示條件]\nhas_completed_onboarding = true → 永遠不顯示\n管理後台頁面（/admin/*）→ 不顯示"
+          "content": "[觸發條件]\n已登入 AND has_completed_onboarding = false（athletes 表新增欄位，預設 false）。\n登入後第一次進入任何 (main) 頁面時立即顯示。\n\n[Checklist 項目（共 4 項）]\n1. ✓ 建立帳號（已完成，預設打勾）\n2. ○ 完成個人資料　→ /profile（填寫真實姓名）\n3. ○ 認領你的成績　→ /unclaimed（搜尋並認領）\n4. ○ 瀏覽最速榜　　→ /leaderboard\n\n[顯示形式]\n右下角固定浮動卡片（position: fixed，right: 1.5rem，bottom: 1.5rem）。\n不遮蓋主要內容，不阻斷操作。\n寬度約 260px，含進度條（N/4 已完成）。\n\n[完成判斷]\n項目 2（完成個人資料）：athletes.name IS NOT NULL\n項目 3（認領成績）：EXISTS 任一 results WHERE athlete_id = 登入者\n項目 4（瀏覽最速榜）：localStorage key tl_visited_leaderboard，造訪 /leaderboard 時由 usePathname 寫入\n各項目每次頁面載入時重新判斷，打勾後不可取消。\n\n[全部完成後]\n顯示「🎉 入門完成！開始探索 Tri·log」2 秒後自動消失，\n同時將 athletes.has_completed_onboarding 設為 true，往後不再顯示。\n\n[手動關閉]\nChecklist 右上角有「✕」關閉鈕，點擊後收合。\n關閉後顯示提示文字：「可在個人資料頁隨時查看入門進度。」\n收合狀態用 sessionStorage 記錄（重新登入後復原，提醒尚未完成的用戶）。\nhas_completed_onboarding = true 後永遠不再顯示，不受 sessionStorage 影響。\n\n[不顯示條件]\nhas_completed_onboarding = true → 永遠不顯示\n管理後台頁面（/admin/*）→ 不顯示"
         },
         {
           "id": "48.4",
@@ -7914,7 +7932,95 @@
         {
           "id": "48.5",
           "title": "/about 頁面結構",
-          "content": "路徑：/about（(main) Route Group，無需登入）\n\n[建議章節]\n1. 一句話定位：「鐵人三項選手的跨賽事成績記錄與排行榜平台」\n2. 三步驟說明：找到成績 → 認領 → 出現在榜上\n3. 策展層說明：助手預建官方成績，選手逐步認領\n4. 排行榜說明：最速榜（個人最佳）vs 排行榜（單場成績）\n5. 常見問題（FAQ）：\n   「我的成績不在上面怎麼辦？」→ 自己登錄\n   「認領是什麼意思？」→ 說明 claimed/unclaimed\n   「成績會被修改嗎？」→ 說明公信力政策\n\n[連結位置]\n訪客 Banner 的「了解更多 →」\n頁面 Footer\n登入頁底部次要連結"
+          "content": "路徑：/about（(main) Route Group，無需登入）\n\n[Hero 區塊（全寬背景照片）]\n照片：Challenge Taiwan 終點線照片（選手雙手高舉衝過終點）\n尺寸：全寬，aspect-ratio 16/7\n裁切：object-fit: cover，object-position: center 30%（取拱門 + 雙手高舉段）\n遮罩：左側較深（文字可讀）→ 右側漸淡（照片透出）+ 底部淡遮\n  left gradient: rgba(11,15,20,0.82) 0% → rgba(11,15,20,0.18) 100%\n  bottom gradient: rgba(11,15,20,0.6) 0% → transparent 50%\n\n[Hero 左側文字（寬度 55%）]\n  section label：「關於 Tri·log」薄荷綠小字（#66c6be，letter-spacing 0.14em）\n  主標題：「每一場鐵人賽，你都拚盡了全力。那些成績，應該有個家。」白色 24px\n  副標：「台灣鐵人三項選手的跨賽事成績記錄平台，讓每一場成績都被好好保存下來。」白色 65% opacity\n  CTA 主按鈕：「查看未認領成績 ↗」薄荷綠半透明填色 + 綠邊框\n  CTA 次按鈕：「登入 / 註冊」白色半透明線條\n\n[Hero 右下角三項距離 tag]\n  游泳：ti-swim icon（#4ea1ff）+ 「3.8 km」\n  自行車：ti-bike icon（#66c6be）+ 「180 km」\n  跑步：ti-run icon（#ff685e）+ 「42.2 km」\n  背景：rgba(11,15,20,0.55)，0.5px 白色 12% 邊框\n\n[頁面其餘段落（Hero 之後）]\n1. 痛點（blockquote 格式，左邊線）\n2. 三步驟（三欄卡片：找到成績 / 認領它 / 出現在榜上）\n3. 認領機制說明 + CTA\n4. 最速榜說明（給老手的動機）\n5. FAQ（三張卡片）\n6. 底部 CTA（雙按鈕：查看未認領成績 / 登入註冊）\n\n[連結位置]\nNav 主連結（未登入狀態，§30.2）\n頁面 Footer（選擇性）\n登入頁底部次要連結「了解 Tri·log →」（選擇性）\n\n[照片授權]\n自行拍攝，無版權疑慮，可自由使用。\n建議存放路徑：public/about-hero.jpg"
+        }
+      ]
+    },
+    {
+      "id": "49",
+      "title": "賽事追蹤系統（race_follows）",
+      "sections": [
+        {
+          "id": "49.1",
+          "title": "設計背景",
+          "content": "讓選手追蹤感興趣的賽事屆次，記錄「想參加」、「已報名」、「已完賽」三種狀態，並在 /my/races 頁面集中管理。"
+        },
+        {
+          "id": "49.2",
+          "title": "race_follows 資料表",
+          "content": "race_follows 以 race_edition_id 為錨點（而非 race_id+year），讓不同距離可獨立追蹤。\n\n欄位：\n  id UUID PK\n  athlete_id UUID REFERENCES athletes(id)\n  race_edition_id UUID REFERENCES race_editions(id)\n  status TEXT CHECK IN ('watching', 'registered', 'completed')\n  result_id UUID REFERENCES results(id) NULL\n  completion_source TEXT NULL  -- 'auto' | 'manual'\n  created_at / updated_at TIMESTAMPTZ\n\nUNIQUE (athlete_id, race_edition_id)"
+        },
+        {
+          "id": "49.3",
+          "title": "狀態轉換規則",
+          "content": "watching → registered：選手手動升級（UpgradeToRegisteredButton）\nwatching / registered → completed：\n  自動：createResult 成功後觸發 autoCompleteRaceFollow\n  自動：approveClaim（admin 審核通過）後觸發 autoCompleteRaceFollow（認領者）\n  注意：claimResult（認領申請，狀態仍為 pending）不觸發自動完賽\n  手動：使用者於 /my/races 手動標記完賽\n\nautoCompleteRaceFollow 邏輯：\n  若 race_follows 不存在 → 自動 INSERT status=completed, completion_source=auto\n  若已存在且 status = registered → UPDATE 為 completed\n  若已存在且 status = watching → 維持不動（不覆蓋用戶主動設定）"
+        },
+        {
+          "id": "49.4",
+          "title": "刪除成績時的 race_follows 清理",
+          "content": "deleteResult 在刪除成績前先查詢 race_follows WHERE result_id = $id：\n  completion_source = 'auto' → 整筆刪除 race_follows\n  completion_source ≠ 'auto'（手動標記）→ 只將 result_id SET NULL，保留完賽狀態\n\n注意：race_follows.result_id FK 為 ON DELETE SET NULL，\n需在刪除 result 前取得 follow 資料，否則 result_id 已為 NULL 而無法識別。\n後續建議加 DB trigger AFTER UPDATE OF result_id ON race_follows 補強。"
+        },
+        {
+          "id": "49.5",
+          "title": "/my/races 頁面",
+          "content": "路徑：/my/races（需登入）\n三個 Tab：Upcoming（已報名未來賽事）/ Watching（關注中）/ History（已完賽）\n\nNav 與 AvatarDropdown 均加入「我的賽事」入口。"
+        },
+        {
+          "id": "49.6",
+          "title": "歷史資料遷移",
+          "content": "既有 race_interest 表的 attended/wishlist 記錄以 SQL migration 轉入 race_follows：\n  有成績者（claimed）→ status=completed, completion_source=manual, 連結 result_id\n  無成績者 → status=watching；取同年最長距離 edition（full > 70.3 > olympic > sprint）\n\n去重邏輯：DISTINCT ON (race_id, year, athlete_id)，\nNOT EXISTS 條件排除已有成績的 race+year，避免多距離重複插入。"
+        }
+      ]
+    },
+    {
+      "id": "50",
+      "title": "賽事即時資訊貢獻系統（race_edition_infos）",
+      "sections": [
+        {
+          "id": "50.1",
+          "title": "設計背景",
+          "content": "讓社群選手補充賽事屆次的即時資訊（路線圖、補給站位置、特殊規定等），貢獻行為納入 contribution_events 積分系統。"
+        },
+        {
+          "id": "50.2",
+          "title": "race_edition_infos 資料表",
+          "content": "欄位：\n  id UUID PK\n  race_edition_id UUID REFERENCES race_editions(id)\n  contributed_by UUID REFERENCES athletes(id)\n  info_type TEXT  -- route_map / aid_station / special_rule / etc.\n  content TEXT NULL\n  file_url TEXT NULL  -- Supabase Storage: race-info/{race_edition_id}/{uuid}.{ext}\n  created_at TIMESTAMPTZ\n\nStorage bucket: race-info（public bucket + INSERT/DELETE policy）"
+        },
+        {
+          "id": "50.3",
+          "title": "貢獻積分整合",
+          "content": "contribution_events 修訂：\n  result_id 改為 nullable（支援非成績類貢獻事件）\n  新增 related_edition_id 欄位\n  新增 event_type: add_race_info（+2 分）\n\nAddRaceInfoSheet 上傳成功後觸發 contribution_events INSERT。"
+        },
+        {
+          "id": "50.4",
+          "title": "前端元件",
+          "content": "AddRaceInfoSheet：使用 useActionState + Server Action 上傳，\n不依賴 @radix-ui/react-dialog（未安裝），改用自製 overlay 模態。\nRaceEditionInfos：顯示該屆次的貢獻資訊列表，含貢獻者姓名。\n注意：Supabase 無法直接 join race_edition_infos → athletes（外鍵未被識別為關係），\n改用兩次查詢（infos + athletes）再合併。"
+        }
+      ]
+    },
+    {
+      "id": "51",
+      "title": "深淺主題切換系統",
+      "sections": [
+        {
+          "id": "51.1",
+          "title": "設計決策",
+          "content": "預設跟隨系統（prefers-color-scheme），用戶可手動覆蓋為淺色或深色。\n手動設定優先於系統設定，存入 localStorage key: tl_theme（值：'light' | 'dark'）。\n未設定時跟隨系統，系統偏好改變時即時反映。\n\n[三態邏輯]\n  跟隨系統：<html> 無 data-theme，CSS @media prefers-color-scheme 生效\n  手動淺色：<html data-theme=\"light\">，覆蓋系統設定\n  手動深色：<html data-theme=\"dark\">，覆蓋系統設定"
+        },
+        {
+          "id": "51.2",
+          "title": "CSS Token 雙主題設計",
+          "content": "globals.css 採語意化雙層 token，三段 CSS 規則：\n\n[1] :root（淺色預設，無系統偏好時的 fallback）\n  --bg:       #f5f7fa\n  --bg-card:  #ffffff\n  --bg-hover: #eef1f5\n  --ink:      #0f172a\n  --ink-2:    #475569\n  --ink-3:    #64748b\n  --border:   rgba(0, 0, 0, 0.10)\n  --accent:   #3da89f  （淺色底下稍深以保持對比）\n  --swim:     #4ea1ff  （兩主題不變）\n  --bike:     #66c6be  （兩主題不變）\n  --run:      #ff685e  （兩主題不變）\n\n[2] [data-theme=\"dark\"]（用戶手動選深色）\n  --bg:       #0b0f14\n  --bg-card:  #161b22\n  --bg-hover: #1e2d3d\n  --ink:      #e2e8f0\n  --ink-2:    #a8b3c1\n  --ink-3:    #8892a0\n  --border:   rgba(255, 255, 255, 0.08)\n  --accent:   #66c6be\n\n[3] @media (prefers-color-scheme: dark) + :root:not([data-theme=\"light\"])\n  同 [2] 的值。:not([data-theme=\"light\"]) 確保用戶手動選淺色時不被系統深色覆蓋。\n\n[About Hero 遮罩 token]\n  --about-hero-overlay-start: rgba(11,15,20,0.65)  （淺色主題）\n  --about-hero-overlay-end:   rgba(11,15,20,0.10)\n  深色主題覆蓋為 0.82 / 0.18，讓照片在深色背景下有更強對比。\n\nTailwind @theme inline 區塊同步更新，確保 bg-bg、text-ink 等 utility class 正確對應。\n所有元件使用 CSS 變數，不硬寫色值。"
+        },
+        {
+          "id": "51.3",
+          "title": "切換機制",
+          "content": "[ThemeSwitcher Client Component]\n路徑：src/components/ui/ThemeSwitcher.tsx\n三態分段按鈕，使用 Tabler icon：\n  ti-device-laptop → 跟隨系統\n  ti-sun           → 淺色\n  ti-moon          → 深色\n目前作用中的選項以 var(--bg-hover) 背景高亮標示。\n切換時即時修改 document.documentElement 的 data-theme attribute。\n\n[狀態管理]\nuseEffect 初始化：讀取 localStorage.getItem('tl_theme')，設定初始 state。\napply(theme) 函式：\n  system → removeItem('tl_theme')、removeAttribute('data-theme')\n  light/dark → setItem('tl_theme', t)、setAttribute('data-theme', t)\n\n[SSR 防閃爍 inline script]\nlayout.tsx 的 <head> 加入 inline script，在 HTML 渲染前讀取 localStorage 並設定 data-theme。\n<html> 標籤加 suppressHydrationWarning，避免 data-theme 造成 hydration mismatch。\n\n[切換 UI 位置]\nAvatarDropdown 底部，登出按鈕上方，含「外觀」標籤說明。\n帶文字版（系統 / 淺色 / 深色）搭配 icon，清楚標示三個選項。"
+        },
+        {
+          "id": "51.4",
+          "title": "實作注意事項",
+          "content": "[元件掃描替換對照]\n  #0b0f14          → var(--bg)\n  #161b22          → var(--bg-card)\n  #1e2d3d          → var(--bg-hover)\n  #e2e8f0          → var(--ink)\n  #a8b3c1          → var(--ink-2)\n  #8892a0          → var(--ink-3)\n  rgba(255,255,255,0.08) → var(--border)\n  #66c6be（文字色）→ var(--accent)\n  #ffffff（背景）  → var(--bg-card)\n\n[特別注意元件]\n  GuestBanner.tsx：Hero 遮罩改用 --about-hero-overlay-start/end CSS 變數\n  TrilogLogo.tsx：SVG 三色線條（swim/bike/run）在兩個主題下均有足夠對比，不需修改\n  GlobalVerifyBanner.tsx：banner 背景色確認使用 CSS 變數\n\n[Logo 與三項顏色]\nLogo SVG 三色（--swim / --bike / --run）兩個主題均不調整。\n飽和色在淺色和深色背景下都能成立，是品牌一致性的錨點。\n\n[Tailwind v4 注意]\n使用 @theme inline 語法（非 v3 的 tailwind.config.js）。\n新增 token 時，globals.css 的 :root {} 和 @theme inline {} 必須同時更新。"
         }
       ]
     }

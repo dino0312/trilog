@@ -61,6 +61,7 @@ export function TrilogLogo({
       xmlns="http://www.w3.org/2000/svg"
       role="img" aria-label="Tri·log"
       className={className}
+      style={{ color: 'var(--ink)' }}
     >
       <defs>
         {/* clipPath 限制底邊波浪可見範圍，每個實例用獨立 id */}
@@ -108,7 +109,7 @@ export function TrilogLogo({
       <text x={78}  y={43}
         fontFamily="Arial, 'Helvetica Neue', sans-serif"
         fontSize={32} fontWeight={800}
-        fill="#F0EDE6" letterSpacing={-2}>Tri</text>
+        fill="currentColor" letterSpacing={-2}>Tri</text>
       <text x={126} y={43}
         fontFamily="Arial, 'Helvetica Neue', sans-serif"
         fontSize={32} fontWeight={800}
@@ -116,7 +117,7 @@ export function TrilogLogo({
       <text x={136} y={43}
         fontFamily="Arial, 'Helvetica Neue', sans-serif"
         fontSize={32} fontWeight={300}
-        fill="#F0EDE6" letterSpacing={-2}>log</text>
+        fill="currentColor" letterSpacing={-2}>log</text>
     </svg>
   )
 }

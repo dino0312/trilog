@@ -15,7 +15,11 @@ type Props = {
 }
 
 const DISTANCE_KM: Record<string, string> = {
-  sprint: '51.5', olympic: '51.5', '70.3': '113', full: '226',
+  sprint: 'Sprint', olympic: 'Olympic (51.5)', '70.3': '70.3 (113)', full: 'Full (226)',
+}
+
+const DISTANCE_ORDER: Record<string, number> = {
+  full: 0, '70.3': 1, olympic: 2, sprint: 3,
 }
 
 function distanceTags(editions: Edition[]): string {
@@ -60,12 +64,13 @@ function sortRaces(races: Race[]): Race[] {
 }
 
 export function RaceEditionPicker({ value, onChange, error }: Props) {
-  const [step, setStep] = useState<'search' | 'year'>('search')
+  const [step, setStep] = useState<'search' | 'year' | 'distance'>('search')
   const [query, setQuery] = useState('')
   const [allRaces, setAllRaces] = useState<Race[]>([])
   const [open, setOpen] = useState(false)
   const [selectedRace, setSelectedRace] = useState<Race | null>(null)
   const [yearGroups, setYearGroups] = useState<YearGroup[]>([])
+  const [selectedYear, setSelectedYear] = useState<YearGroup | null>(null)
   const [loadingYears, setLoadingYears] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -108,10 +113,23 @@ export function RaceEditionPicker({ value, onChange, error }: Props) {
 
   const selectYear = useCallback((group: YearGroup) => {
     if (!selectedRace) return
-    const editionId = group.editions[0]?.id ?? ''
-    const displayText = `${selectedRace.name}（${group.year}）`
-    onChange({ editionId, displayText })
+    if (group.editions.length === 1) {
+      // 只有一個距離，直接選定
+      const displayText = `${selectedRace.name}（${group.year}）`
+      onChange({ editionId: group.editions[0].id, displayText })
+    } else {
+      // 多個距離，進入距離選擇步驟
+      setSelectedYear(group)
+      setStep('distance')
+    }
   }, [selectedRace, onChange])
+
+  const selectDistance = useCallback((edition: Edition) => {
+    if (!selectedRace || !selectedYear) return
+    const distLabel = DISTANCE_KM[edition.distance_category] ?? edition.distance_category
+    const displayText = `${selectedRace.name}（${selectedYear.year} · ${distLabel}）`
+    onChange({ editionId: edition.id, displayText })
+  }, [selectedRace, selectedYear, onChange])
 
   const reset = useCallback(() => {
     onChange(null)
@@ -120,6 +138,7 @@ export function RaceEditionPicker({ value, onChange, error }: Props) {
     setOpen(false)
     setSelectedRace(null)
     setYearGroups([])
+    setSelectedYear(null)
     setTimeout(() => inputRef.current?.focus(), 0)
   }, [onChange])
 
@@ -191,6 +210,37 @@ export function RaceEditionPicker({ value, onChange, error }: Props) {
               ))}
             </ul>
           )}
+        </div>
+      )}
+
+      {/* Step 3: distance selection */}
+      {step === 'distance' && selectedRace && selectedYear && (
+        <div className="rounded-lg border border-border-strong bg-bg-elev overflow-hidden">
+          <button
+            type="button"
+            onClick={() => { setStep('year'); setSelectedYear(null) }}
+            className="flex items-center gap-1.5 w-full px-3.5 py-2 text-sm text-ink-3 hover:text-ink border-b border-border transition"
+          >
+            <span className="text-base leading-none">←</span>
+            <span>{selectedRace.name}（{selectedYear.year}）選擇距離</span>
+          </button>
+          <ul>
+            {[...selectedYear.editions]
+              .sort((a, b) => (DISTANCE_ORDER[a.distance_category] ?? 9) - (DISTANCE_ORDER[b.distance_category] ?? 9))
+              .map(edition => (
+                <li key={edition.id}>
+                  <button
+                    type="button"
+                    onClick={() => selectDistance(edition)}
+                    className="flex items-center justify-between w-full px-3.5 py-2.5 text-sm hover:bg-bg-card/60 transition"
+                  >
+                    <span className="text-ink font-medium">
+                      {DISTANCE_KM[edition.distance_category] ?? edition.distance_category}
+                    </span>
+                  </button>
+                </li>
+              ))}
+          </ul>
         </div>
       )}
 

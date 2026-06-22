@@ -144,40 +144,42 @@ export type Database = {
       // ── race_editions ────────────────────────────────────
       race_editions: {
         Row: {
-          id:                 string
-          race_id:            string
-          year:               number
-          race_date:          string
-          race_date_end:      string | null
-          distance_category:  DistanceCategory
-          swim_distance_m:    number | null
-          bike_distance_km:   number | null
-          run_distance_km:    number | null
-          is_wetsuit_allowed: boolean | null
-          water_temp_c:       number | null
-          swim_type:          SwimType | null
-          weather_source:     WeatherSource | null
-          weather_data:       WeatherData | null
-          finisher_count:     number | null
-          dnf_count:          number | null
-          total_starters:     number | null
-          venue:              string | null
-          registration_url:   string | null
-          results_url:        string | null
-          notes:              string | null
-          created_at:         string
-          updated_at:         string
+          id:                    string
+          race_id:               string
+          year:                  number
+          race_date:             string
+          race_date_end:         string | null
+          distance_category:     DistanceCategory
+          swim_distance_m:       number | null
+          bike_distance_km:      number | null
+          run_distance_km:       number | null
+          is_wetsuit_allowed:    boolean | null
+          water_temp_c:          number | null
+          swim_type:             SwimType | null
+          weather_source:        WeatherSource | null
+          weather_data:          WeatherData | null
+          finisher_count:        number | null
+          dnf_count:             number | null
+          total_starters:        number | null
+          venue:                 string | null
+          registration_url:      string | null
+          results_url:           string | null
+          registration_deadline: string | null
+          notes:                 string | null
+          created_at:            string
+          updated_at:            string
         }
         Insert: {
-          id?:                 string
-          race_id:             string
-          year:                number
-          race_date:           string
-          race_date_end?:      string | null
-          venue?:              string | null
-          registration_url?:   string | null
-          results_url?:        string | null
-          distance_category:   DistanceCategory
+          id?:                    string
+          race_id:                string
+          year:                   number
+          race_date:              string
+          race_date_end?:         string | null
+          venue?:                 string | null
+          registration_url?:      string | null
+          results_url?:           string | null
+          registration_deadline?: string | null
+          distance_category:      DistanceCategory
           swim_distance_m?:    number | null
           bike_distance_km?:   number | null
           run_distance_km?:    number | null
@@ -257,23 +259,83 @@ export type Database = {
       // ── contribution_events ──────────────────────────────
       contribution_events: {
         Row: {
-          id:            string
-          athlete_id:    string
-          event_type:    'add_self' | 'add_other' | 'other_claimed'
-          result_id:     string
-          points:        number
-          revoke_reason: string | null
-          created_at:    string
+          id:                 string
+          athlete_id:         string
+          event_type:         'add_self' | 'add_other' | 'other_claimed' | 'add_race_info'
+          result_id:          string | null
+          related_edition_id: string | null
+          points:             number
+          revoke_reason:      string | null
+          created_at:         string
         }
         Insert: {
-          id?:            string
-          athlete_id:     string
-          event_type:     'add_self' | 'add_other' | 'other_claimed'
-          result_id:      string
-          points:         number
-          revoke_reason?: string | null
+          id?:                 string
+          athlete_id:          string
+          event_type:          'add_self' | 'add_other' | 'other_claimed' | 'add_race_info'
+          result_id?:          string | null
+          related_edition_id?: string | null
+          points:              number
+          revoke_reason?:      string | null
         }
         Update: Partial<Database['public']['Tables']['contribution_events']['Insert']>
+        Relationships: []
+      }
+
+      // ── race_follows ─────────────────────────────────────
+      race_follows: {
+        Row: {
+          id:                string
+          athlete_id:        string
+          race_edition_id:   string
+          status:            'watching' | 'registered' | 'completed' | 'dns' | 'dnf'
+          completion_source: 'auto' | 'manual' | null
+          result_id:         string | null
+          dns_dnf_reason:    string | null
+          dns_dnf_public:    boolean
+          created_at:        string
+          updated_at:        string
+        }
+        Insert: {
+          id?:                string
+          athlete_id:         string
+          race_edition_id:    string
+          status:             'watching' | 'registered' | 'completed' | 'dns' | 'dnf'
+          completion_source?: 'auto' | 'manual' | null
+          result_id?:         string | null
+          dns_dnf_reason?:    string | null
+          dns_dnf_public?:    boolean
+        }
+        Update: Partial<Database['public']['Tables']['race_follows']['Insert']>
+        Relationships: []
+      }
+
+      // ── race_edition_infos ───────────────────────────────
+      race_edition_infos: {
+        Row: {
+          id:              string
+          race_edition_id: string
+          athlete_id:      string
+          info_type:       'route_map' | 'aid_station' | 'external_link' | 'note'
+          title:           string
+          content:         string | null
+          file_url:        string | null
+          file_type:       'pdf' | 'image' | null
+          is_public:       boolean
+          created_at:      string
+          updated_at:      string
+        }
+        Insert: {
+          id?:              string
+          race_edition_id:  string
+          athlete_id:       string
+          info_type:        'route_map' | 'aid_station' | 'external_link' | 'note'
+          title:            string
+          content?:         string | null
+          file_url?:        string | null
+          file_type?:       'pdf' | 'image' | null
+          is_public?:       boolean
+        }
+        Update: Partial<Database['public']['Tables']['race_edition_infos']['Insert']>
         Relationships: []
       }
 

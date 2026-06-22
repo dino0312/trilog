@@ -16,6 +16,7 @@ const AUTH_LINKS = [
   { href: '/races',       label: '賽事' },
   { href: '/records',      label: '我的成績' },
   { href: '/my/following', label: '關注名單' },
+  { href: '/my/races',     label: '我的賽事' },
 ]
 
 type Props = { isLoggedIn?: boolean }
@@ -35,14 +36,14 @@ export function NavLinks({ isLoggedIn = false }: Props) {
             aria-current={active ? 'page' : undefined}
             className="flex h-14 items-center px-3.5 text-sm transition-colors"
             style={{
-              color:        active ? '#F0EDE6' : '#4A5568',
+              color:        active ? 'var(--ink)' : 'var(--ink-3)',
               borderBottom: active ? '2px solid #FF6B3D' : '2px solid transparent',
             }}
             onMouseEnter={e => {
-              if (!active) (e.currentTarget as HTMLAnchorElement).style.color = '#8A96A8'
+              if (!active) (e.currentTarget as HTMLAnchorElement).style.color = 'var(--ink-2)'
             }}
             onMouseLeave={e => {
-              if (!active) (e.currentTarget as HTMLAnchorElement).style.color = '#4A5568'
+              if (!active) (e.currentTarget as HTMLAnchorElement).style.color = 'var(--ink-3)'
             }}
           >
             {label}

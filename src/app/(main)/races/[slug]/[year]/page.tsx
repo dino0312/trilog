@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/server'
 import { RaceInterestButtons } from '@/components/races/RaceInterestButtons'
 import { EditionResultsSection } from '@/components/races/EditionResultsSection'
 import { RaceReportButton } from '@/components/reports/RaceReportButton'
+import { RaceFollowButtons } from '@/components/races/RaceFollowButtons'
+import { RaceEditionInfos } from '@/components/races/RaceEditionInfos'
 
 const DISTANCE_LABEL: Record<string, string> = {
   sprint: 'Sprint', olympic: '51.5', '70.3': '113', full: '226',
@@ -93,6 +95,18 @@ export default async function EditionPage({
       .eq('year', year)
     wishlistActive = (data ?? []).some(i => i.interest_type === 'wishlist')
     attendedActive = (data ?? []).some(i => i.interest_type === 'attended')
+  }
+
+  // 追蹤狀態（每個 edition 各一）— 取第一個 edition 的追蹤作為代表
+  let initialFollow: { id: string; status: string } | null = null
+  if (user && editions.length > 0) {
+    const { data: followData } = await supabase
+      .from('race_follows')
+      .select('id, status')
+      .eq('athlete_id', user.id)
+      .eq('race_edition_id', editions[0].id)
+      .maybeSingle()
+    initialFollow = followData ?? null
   }
 
   // 計數
@@ -187,17 +201,26 @@ export default async function EditionPage({
           </h1>
           {dateStr && <p className="mt-1 text-sm text-ink-3">{dateStr}</p>}
         </div>
-        <RaceInterestButtons
-          raceId={race.id}
-          year={year}
-          isLoggedIn={isLoggedIn}
-          initialWishlist={wishlistActive}
-          initialAttended={attendedActive}
-          wishlistCount={wishlistCount}
-          attendedCount={attendedCount}
-          showWishlist={year >= currentYear}
-          showAttended={year <= currentYear}
-        />
+        <div className="flex flex-col items-end gap-2">
+          <RaceInterestButtons
+            raceId={race.id}
+            year={year}
+            isLoggedIn={isLoggedIn}
+            initialWishlist={wishlistActive}
+            initialAttended={attendedActive}
+            wishlistCount={wishlistCount}
+            attendedCount={attendedCount}
+            showWishlist={year >= currentYear}
+            showAttended={year <= currentYear}
+          />
+          {isLoggedIn && editions.length > 0 && (
+            <RaceFollowButtons
+              raceEditionId={editions[0].id}
+              initialFollow={initialFollow as any}
+              raceDate={editions[0].race_date}
+            />
+          )}
+        </div>
       </div>
 
       {/* 資訊卡 */}
@@ -307,8 +330,13 @@ export default async function EditionPage({
 
       </div>
 
+      {/* 賽事資訊（社群貢獻） */}
+      <div className="mt-6">
+        <RaceEditionInfos raceEditionId={editions[0].id} isLoggedIn={isLoggedIn} />
+      </div>
+
       {/* ④ 成績列表 */}
-      <div className="mt-2 mb-4 text-center">
+      <div className="mt-6 mb-4 text-center">
         <RaceReportButton raceId={race.id} />
       </div>
 

@@ -13,6 +13,7 @@ const PAGE_CONTEXT: Record<string, { title: string; sub: string }> = {
   '/records/new':  { title: '新增成績',  sub: '個人成績 · 接力成績 · 幫他人新增' },
   '/my/contributions': { title: '我的貢獻', sub: '你幫別人新增的成績 · 待認領追蹤' },
   '/my/following': { title: '關注名單',  sub: '你關注的選手 · 查看最佳成績' },
+  '/my/races':     { title: '我的賽事',  sub: '追蹤 · 記錄 · 回顧' },
   '/my/profile':   { title: '個人資料',  sub: '帳號設定與公開資訊' },
   '/about':       { title: '關於 Tri·log', sub: '平台介紹 · 如何使用 · 常見問題' },
   '/admin':       { title: '管理後台',   sub: '賽事資料 · 公證審核' },
@@ -35,14 +36,14 @@ export function PageContextStrip() {
   return (
     <div
       className="flex items-center px-5 py-2.5"
-      style={{ background: '#0D1526', borderTop: '1px solid rgba(255,255,255,0.06)' }}
+      style={{ background: 'var(--bg-alt)', borderTop: '1px solid var(--border)' }}
     >
       <span
         style={{
           fontFamily:    'Arial, sans-serif',
           fontSize:      22,
           fontWeight:    800,
-          color:         '#F0EDE6',
+          color:         'var(--ink)',
           letterSpacing: '-0.03em',
           lineHeight:    1,
         }}
@@ -54,7 +55,7 @@ export function PageContextStrip() {
         style={{
           fontFamily: "'DM Mono', monospace",
           fontSize:   11,
-          color:      '#4A5568',
+          color:      'var(--ink-3)',
         }}
       >
         {ctx.sub}

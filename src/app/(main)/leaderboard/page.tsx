@@ -54,11 +54,11 @@ function RankBadge({ rank }: { rank: number }) {
   if (rank === 1) return <span style={{ color: '#F5C842', fontSize: 17, fontFamily: 'var(--font-dm)', fontWeight: 500 }}>1</span>
   if (rank === 2) return <span style={{ color: '#A0A0A0', fontSize: 16, fontFamily: 'var(--font-dm)' }}>2</span>
   if (rank === 3) return <span style={{ color: '#CD9660', fontSize: 16, fontFamily: 'var(--font-dm)' }}>3</span>
-  return <span style={{ color: '#4A5568', fontSize: 14, fontFamily: 'var(--font-dm)' }}>{rank}</span>
+  return <span style={{ color: 'var(--ink-3)', fontSize: 14, fontFamily: 'var(--font-dm)' }}>{rank}</span>
 }
 
 function TimeCell({ seconds, rank, gender }: { seconds: number; rank: number; gender: 'M' | 'F'; distance: string }) {
-  let color = '#F0EDE6'
+  let color = 'var(--ink)'
   if (gender === 'M') {
     if (rank === 1) color = '#F5C842'
   } else {
@@ -99,7 +99,7 @@ function GenderSection({
           fontFamily: 'var(--font-dm)', fontSize: 13, letterSpacing: '0.12em',
           color: labelColor, borderLeft: `2px solid ${labelColor}`, paddingLeft: 10,
         }}>{label}</span>
-        <span style={{ fontFamily: 'var(--font-dm)', fontSize: 11, color: '#4A5568', marginLeft: 'auto' }}>
+        <span style={{ fontFamily: 'var(--font-dm)', fontSize: 11, color: 'var(--ink-3)', marginLeft: 'auto' }}>
           {entries.length} 人
         </span>
       </div>
@@ -129,7 +129,7 @@ function GenderSection({
                     href={`/athletes/${e.athlete_id}`}
                     style={{
                       fontSize: 15, fontWeight: 500,
-                      color: '#F0EDE6',
+                      color: 'var(--ink)',
                       whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                       fontFamily: "'Noto Sans TC', sans-serif",
                       textDecoration: 'none',
@@ -141,7 +141,7 @@ function GenderSection({
                 ) : (
                   <span style={{
                     fontSize: 15, fontWeight: 500,
-                    color: e.claim_status === 'unclaimed' ? '#8A96A8' : '#F0EDE6',
+                    color: e.claim_status === 'unclaimed' ? 'var(--ink-3)' : 'var(--ink)',
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                     fontFamily: "'Noto Sans TC', sans-serif",
                   }}>
@@ -152,7 +152,7 @@ function GenderSection({
                   <span style={{
                     flexShrink: 0,
                     fontSize: 11, fontFamily: 'var(--font-dm)', letterSpacing: '0.1em',
-                    color: '#4A5568', border: '1px solid rgba(255,255,255,0.08)',
+                    color: 'var(--ink-3)', border: '1px solid var(--border)',
                     padding: '1px 6px', borderRadius: 100,
                   }}>未認領</span>
                 )}
@@ -163,7 +163,7 @@ function GenderSection({
               </div>
 
               <div className="tlb-race" style={{
-                fontSize: 13, color: '#4A5568', textAlign: 'right', paddingLeft: 12,
+                fontSize: 13, color: 'var(--ink-3)', textAlign: 'right', paddingLeft: 12,
                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                 fontFamily: 'var(--font-dm)',
               }}>
@@ -259,7 +259,7 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
       <div style={{ padding: '1.5rem 0 1.5rem' }}>
         <p style={{
           fontFamily: 'var(--font-syne)', fontWeight: 800,
-          fontSize: 'clamp(1.4rem, 3vw, 2.4rem)', color: '#4A5568',
+          fontSize: 'clamp(1.4rem, 3vw, 2.4rem)', color: 'var(--ink-3)',
           letterSpacing: '-0.03em', lineHeight: 1, marginBottom: 6,
         }}>
           台灣選手
@@ -267,7 +267,7 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
         <h1 style={{
           fontFamily: 'var(--font-syne)', fontWeight: 800,
           fontSize: 'clamp(2.8rem, 6vw, 4.5rem)', letterSpacing: '-0.03em',
-          lineHeight: 1, color: '#F0EDE6',
+          lineHeight: 1, color: 'var(--ink)',
         }}>
           最<span style={{ color: '#FF6B3D' }}>速</span>榜
         </h1>
@@ -297,12 +297,12 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
 
           <div style={{
             fontFamily: 'var(--font-syne)', fontWeight: 800, fontSize: 40,
-            color: '#F0EDE6', letterSpacing: '-0.03em', lineHeight: 1, marginBottom: 8,
+            color: 'var(--ink)', letterSpacing: '-0.03em', lineHeight: 1, marginBottom: 8,
           }}>
             {distLabel}
           </div>
           <div style={{
-            fontSize: 13, color: '#4A5568', fontFamily: 'var(--font-dm)',
+            fontSize: 13, color: 'var(--ink-3)', fontFamily: 'var(--font-dm)',
             letterSpacing: '0.04em', marginBottom: '1.5rem',
           }}>
             個人最佳 · 跨賽事 · 僅供參考
@@ -319,7 +319,7 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
         )}
 
         {male.length === 0 && female.length === 0 && (
-          <div style={{ padding: '3rem', textAlign: 'center', color: '#4A5568', fontFamily: 'var(--font-dm)' }}>
+          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--ink-3)', fontFamily: 'var(--font-dm)' }}>
             尚無成績資料
           </div>
         )}
@@ -341,7 +341,7 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
           padding: '12px 20px',
           borderTop: '1px solid rgba(255,255,255,0.07)',
         }}>
-          <span style={{ fontSize: 13, color: '#4A5568', fontFamily: 'var(--font-dm)' }}>
+          <span style={{ fontSize: 13, color: 'var(--ink-3)', fontFamily: 'var(--font-dm)' }}>
             未認領成績來自官方賽事成績；認領後成為個人紀錄
           </span>
           <a href="/records/new" style={{
