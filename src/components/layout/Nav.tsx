@@ -44,7 +44,7 @@ export async function Nav() {
           </Link>
 
           {/* 主選單連結（含 active state）*/}
-          <nav className="flex h-14 items-center">
+          <nav className="hidden sm:flex h-14 items-center">
             <NavLinks isLoggedIn={!!user} />
           </nav>
 
@@ -71,6 +71,13 @@ export async function Nav() {
             )}
           </div>
         </div>
+
+        {/* 行動版導航列 */}
+        <nav className="sm:hidden overflow-x-auto border-t border-white/5">
+          <div className="flex px-2">
+            <NavLinks isLoggedIn={!!user} compact />
+          </div>
+        </nav>
 
         {/* 頁面標題條帶 */}
         <PageContextStrip />

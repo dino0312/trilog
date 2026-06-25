@@ -60,13 +60,13 @@ export default async function RankingsPage({ searchParams }: { searchParams: Sea
           <p className="text-ink-3">目前沒有符合條件的成績</p>
         </div>
       ) : (
-        <div className="rounded-xl border border-border bg-bg-card overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="rounded-xl border border-border bg-bg-card overflow-x-auto">
+          <table className="w-full text-sm min-w-[480px]">
             <thead>
               <tr className="border-b border-border text-ink-3 text-xs">
                 <th className="px-4 py-3 text-left w-10">#</th>
                 <th className="px-4 py-3 text-left">選手</th>
-                <th className="px-4 py-3 text-left">賽事</th>
+                <th className="px-4 py-3 text-left hidden sm:table-cell">賽事</th>
                 <th className="px-4 py-3 text-right font-mono">完賽</th>
                 <th className="px-4 py-3 text-right font-mono hidden sm:table-cell text-swim">游</th>
                 <th className="px-4 py-3 text-right font-mono hidden sm:table-cell text-bike">騎</th>
@@ -79,10 +79,10 @@ export default async function RankingsPage({ searchParams }: { searchParams: Sea
                   className="border-b border-border last:border-0 hover:bg-bg-elev transition">
                   <td className="px-4 py-3 text-ink-4 tabular-nums">{i + 1}</td>
                   <td className="px-4 py-3">
-                    <p className="text-ink font-medium">{e.display_name ?? '匿名'}</p>
+                    <p className="text-ink font-medium whitespace-nowrap">{e.display_name ?? '匿名'}</p>
                     {e.age_group && <p className="text-xs text-ink-4">{e.age_group}</p>}
                   </td>
-                  <td className="px-4 py-3 text-ink-3">
+                  <td className="px-4 py-3 text-ink-3 hidden sm:table-cell">
                     {e.race_name} {e.edition_year}
                   </td>
                   <td className="px-4 py-3 text-right font-mono font-bold text-accent tabular-nums">

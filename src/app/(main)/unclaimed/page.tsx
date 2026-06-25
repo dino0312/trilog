@@ -164,7 +164,7 @@ export default async function UnclaimedPage({ searchParams }: { searchParams: Se
                       className="font-semibold text-ink hover:text-accent transition">
                       {r.athlete_name_snapshot ?? '—'}
                     </Link>
-                    <p className="text-xs text-ink-4 mt-0.5">
+                    <p className="text-xs text-ink-4 mt-0.5 truncate">
                       {raceName} {edition?.year}
                       {' · '}{DISTANCE_LABEL[edition?.distance_category] ?? edition?.distance_category}
                       {' · '}{r.source_credibility === 'official' ? '官方成績' : '自填'}

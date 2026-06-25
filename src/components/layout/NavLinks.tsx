@@ -19,9 +19,9 @@ const AUTH_LINKS = [
   { href: '/my/races',     label: '我的賽事' },
 ]
 
-type Props = { isLoggedIn?: boolean }
+type Props = { isLoggedIn?: boolean; compact?: boolean }
 
-export function NavLinks({ isLoggedIn = false }: Props) {
+export function NavLinks({ isLoggedIn = false, compact = false }: Props) {
   const pathname = usePathname()
   const links = isLoggedIn ? AUTH_LINKS : PUBLIC_LINKS
 
@@ -34,7 +34,7 @@ export function NavLinks({ isLoggedIn = false }: Props) {
             key={href}
             href={href}
             aria-current={active ? 'page' : undefined}
-            className="flex h-14 items-center px-3.5 text-sm transition-colors"
+            className={`flex items-center whitespace-nowrap transition-colors ${compact ? 'h-10 px-3 text-xs' : 'h-14 px-3.5 text-sm'}`}
             style={{
               color:        active ? 'var(--ink)' : 'var(--ink-3)',
               borderBottom: active ? '2px solid #FF6B3D' : '2px solid transparent',

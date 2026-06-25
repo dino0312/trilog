@@ -242,7 +242,7 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
   const distLabel = DISTANCE_LABEL[distance] ?? distance
 
   return (
-    <main style={{ maxWidth: 860, margin: '0 auto', padding: '2.5rem 2rem 4rem' }}>
+    <main style={{ maxWidth: 860, margin: '0 auto', padding: 'clamp(1rem, 4vw, 2.5rem) clamp(1rem, 4vw, 2rem) 4rem' }}>
       <style>{`
         .tlb-row:hover { background: rgba(255,255,255,0.025); transition: background 0.1s; }
         .tlb-row { grid-template-columns: 36px minmax(0,1fr) 110px minmax(0,1fr) 32px; }
@@ -290,13 +290,13 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
           {/* 浮水印 */}
           <span aria-hidden style={{
             position: 'absolute', right: -8, top: -20,
-            fontFamily: 'var(--font-syne)', fontWeight: 800, fontSize: 140,
+            fontFamily: 'var(--font-syne)', fontWeight: 800, fontSize: 'clamp(60px, 30vw, 140px)',
             color: 'rgba(255,255,255,0.03)', lineHeight: 1,
             pointerEvents: 'none', userSelect: 'none', letterSpacing: -6,
           }}>{distTitle}</span>
 
           <div style={{
-            fontFamily: 'var(--font-syne)', fontWeight: 800, fontSize: 40,
+            fontFamily: 'var(--font-syne)', fontWeight: 800, fontSize: 'clamp(1.4rem, 8vw, 2.5rem)',
             color: 'var(--ink)', letterSpacing: '-0.03em', lineHeight: 1, marginBottom: 8,
           }}>
             {distLabel}

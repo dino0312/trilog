@@ -24,6 +24,8 @@ export function DistanceTabs({ current }: { current: string }) {
       display: 'flex',
       borderTop: '1px solid rgba(255,255,255,0.04)',
       margin: '0 -2rem',
+      overflowX: 'auto',
+      WebkitOverflowScrolling: 'touch',
     }}>
       {TABS.filter(tab => !tab.hidden).map(tab => {
         const active = tab.value === current

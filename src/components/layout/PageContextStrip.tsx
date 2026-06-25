@@ -51,11 +51,14 @@ export function PageContextStrip() {
         {ctx.title}
       </span>
       <span
-        className="ml-auto"
+        className="ml-auto text-right overflow-hidden"
         style={{
-          fontFamily: "'DM Mono', monospace",
-          fontSize:   11,
-          color:      'var(--ink-3)',
+          fontFamily:  "'DM Mono', monospace",
+          fontSize:    11,
+          color:       'var(--ink-3)',
+          whiteSpace:  'nowrap',
+          textOverflow:'ellipsis',
+          minWidth:    0,
         }}
       >
         {ctx.sub}

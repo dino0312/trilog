@@ -41,7 +41,7 @@ function InterestButton({
       <button
         type="button"
         onClick={() => open(type === 'wishlist' ? 'race_wishlist' : 'race_attended', { raceId, year })}
-        className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border border-border text-ink-4 hover:border-border-strong hover:text-ink-3 transition"
+        className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border border-border text-ink-4 hover:border-border-strong hover:text-ink-3 transition whitespace-nowrap flex-shrink-0"
       >
         <span>{label}</span>
         {displayCount > 0 && <span className="font-mono">{displayCount}</span>}
@@ -57,7 +57,7 @@ function InterestButton({
       <button
         type="submit"
         disabled={pending}
-        className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border transition disabled:opacity-50 ${
+        className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border transition disabled:opacity-50 whitespace-nowrap flex-shrink-0 ${
           state.active
             ? activeClass
             : 'border-border text-ink-4 hover:border-border-strong hover:text-ink-3'
