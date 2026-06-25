@@ -16,6 +16,7 @@ export function AuthModal() {
   const [error, setError]           = useState<string | null>(null)
   const [emailSent, setEmailSent]   = useState(false)
   const [loading, setLoading]       = useState(false)
+  const [agreed, setAgreed]         = useState(false)
   const overlayRef            = useRef<HTMLDivElement>(null)
   const router                = useRouter()
 
@@ -158,7 +159,7 @@ export function AuthModal() {
           {(['login', 'register'] as Tab[]).map(t => (
             <button
               key={t}
-              onClick={() => { setTab(t); setError(null) }}
+              onClick={() => { setTab(t); setError(null); setAgreed(false) }}
               className={`pb-2.5 text-sm font-medium transition border-b-2 -mb-px ${
                 tab === t
                   ? 'border-[#FF6B3D] text-ink'
@@ -186,8 +187,23 @@ export function AuthModal() {
             <Input label="電子郵件" id="modal-reg-email" name="email" type="email" autoComplete="email" required />
             <Input label="密碼" id="modal-reg-password" name="password" type="password" autoComplete="new-password" required />
             <Input label="確認密碼" id="modal-reg-confirm" name="confirm" type="password" autoComplete="new-password" required />
+            <div className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                id="modal-terms-agree"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="mt-0.5 shrink-0 accent-accent"
+              />
+              <label htmlFor="modal-terms-agree" className="text-xs text-ink-3 leading-relaxed">
+                我已閱讀並同意{' '}
+                <Link href="/terms" target="_blank" className="text-accent hover:underline">服務條款</Link>
+                {' '}及{' '}
+                <Link href="/privacy" target="_blank" className="text-accent hover:underline">隱私權政策</Link>
+              </label>
+            </div>
             {error && <p className="text-sm text-red text-center">{error}</p>}
-            <Button type="submit" loading={loading} className="mt-1">建立帳號</Button>
+            <Button type="submit" loading={loading} disabled={!agreed || loading} className="mt-1" style={{ opacity: !agreed ? 0.5 : undefined, cursor: !agreed ? 'not-allowed' : undefined }}>建立帳號</Button>
           </form>
         )}
 

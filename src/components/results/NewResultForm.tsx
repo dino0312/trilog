@@ -17,6 +17,8 @@ type Props = {
   profileComplete: boolean
   profile: Profile
   forOther?: boolean
+  contributorConsented?: boolean
+  onContributorConsentChange?: (v: boolean) => void
 }
 
 const initial: ResultState = { error: null }
@@ -34,7 +36,7 @@ const NATIONALITIES = [
   { value: 'FRA', label: '🇫🇷 法國' },
 ]
 
-export function NewResultForm({ profileComplete, profile, forOther = false }: Props) {
+export function NewResultForm({ profileComplete, profile, forOther = false, contributorConsented = false, onContributorConsentChange }: Props) {
   const [state, action, pending] = useActionState(createResult, initial)
   const [raceEdition, setRaceEdition] = useState<RaceEditionValue | null>(null)
   const [raceError, setRaceError] = useState<string | undefined>()
@@ -185,9 +187,27 @@ export function NewResultForm({ profileComplete, profile, forOther = false }: Pr
         </div>
       )}
 
+      {/* 他人成績同意聲明 */}
+      {forOther && (
+        <div className="flex items-start gap-2">
+          <input
+            type="checkbox"
+            id="contributor-consent"
+            checked={contributorConsented}
+            onChange={(e) => onContributorConsentChange?.(e.target.checked)}
+            className="mt-0.5 shrink-0 accent-accent"
+          />
+          <label htmlFor="contributor-consent" className="text-xs text-ink-3 leading-relaxed">
+            我確認已獲得該選手的明確同意，同意本平台依{' '}
+            <a href="/privacy" target="_blank" className="text-accent hover:underline">隱私權政策</a>
+            {' '}蒐集其個人資料，並對所填寫資料的正確性負責。
+          </label>
+        </div>
+      )}
+
       {state.error && <p className="text-sm text-red">{state.error}</p>}
 
-      <Button type="submit" loading={pending} disabled={!raceEdition?.editionId}>
+      <Button type="submit" loading={pending} disabled={!raceEdition?.editionId || (forOther && !contributorConsented)}>
         {forOther ? '代入成績' : '儲存成績'}
       </Button>
     </form>

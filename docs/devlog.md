@@ -6,6 +6,78 @@
 
 ---
 
+### [2026-06-25] 合規實作：隱私權政策、服務條款、同意勾選框
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: [13, 16, 34]
+status: implemented
+decisions:
+  - id: D001
+    chapter: 13
+    content: "/privacy 與 /terms 靜態頁面實作，Footer 加入隱私權政策與服務條款連結"
+    spec_impact: false
+    synced: false
+  - id: D002
+    chapter: 16
+    content: "Migration: results.contributor_consented_at TIMESTAMPTZ NULL，src/types/database.ts 同步更新"
+    spec_impact: false
+    synced: false
+  - id: D003
+    chapter: 34
+    content: "他人成績 Tab 同意勾選框（非預設勾選，未勾選 disabled），contributorConsented 狀態提升至 ResultEntryPage，切換 Tab 重置，createResult action 寫入 contributor_consented_at"
+    spec_impact: false
+    synced: false
+  - id: D004
+    chapter: 13
+    content: "註冊頁同意勾選框（非預設勾選，未勾選 disabled，連結 /terms 與 /privacy 以 target=_blank 開新頁籤）"
+    spec_impact: false
+    synced: false
+```
+
+**完成內容**：
+- `supabase/migrations/20260625000001_results_contributor_consent.sql`：新增 `contributor_consented_at TIMESTAMPTZ NULL` 欄位
+- `src/types/database.ts`：results Row/Insert 新增 `contributor_consented_at: string | null`
+- `src/app/(main)/privacy/page.tsx`：隱私權政策靜態頁面（完整內容、metadata）
+- `src/app/(main)/terms/page.tsx`：服務條款靜態頁面（完整內容、metadata）
+- `src/components/layout/Footer.tsx`：加入隱私權政策與服務條款連結
+- `src/app/(auth)/layout.tsx`：加入 Footer，讓 /login 與 /register 頁面也顯示 Footer
+- `src/components/auth/RegisterForm.tsx`：加入同意勾選框（非預設勾選，未勾選時送出按鈕 disabled）
+- `src/components/results/ResultEntryPage.tsx`：提升 `contributorConsented` 狀態，Tab 切換時重置
+- `src/components/results/NewResultForm.tsx`：他人成績 Tab 顯示同意勾選框，未勾選時按鈕 disabled
+- `src/app/actions/results.ts`：forOther 路徑寫入 `contributor_consented_at`
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | `/privacy` 正常載入 | ✅ PASS | 完整政策內容顯示 |
+| 2 | `/terms` 正常載入 | ✅ PASS | 完整條款內容顯示 |
+| 3 | Footer 隱私權政策連結 | ✅ PASS | 主頁面與 /register 底部均顯示 |
+| 4 | 註冊頁同意勾選框 | ✅ PASS | 預設未勾選，未勾選時按鈕灰化 |
+| 5 | `npx tsc --noEmit` | ✅ PASS | 零錯誤 |
+| 6 | `npm run lint` | ✅ PASS | 無新增警告（87 個為既有問題）|
+
+**待驗證**（需真實 Supabase 環境）：
+- ⚠️ Migration 執行後 `contributor_consented_at` 欄位存在
+- ⚠️ 他人成績送出後 DB 正確寫入 `contributor_consented_at`（非 null）
+- ⚠️ 個人成績送出後 `contributor_consented_at` 為 null
+
+**異動檔案**：
+- `supabase/migrations/20260625000001_results_contributor_consent.sql`（新增）
+- `src/types/database.ts`
+- `src/app/(main)/privacy/page.tsx`（新增）
+- `src/app/(main)/terms/page.tsx`（新增）
+- `src/components/layout/Footer.tsx`
+- `src/app/(auth)/layout.tsx`
+- `src/components/auth/RegisterForm.tsx`
+- `src/components/results/ResultEntryPage.tsx`
+- `src/components/results/NewResultForm.tsx`
+- `src/app/actions/results.ts`
+
+---
+
 ## 如何新增記錄
 
 完成功能後，在 `## 記錄` 區塊**最上方**插入：

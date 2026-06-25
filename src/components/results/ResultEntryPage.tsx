@@ -27,6 +27,12 @@ const TABS: { key: Tab; label: string }[] = [
 
 export function ResultEntryPage({ profileComplete, profile, defaultTab = 'solo' }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>(defaultTab)
+  const [contributorConsented, setContributorConsented] = useState(false)
+
+  function handleTabChange(tab: Tab) {
+    setActiveTab(tab)
+    if (tab !== 'other') setContributorConsented(false)
+  }
 
   return (
     <main className="flex-1 p-6 max-w-2xl mx-auto w-full">
@@ -36,7 +42,7 @@ export function ResultEntryPage({ profileComplete, profile, defaultTab = 'solo' 
           <button
             key={tab.key}
             type="button"
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => handleTabChange(tab.key)}
             className={[
               'px-4 py-2 rounded-lg text-sm font-medium transition',
               activeTab === tab.key
@@ -55,7 +61,13 @@ export function ResultEntryPage({ profileComplete, profile, defaultTab = 'solo' 
           <NewResultForm profileComplete={profileComplete} profile={profile} forOther={false} />
         </div>
         <div className={activeTab === 'other' ? '' : 'hidden'}>
-          <NewResultForm profileComplete={profileComplete} profile={profile} forOther={true} />
+          <NewResultForm
+            profileComplete={profileComplete}
+            profile={profile}
+            forOther={true}
+            contributorConsented={contributorConsented}
+            onContributorConsentChange={setContributorConsented}
+          />
         </div>
         <div className={activeTab === 'relay' ? '' : 'hidden'}>
           <NewRelayResultForm />

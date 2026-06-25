@@ -10,10 +10,16 @@ export function Footer() {
   return (
     <footer className="border-t border-border py-4 px-6 mt-8">
       <div className="mx-auto max-w-4xl flex items-center justify-between text-xs text-ink-4">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           <span>© 2026 Tri·log · trilog.run</span>
           <Link href="/about" className="hover:text-ink transition underline underline-offset-2">
             關於
+          </Link>
+          <Link href="/privacy" className="hover:text-ink transition underline underline-offset-2">
+            隱私權政策
+          </Link>
+          <Link href="/terms" className="hover:text-ink transition underline underline-offset-2">
+            服務條款
           </Link>
         </div>
         <button

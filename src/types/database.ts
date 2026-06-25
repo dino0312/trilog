@@ -221,36 +221,38 @@ export type Database = {
           ag_rank:               number | null
           bib_number:            string | null
           notes:                 string | null
-          claimed_at:            string | null
-          verified_at:           string | null
-          created_by:            string | null
-          created_at:            string
-          updated_at:            string
+          claimed_at:                  string | null
+          verified_at:                 string | null
+          contributor_consented_at:    string | null
+          created_by:                  string | null
+          created_at:                  string
+          updated_at:                  string
         }
         Insert: {
-          id?:                    string
-          result_type:            ResultType
-          race_edition_id:        string
-          athlete_id?:            string | null
-          athlete_name_snapshot?: string | null
-          source_credibility:     SourceCredibility
-          claim_status?:          ClaimStatus
-          total_seconds:          number
-          swim_seconds?:          number | null
-          t1_seconds?:            number | null
-          bike_seconds?:          number | null
-          t2_seconds?:            number | null
-          run_seconds?:           number | null
-          curated_gender?:        Gender | null
-          is_public?:             boolean
-          certificate_url?:       string | null
-          overall_rank?:          number | null
-          ag_rank?:               number | null
-          bib_number?:            string | null
-          notes?:                 string | null
-          claimed_at?:            string | null
-          verified_at?:           string | null
-          created_by?:            string | null
+          id?:                          string
+          result_type:                  ResultType
+          race_edition_id:              string
+          athlete_id?:                  string | null
+          athlete_name_snapshot?:       string | null
+          source_credibility:           SourceCredibility
+          claim_status?:                ClaimStatus
+          total_seconds:                number
+          swim_seconds?:                number | null
+          t1_seconds?:                  number | null
+          bike_seconds?:                number | null
+          t2_seconds?:                  number | null
+          run_seconds?:                 number | null
+          curated_gender?:              Gender | null
+          is_public?:                   boolean
+          certificate_url?:             string | null
+          overall_rank?:                number | null
+          ag_rank?:                     number | null
+          bib_number?:                  string | null
+          notes?:                       string | null
+          claimed_at?:                  string | null
+          verified_at?:                 string | null
+          contributor_consented_at?:    string | null
+          created_by?:                  string | null
         }
         Update: Partial<Database['public']['Tables']['results']['Insert']>
         Relationships: []
