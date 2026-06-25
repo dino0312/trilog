@@ -37,13 +37,14 @@ decisions:
 ```
 
 **完成內容**：
-- `supabase/migrations/20260625000001_results_contributor_consent.sql`：新增 `contributor_consented_at TIMESTAMPTZ NULL` 欄位
+- `supabase/migrations/20260625000001_results_contributor_consent.sql`：新增 `contributor_consented_at TIMESTAMPTZ NULL` 欄位（已在 Supabase 執行，欄位確認存在）
 - `src/types/database.ts`：results Row/Insert 新增 `contributor_consented_at: string | null`
 - `src/app/(main)/privacy/page.tsx`：隱私權政策靜態頁面（完整內容、metadata）
 - `src/app/(main)/terms/page.tsx`：服務條款靜態頁面（完整內容、metadata）
 - `src/components/layout/Footer.tsx`：加入隱私權政策與服務條款連結
 - `src/app/(auth)/layout.tsx`：加入 Footer，讓 /login 與 /register 頁面也顯示 Footer
 - `src/components/auth/RegisterForm.tsx`：加入同意勾選框（非預設勾選，未勾選時送出按鈕 disabled）
+- `src/components/auth/AuthModal.tsx`：dialog 註冊 tab 同樣加入同意勾選框，切換 tab 時重置
 - `src/components/results/ResultEntryPage.tsx`：提升 `contributorConsented` 狀態，Tab 切換時重置
 - `src/components/results/NewResultForm.tsx`：他人成績 Tab 顯示同意勾選框，未勾選時按鈕 disabled
 - `src/app/actions/results.ts`：forOther 路徑寫入 `contributor_consented_at`
@@ -55,14 +56,17 @@ decisions:
 | 1 | `/privacy` 正常載入 | ✅ PASS | 完整政策內容顯示 |
 | 2 | `/terms` 正常載入 | ✅ PASS | 完整條款內容顯示 |
 | 3 | Footer 隱私權政策連結 | ✅ PASS | 主頁面與 /register 底部均顯示 |
-| 4 | 註冊頁同意勾選框 | ✅ PASS | 預設未勾選，未勾選時按鈕灰化 |
-| 5 | `npx tsc --noEmit` | ✅ PASS | 零錯誤 |
-| 6 | `npm run lint` | ✅ PASS | 無新增警告（87 個為既有問題）|
+| 4 | 註冊頁（完整頁）同意勾選框 | ✅ PASS | 預設未勾選，未勾選時按鈕灰化 |
+| 5 | 註冊（AuthModal dialog）同意勾選框 | ✅ PASS | 預設未勾選，未勾選時按鈕灰化 |
+| 6 | Supabase migration 執行 | ✅ PASS | `contributor_consented_at` 欄位存在，TIMESTAMPTZ，nullable |
+| 7 | `npx tsc --noEmit` | ✅ PASS | 零錯誤 |
+| 8 | `npm run lint` | ✅ PASS | 無新增警告（87 個為既有問題）|
 
-**待驗證**（需真實 Supabase 環境）：
-- ⚠️ Migration 執行後 `contributor_consented_at` 欄位存在
+**待驗證**（需部署後測試）：
 - ⚠️ 他人成績送出後 DB 正確寫入 `contributor_consented_at`（非 null）
 - ⚠️ 個人成績送出後 `contributor_consented_at` 為 null
+
+**部署**：commit `56c9c81`，push 至 main，Vercel 自動部署 v0.6.001
 
 **異動檔案**：
 - `supabase/migrations/20260625000001_results_contributor_consent.sql`（新增）
@@ -72,6 +76,7 @@ decisions:
 - `src/components/layout/Footer.tsx`
 - `src/app/(auth)/layout.tsx`
 - `src/components/auth/RegisterForm.tsx`
+- `src/components/auth/AuthModal.tsx`
 - `src/components/results/ResultEntryPage.tsx`
 - `src/components/results/NewResultForm.tsx`
 - `src/app/actions/results.ts`
