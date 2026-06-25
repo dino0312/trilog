@@ -6,6 +6,49 @@
 
 ---
 
+### [2026-06-25] 手機版面修正 + About Hero 圖片調整
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: []
+status: implemented
+decisions: []
+```
+
+**完成內容**：
+
+**手機版面（v0.6.004，commit 0fc04a0）**
+- `Nav.tsx` + `NavLinks.tsx`：手機改為兩列佈局，上排 Logo + Auth，下排獨立可橫向捲動導覽列；NavLinks 新增 `compact` 模式，所有連結加 `whitespace-nowrap`
+- `leaderboard/page.tsx`：標題字體改 `clamp()`，浮水印限制寬度防橫向溢出
+- `DistanceTabs.tsx`：加 `overflowX: 'auto'` 讓距離 Tab 可橫向捲動
+- `rankings/page.tsx`：賽事欄手機隱藏（`hidden sm:table-cell`），表格加 `min-w-[480px]` + `overflow-x-auto`
+- `PageContextStrip.tsx`：副標題加 `whitespace-nowrap` + `text-overflow: ellipsis`，不再換行
+- `unclaimed/page.tsx`：成績卡描述文字加 `truncate`
+- `RaceInterestButtons.tsx`：「想參加/參加過」按鈕加 `whitespace-nowrap flex-shrink-0`
+
+**About Hero（v0.6.004+，commit 93678db）**
+- `about/page.tsx`：`aspectRatio` 從 `16/7` 改為 `16/9`，加 `minHeight: 260px`；`objectPosition` 從 `center 30%` 改為 `center center`，手機與桌機均可看到選手完整全身
+
+**基礎設施：ImprovMX 收信服務**
+- `privacy@trilog.run` 使用 [ImprovMX](https://improvmx.com) 服務接收信件，轉發至個人信箱
+- 對應隱私權政策與服務條款中所列聯絡信箱，確保用戶個資申請信件可正常收到
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | Nav 手機版兩列佈局 | ✅ PASS | 375px 正常，連結無換行 |
+| 2 | 最速榜標題手機版 | ✅ PASS | clamp() 自適應，不換行 |
+| 3 | 距離 Tab 橫向捲動 | ✅ PASS | 三個 Tab 均可捲動顯示 |
+| 4 | 排行榜表格手機版 | ✅ PASS | 賽事欄隱藏，選手名不換行 |
+| 5 | PageContextStrip 截斷 | ✅ PASS | 長副標題以 … 截斷 |
+| 6 | About Hero 全身顯示 | ✅ PASS | 手機 + 桌機均可見選手全身 |
+
+**部署**：commit `0fc04a0`（手機版面）、`93678db`（Hero 圖片），push 至 main，Vercel 自動部署
+
+---
+
 ### [2026-06-25] 合規實作：隱私權政策、服務條款、同意勾選框
 
 **狀態**：✅ 完成
