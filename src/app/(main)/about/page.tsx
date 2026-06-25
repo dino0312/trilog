@@ -11,11 +11,11 @@ export default function AboutPage() {
     <main>
 
       {/* Hero */}
-      <section style={{ position: 'relative', width: '100%', aspectRatio: '16/7', overflow: 'hidden' }}>
+      <section style={{ position: 'relative', width: '100%', aspectRatio: '16/9', minHeight: '260px', overflow: 'hidden' }}>
         <img
           src="/about-hero.jpg"
           alt="選手衝過 Challenge Taiwan 終點線，雙手高舉"
-          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', display: 'block' }}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center center', display: 'block' }}
         />
         {/* 左深→右淡漸層遮罩 */}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, var(--hero-overlay-h) 0%, rgba(11,15,20,0.45) 45%, rgba(11,15,20,0.12) 100%)' }} />
