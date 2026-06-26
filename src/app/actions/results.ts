@@ -115,10 +115,14 @@ export async function createResult(_prev: ResultState, formData: FormData): Prom
     const athleteNameSnapshot = (formData.get('athlete_name_snapshot') as string | null)?.trim()
     if (!athleteNameSnapshot) return { error: '請填寫成績歸屬人姓名' }
 
+    const curatedGender = (formData.get('curated_gender') as string | null) || null
+    if (!curatedGender) return { error: '請選擇成績歸屬人的性別（排行榜分組必填）' }
+
     const { error } = await supabase.from('results').insert({
       race_edition_id:           raceEditionId,
       athlete_id:                null,
       athlete_name_snapshot:     athleteNameSnapshot,
+      curated_gender:            curatedGender as 'M' | 'F',
       result_type:               'solo',
       source_credibility:        'self_reported',
       claim_status:              'unclaimed',

@@ -84,6 +84,22 @@ export function NewResultForm({ profileComplete, profile, forOther = false, cont
             placeholder="選手真實姓名（用於比對認領）"
             required
           />
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="curated_gender" className="text-sm font-medium text-ink-2">
+              性別 <span className="text-run">*</span>
+            </label>
+            <select
+              id="curated_gender"
+              name="curated_gender"
+              required
+              className="w-full rounded-lg border border-border-strong bg-bg-elev px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+            >
+              <option value="">請選擇…</option>
+              <option value="M">男</option>
+              <option value="F">女</option>
+            </select>
+            <p className="text-xs text-ink-4">排行榜分組依據，認領後以本人帳號性別為準</p>
+          </div>
         </div>
       )}
 
