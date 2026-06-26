@@ -6,6 +6,59 @@
 
 ---
 
+### [2026-06-26] 最速榜進榜門檻、後台性別必填、我的貢獻修正
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: []
+status: implemented
+decisions:
+  - id: D001
+    chapter: 0
+    content: "最速榜各距離加入進榜時間門檻：226 < 12h、113 男 < 5h / 女 < 6h、51.5 < 2:30；每性別上限 100 人"
+    spec_impact: true
+    synced: false
+  - id: D002
+    chapter: 0
+    content: "後台官方成績輸入表單性別欄位改為必填（原為選填導致 curated_gender=null，成績不出現在榜單）"
+    spec_impact: false
+    synced: false
+  - id: D003
+    chapter: 0
+    content: "幫他人新增成績加入性別欄位（curated_gender），修正未認領成績不出現在排行榜的問題"
+    spec_impact: true
+    synced: false
+  - id: D004
+    chapter: 0
+    content: "我的貢獻頁 .neq('athlete_id', uid) 改為 .or('athlete_id.is.null,...')，修正 NULL neq 在 SQL 中不回傳 null 列的問題"
+    spec_impact: false
+    synced: false
+  - id: D005
+    chapter: 0
+    content: "我的貢獻頁加入刪除功能（solo 未認領成績），deleteContribution server action 限制 created_by + athlete_id IS NULL + unclaimed"
+    spec_impact: true
+    synced: false
+```
+
+**完成內容**：
+- `leaderboard/page.tsx`：CUTOFF_SECONDS 支援 `number | {M,F}` 結構，113 男 5h / 女 6h，226 12h，51.5 2:30；男女各最多 100 人
+- `OfficialResultForm.tsx` / `official.ts`：後台性別欄位加 required + server-side 驗證
+- `NewResultForm.tsx` / `results.ts`：他人成績加性別下拉（curated_gender 必填）
+- `contributions/page.tsx`：or filter 修正 NULL neq 問題；solo 未認領列加刪除按鈕
+- `DeleteContributionButton.tsx`：新增 client component
+
+**異動檔案**：
+- `src/app/(main)/leaderboard/page.tsx`
+- `src/app/(admin)/admin/results/OfficialResultForm.tsx`
+- `src/app/actions/official.ts`
+- `src/app/actions/results.ts`
+- `src/components/results/NewResultForm.tsx`
+- `src/components/results/DeleteContributionButton.tsx`
+- `src/app/(main)/my/contributions/page.tsx`
+
+---
+
 ### [2026-06-26] 成績合理性驗證：世界紀錄硬擋 + DB最快軟警告
 
 **狀態**：✅ 完成
