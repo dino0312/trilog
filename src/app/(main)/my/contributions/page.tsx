@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { IconUser, IconUsers } from '@tabler/icons-react'
+import { DeleteContributionButton } from '@/components/results/DeleteContributionButton'
 
 export const metadata: Metadata = { title: '我的貢獻 · Tri·log' }
 
@@ -180,20 +181,26 @@ export default async function ContributionsPage() {
                   {STATUS_LABEL[item.claim_status] ?? item.claim_status}
                 </span>
 
-                {/* 編輯 / 不可編輯 */}
-                {!isClaimed ? (
-                  <Link
-                    href={item.type === 'relay'
-                      ? `/records/relay/${item.id}/edit`
-                      : `/records`
-                    }
-                    className="shrink-0 text-xs text-ink-4 hover:text-ink px-2 py-1 rounded hover:bg-bg-elev transition"
-                  >
-                    編輯
-                  </Link>
-                ) : (
-                  <span className="shrink-0 text-xs text-ink-4 px-2 py-1">不可編輯</span>
-                )}
+                {/* 操作按鈕 */}
+                <div className="shrink-0 flex items-center gap-1">
+                  {!isClaimed ? (
+                    <>
+                      {item.type === 'relay' && (
+                        <Link
+                          href={`/records/relay/${item.id}/edit`}
+                          className="text-xs text-ink-4 hover:text-ink px-2 py-1 rounded hover:bg-bg-elev transition"
+                        >
+                          編輯
+                        </Link>
+                      )}
+                      {item.type === 'solo' && (
+                        <DeleteContributionButton id={item.id} />
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-xs text-ink-4 px-2 py-1">不可編輯</span>
+                  )}
+                </div>
               </div>
             )
           })}

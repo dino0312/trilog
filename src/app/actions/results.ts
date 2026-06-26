@@ -481,3 +481,29 @@ export async function deleteRelayResult(_prev: ResultState, formData: FormData):
   revalidatePath('/records')
   redirect('/records')
 }
+
+export async function deleteContribution(_prev: ResultState, formData: FormData): Promise<ResultState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: '請先登入' }
+
+  const id = formData.get('id') as string
+
+  // 只能刪自己新增、尚未認領、athlete_id 為 null 的成績
+  const { error } = await supabase
+    .from('results')
+    .delete()
+    .eq('id', id)
+    .eq('created_by', user.id)
+    .is('athlete_id', null)
+    .eq('claim_status', 'unclaimed')
+    .eq('source_credibility', 'self_reported')
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/my/contributions')
+  revalidatePath('/unclaimed')
+  revalidatePath('/leaderboard')
+  revalidatePath('/rankings')
+  redirect('/my/contributions')
+}
