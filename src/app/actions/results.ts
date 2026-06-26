@@ -17,6 +17,21 @@ function parseTime(val: string): number | null {
   return null
 }
 
+// 各距離世界紀錄下限（秒），低於此值視為不合理
+const DISTANCE_MIN_SECONDS: Record<string, number> = {
+  'sprint': 2880,   // 48:00 — 衝刺距離世界紀錄約 49 分
+  'olympic': 6300,  // 1:45:00 — 奧林匹克世界紀錄約 1:46
+  '70.3':   12420,  // 3:27:00 — 113 世界紀錄約 3:27
+  'full':   27000,  // 7:30:00 — 226 世界紀錄約 7:35
+}
+
+const DISTANCE_LABEL: Record<string, string> = {
+  'sprint':  '衝刺距離（25.75）',
+  'olympic': '奧林匹克（51.5）',
+  '70.3':    '半程（113）',
+  'full':    '全程（226）',
+}
+
 export async function createResult(_prev: ResultState, formData: FormData): Promise<ResultState> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -37,6 +52,26 @@ export async function createResult(_prev: ResultState, formData: FormData): Prom
   const totalSeconds = parseTime(totalStr)
   if (!totalSeconds || totalSeconds <= 0) return { error: '請輸入正確的完賽時間（HH:MM:SS）' }
   if (!raceEditionId) return { error: '請選擇賽事' }
+
+  // ── 合理性檢查：查距離類別，比對最低完賽時間 ──────────────
+  const { data: edition } = await supabase
+    .from('race_editions')
+    .select('distance_category')
+    .eq('id', raceEditionId)
+    .single()
+
+  if (edition?.distance_category) {
+    const minSec = DISTANCE_MIN_SECONDS[edition.distance_category]
+    if (minSec && totalSeconds < minSec) {
+      const label = DISTANCE_LABEL[edition.distance_category] ?? edition.distance_category
+      const minTime = [
+        String(Math.floor(minSec / 3600)).padStart(2, '0'),
+        String(Math.floor((minSec % 3600) / 60)).padStart(2, '0'),
+        String(minSec % 60).padStart(2, '0'),
+      ].join(':')
+      return { error: `${label} 完賽時間不可低於 ${minTime}（低於世界紀錄，請確認輸入是否正確）` }
+    }
+  }
 
   // ── 幫他人新增成績 ─────────────────────────────────────────
   if (forOther) {
