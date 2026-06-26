@@ -15,11 +15,11 @@ const SUB: Record<string, { M: number; F: number }> = {
   sprint:  { M:  3600, F:  4320 },  // Sub 1 / Sub 1.2
 }
 
-// 進榜資格上限（秒），超過此時間不進榜
-const CUTOFF_SECONDS: Partial<Record<string, number>> = {
-  'full':    43200,  // 12:00:00
-  '70.3':   18000,  // 5:00:00
-  'olympic': 9000,  // 2:30:00
+// 進榜資格上限（秒），可分性別設定
+const CUTOFF_SECONDS: Partial<Record<string, number | { M: number; F: number }>> = {
+  'full':    43200,                    // 12:00:00 男女同
+  '70.3':   { M: 18000, F: 21600 },  // 男 5:00:00 / 女 6:00:00
+  'olympic': 9000,                    // 2:30:00 男女同
 }
 
 // 每性別最多顯示人數
@@ -223,10 +223,16 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
     followingIds = new Set((follows ?? []).map(f => f.following_id))
   }
 
-  const cutoff = CUTOFF_SECONDS[distance]
-  const maxPer = MAX_PER_GENDER[distance]
+  const cutoffRaw = CUTOFF_SECONDS[distance]
+  const maxPer    = MAX_PER_GENDER[distance]
+
+  const getCutoff = (gender: 'M' | 'F') =>
+    cutoffRaw == null ? null
+    : typeof cutoffRaw === 'number' ? cutoffRaw
+    : cutoffRaw[gender]
 
   const buildQuery = (gender: 'M' | 'F') => {
+    const cutoff = getCutoff(gender)
     let q = supabase
       .from('leaderboard_entries')
       .select('result_id, total_seconds, display_name, athlete_id, race_name, edition_year, race_date, claim_status, source_credibility, claim_tag_count')
