@@ -17,12 +17,14 @@ const SUB: Record<string, { M: number; F: number }> = {
 
 // 進榜資格上限（秒），超過此時間不進榜
 const CUTOFF_SECONDS: Partial<Record<string, number>> = {
+  'full':    43200,  // 12:00:00
   '70.3':   18000,  // 5:00:00
   'olympic': 9000,  // 2:30:00
 }
 
 // 每性別最多顯示人數
 const MAX_PER_GENDER: Partial<Record<string, number>> = {
+  'full':    100,
   '70.3':   100,
   'olympic': 100,
 }
