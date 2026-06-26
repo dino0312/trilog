@@ -6,6 +6,72 @@
 
 ---
 
+### [2026-06-26] 成績合理性驗證：世界紀錄硬擋 + DB最快軟警告
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: [21]
+status: implemented
+decisions:
+  - id: D001
+    chapter: 21
+    content: "新增成績時加入兩層合理性驗證：(1) 低於各距離世界紀錄下限 → 硬擋並回傳 error；(2) 比資料庫同距離最快成績快 → 軟警告，使用者二次確認（force_submit=true）才送出"
+    spec_impact: true
+    synced: false
+  - id: D002
+    chapter: 21
+    content: "ResultState 加入 warning 欄位，NewResultForm 顯示橘色警告框 + 確認送出按鈕（requestSubmit + forceSubmit state）"
+    spec_impact: false
+    synced: false
+```
+
+**完成內容**：
+- `results.ts`：`ResultState` 加 `warning` 欄位；加 `formatSeconds()` helper
+- `results.ts`：硬擋邏輯 — 查 `race_editions.distance_category`，低於世界紀錄下限（sprint 48:00 / olympic 1:45:00 / 70.3 3:27:00 / full 7:30:00）回傳 error
+- `results.ts`：軟警告邏輯 — 查同距離所有 edition 的最快 `total_seconds`，若比資料庫最快還快則回傳 `warning`（`force_submit=true` 時跳過）
+- `NewResultForm.tsx`：顯示橘色警告框 + 「確認送出」按鈕（`forceSubmit` state + `formRef.requestSubmit()`）
+
+**技術決策**：
+- 軟警告用兩次 query（先取 edition IDs，再 min total_seconds），避免 Supabase join 型別複雜度
+- `forceSubmit` 用 React state + `setTimeout(..., 0)` 確保 hidden input 在 requestSubmit 前已更新到 DOM
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | `npx tsc --noEmit` | ✅ PASS | 無型別錯誤 |
+| 2 | 113 填 2:45:00 → 硬擋 | ⚠️ 待驗證 | 需登入測試 |
+| 3 | 填比 DB 最快快的成績 → 軟警告 | ⚠️ 待驗證 | 需有 DB 資料 |
+| 4 | 確認送出後成功儲存 | ⚠️ 待驗證 | 需登入測試 |
+
+**異動檔案**：
+- `src/app/actions/results.ts`
+- `src/components/results/NewResultForm.tsx`
+
+---
+
+### [2026-06-26] 版本號格式改為累積 patch + 日期後綴
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: []
+status: implemented
+decisions: []
+```
+
+**完成內容**：
+- `scripts/bump-patch.mjs` / `bump-minor.mjs`：patch 永不歸零，跨 minor 累積；後綴格式 `-YYMMDD##`（日期 + 當天序號）
+- 修正手動改版造成的歸零錯誤，補回正確累積值 008
+
+**異動檔案**：
+- `scripts/bump-patch.mjs`
+- `scripts/bump-minor.mjs`
+- `package.json`
+
+---
+
 ### [2026-06-26] 互動元件選取狀態統一（§29.5 / §34.4）
 
 **狀態**：✅ 完成

@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState, useRef, useState } from 'react'
 import { createResult, type ResultState } from '@/app/actions/results'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -41,6 +41,8 @@ export function NewResultForm({ profileComplete, profile, forOther = false, cont
   const [raceEdition, setRaceEdition] = useState<RaceEditionValue | null>(null)
   const [raceError, setRaceError] = useState<string | undefined>()
   const [isPublic, setIsPublic] = useState(true)
+  const [forceSubmit, setForceSubmit] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
 
   // 需要顯示 profile 補充欄位：公開 + profile 不完整 + 非幫他人模式
   const showProfileSection = isPublic && !profileComplete && !forOther
@@ -53,6 +55,7 @@ export function NewResultForm({ profileComplete, profile, forOther = false, cont
 
   return (
     <form
+      ref={formRef}
       action={async (formData) => {
         if (!raceEdition?.editionId) {
           setRaceError('請選擇賽事與年份')
@@ -64,6 +67,7 @@ export function NewResultForm({ profileComplete, profile, forOther = false, cont
       }}
       className="flex flex-col gap-5"
     >
+      {forceSubmit && <input type="hidden" name="force_submit" value="true" />}
       {forOther && <input type="hidden" name="for_other" value="true" />}
 
       {/* 幫他人新增：歸屬人姓名 */}
@@ -206,6 +210,43 @@ export function NewResultForm({ profileComplete, profile, forOther = false, cont
       )}
 
       {state.error && <p className="text-sm text-red">{state.error}</p>}
+
+      {state.warning && (
+        <div style={{
+          background: 'var(--warn-soft, rgba(217,119,6,0.10))',
+          border: '1px solid rgba(217,119,6,0.35)',
+          borderRadius: '10px',
+          padding: '12px 14px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+        }}>
+          <p style={{ fontSize: '13px', color: 'var(--warn, #d97706)', lineHeight: 1.5 }}>
+            ⚠️ {state.warning}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setForceSubmit(true)
+              // 等 state 更新後再 submit
+              setTimeout(() => formRef.current?.requestSubmit(), 0)
+            }}
+            style={{
+              alignSelf: 'flex-start',
+              background: 'var(--warn, #d97706)',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '6px 14px',
+              fontSize: '13px',
+              cursor: 'pointer',
+              fontWeight: 600,
+            }}
+          >
+            確認送出
+          </button>
+        </div>
+      )}
 
       <Button type="submit" loading={pending} disabled={!raceEdition?.editionId || (forOther && !contributorConsented)}>
         {forOther ? '代入成績' : '儲存成績'}

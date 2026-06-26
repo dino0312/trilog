@@ -6,7 +6,15 @@ import { createClient } from '@/lib/supabase/server'
 import { autoCompleteRaceFollow } from './race-follows'
 
 export type ResultState = {
-  error: string | null
+  error:   string | null
+  warning?: string | null
+}
+
+function formatSeconds(s: number): string {
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const sec = s % 60
+  return [h, m, sec].map(n => String(n).padStart(2, '0')).join(':')
 }
 
 function parseTime(val: string): number | null {
@@ -53,7 +61,9 @@ export async function createResult(_prev: ResultState, formData: FormData): Prom
   if (!totalSeconds || totalSeconds <= 0) return { error: '請輸入正確的完賽時間（HH:MM:SS）' }
   if (!raceEditionId) return { error: '請選擇賽事' }
 
-  // ── 合理性檢查：查距離類別，比對最低完賽時間 ──────────────
+  const forceSubmit = formData.get('force_submit') === 'true'
+
+  // ── 合理性檢查：查距離類別 ────────────────────────────────
   const { data: edition } = await supabase
     .from('race_editions')
     .select('distance_category')
@@ -61,15 +71,42 @@ export async function createResult(_prev: ResultState, formData: FormData): Prom
     .single()
 
   if (edition?.distance_category) {
+    const distLabel = DISTANCE_LABEL[edition.distance_category] ?? edition.distance_category
+
+    // 硬擋：低於世界紀錄
     const minSec = DISTANCE_MIN_SECONDS[edition.distance_category]
     if (minSec && totalSeconds < minSec) {
-      const label = DISTANCE_LABEL[edition.distance_category] ?? edition.distance_category
-      const minTime = [
-        String(Math.floor(minSec / 3600)).padStart(2, '0'),
-        String(Math.floor((minSec % 3600) / 60)).padStart(2, '0'),
-        String(minSec % 60).padStart(2, '0'),
-      ].join(':')
-      return { error: `${label} 完賽時間不可低於 ${minTime}（低於世界紀錄，請確認輸入是否正確）` }
+      return { error: `${distLabel} 完賽時間不可低於 ${formatSeconds(minSec)}（低於世界紀錄，請確認輸入是否正確）` }
+    }
+
+    // 軟警告：比資料庫最快還快（需使用者二次確認才送出）
+    if (!forceSubmit) {
+      const { data: editionIds } = await supabase
+        .from('race_editions')
+        .select('id')
+        .eq('distance_category', edition.distance_category)
+
+      const ids = (editionIds ?? []).map(e => e.id)
+
+      if (ids.length > 0) {
+        const { data: fastest } = await supabase
+          .from('results')
+          .select('total_seconds')
+          .in('race_edition_id', ids)
+          .eq('is_public', true)
+          .not('total_seconds', 'is', null)
+          .order('total_seconds', { ascending: true })
+          .limit(1)
+          .maybeSingle()
+
+        const dbFastest = fastest?.total_seconds ?? null
+        if (dbFastest && totalSeconds < dbFastest) {
+          return {
+            error: null,
+            warning: `你填入的成績（${formatSeconds(totalSeconds)}）比目前 ${distLabel} 資料庫最快紀錄（${formatSeconds(dbFastest)}）還快，請確認時間是否正確。若確認無誤，請按「確認送出」。`,
+          }
+        }
+      }
     }
   }
 
