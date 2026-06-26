@@ -25,6 +25,27 @@ type Props = { raceId: string; onSuccess?: () => void }
 export function EditionForm({ raceId, onSuccess }: Props) {
   const [state, action, pending] = useActionState(createEdition, initial)
   const [selected, setSelected] = useState<string[]>(['full'])
+  const currentYear = new Date().getFullYear()
+  const defaultDate = `${currentYear}-03-01`
+  const [startDate, setStartDate] = useState(defaultDate)
+  const [endDate,   setEndDate]   = useState('')
+
+  function formatDate(d: Date) {
+    const yyyy = d.getFullYear()
+    const mm   = String(d.getMonth() + 1).padStart(2, '0')
+    const dd   = String(d.getDate()).padStart(2, '0')
+    return `${yyyy}-${mm}-${dd}`
+  }
+
+  function handleStartDateChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value
+    setStartDate(val)
+    if (val) {
+      const [y, m, d] = val.split('-').map(Number)
+      const next = new Date(y, m - 1, d + 1)
+      setEndDate(formatDate(next))
+    }
+  }
 
   useEffect(() => {
     if (state.success) onSuccess?.()
@@ -46,6 +67,8 @@ export function EditionForm({ raceId, onSuccess }: Props) {
           <label className="text-sm font-medium text-ink-2">開始日期 *</label>
           <input
             name="race_date" type="date" required
+            value={startDate}
+            onChange={handleStartDateChange}
             className="w-full rounded-lg border border-border-strong bg-bg-elev px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
           />
         </div>
@@ -55,6 +78,8 @@ export function EditionForm({ raceId, onSuccess }: Props) {
           </label>
           <input
             name="race_date_end" type="date"
+            value={endDate}
+            onChange={e => setEndDate(e.target.value)}
             className="w-full rounded-lg border border-border-strong bg-bg-elev px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
           />
         </div>
@@ -155,6 +180,7 @@ export function EditionForm({ raceId, onSuccess }: Props) {
             <option value="">（未指定）</option>
             <option value="ocean">海洋</option>
             <option value="lake">湖泊</option>
+            <option value="open_water_lake">活水湖</option>
             <option value="river">河川</option>
             <option value="pool">泳池</option>
             <option value="other">其他</option>

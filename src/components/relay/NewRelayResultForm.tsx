@@ -127,15 +127,23 @@ export function NewRelayResultForm() {
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-semibold text-ink-3">成員 {idx + 1}</span>
                 <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-1.5 text-xs text-ink-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={m.is_me}
-                      onChange={e => updateMember(idx, 'is_me', e.target.checked)}
-                      className="rounded"
-                    />
-                    這是我
-                  </label>
+                  <button
+                    type="button"
+                    onClick={() => updateMember(idx, 'is_me', !m.is_me)}
+                    aria-pressed={m.is_me}
+                    style={{
+                      background: m.is_me ? 'var(--accent)' : 'transparent',
+                      border: `0.5px solid ${m.is_me ? 'var(--accent)' : 'var(--border)'}`,
+                      color: m.is_me ? '#ffffff' : 'var(--ink-3)',
+                      borderRadius: '6px',
+                      padding: '4px 10px',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      transition: 'background 0.15s, color 0.15s, border-color 0.15s',
+                    }}
+                  >
+                    {m.is_me ? '✓ 這是我' : '這是我'}
+                  </button>
                   {members.length > 1 && (
                     <button type="button" onClick={() => removeMember(idx)} className="text-xs text-ink-4 hover:text-run transition">
                       移除
@@ -157,22 +165,33 @@ export function NewRelayResultForm() {
                   <p className="text-xs text-ink-4 mb-1.5">負責項目 *</p>
                   <div className="flex gap-2">
                     {[
-                      { key: 'swim', label: '游泳', color: 'swim' },
-                      { key: 'bike', label: '自行車', color: 'bike' },
-                      { key: 'run',  label: '跑步',   color: 'run' },
-                    ].map(({ key, label, color }) => (
-                      <button
-                        key={key} type="button"
-                        onClick={() => toggleDiscipline(idx, key)}
-                        className={`px-3 py-1 rounded-lg text-xs border transition text-${color} ${
-                          m.disciplines.includes(key)
-                            ? `bg-${color}/10 border-${color}/40`
-                            : 'border-border text-ink-4 hover:text-ink'
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    ))}
+                      { key: 'swim', label: '游泳' },
+                      { key: 'bike', label: '自行車' },
+                      { key: 'run',  label: '跑步' },
+                    ].map(({ key, label }) => {
+                      const isSelected = m.disciplines.includes(key)
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => toggleDiscipline(idx, key)}
+                          aria-pressed={isSelected}
+                          data-sport={key}
+                          style={{
+                            background: isSelected ? `var(--${key})` : 'transparent',
+                            border: `0.5px solid ${isSelected ? `var(--${key})` : 'var(--border)'}`,
+                            color: isSelected ? '#ffffff' : 'var(--ink-3)',
+                            transition: 'background 0.15s, color 0.15s, border-color 0.15s',
+                            borderRadius: '6px',
+                            padding: '5px 12px',
+                            fontSize: '13px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {label}
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
 

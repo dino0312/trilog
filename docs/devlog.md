@@ -6,6 +6,107 @@
 
 ---
 
+### [2026-06-26] 互動元件選取狀態統一（§29.5 / §34.4）
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: [29, 34]
+status: implemented
+decisions:
+  - id: D001
+    chapter: 29
+    content: "接力分項按鈕（游泳/自行車/跑步）改為選取實心填色（var(--swim)/var(--bike)/var(--run)）+ 白字，未選取空心邊框，加 aria-pressed 標記"
+    spec_impact: false
+    synced: false
+  - id: D002
+    chapter: 34
+    content: "「這是我」由 checkbox+label 改為 button，選取狀態為 accent 實心填色+白字+✓前綴，aria-pressed 標記，radio 語意維持"
+    spec_impact: false
+    synced: false
+  - id: D003
+    chapter: 29
+    content: "成績登錄三 Tab（個人/他人/接力）由 pill 樣式改為底部橘色線（var(--run)）+ role=tablist/tab + aria-selected"
+    spec_impact: false
+    synced: false
+```
+
+**完成內容**：
+- `NewRelayResultForm.tsx`：分項按鈕改為 inline style 實心填色 + aria-pressed + data-sport
+- `NewRelayResultForm.tsx`：「這是我」由 checkbox 改為 button，選取狀態 accent 填色
+- `ResultEntryPage.tsx`：三 Tab 改為底部橘線樣式，加 role=tablist/tab/aria-selected
+
+**確認不需修改**：
+- `DistanceTabs.tsx`：已有橘色底線（`#FF6B3D`）✅
+- `FollowButton.tsx`：已追蹤為實心 SVG star + accent 色 ✅
+- `ThemeSwitcher.tsx`：bg-elev 背景高亮，符合模式切換語意 ✅
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | `npx tsc --noEmit` | ✅ PASS | 無型別錯誤 |
+| 2 | 接力分項按鈕選取視覺 | ⚠️ 待驗證 | 需瀏覽器確認深淺主題 |
+| 3 | 「這是我」選取狀態 | ⚠️ 待驗證 | 需瀏覽器確認 |
+| 4 | 三 Tab 底線樣式 | ⚠️ 待驗證 | 需瀏覽器確認 |
+
+**異動檔案**：
+- `src/components/relay/NewRelayResultForm.tsx`
+- `src/components/results/ResultEntryPage.tsx`
+
+---
+
+### [2026-06-26] 賽事管理後台 UX 改善 + 游泳環境新增活水湖
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: []
+status: implemented
+decisions:
+  - id: D001
+    chapter: 0
+    content: "新增屆次日期預設改為當年 3/1（非 1/1），更接近台灣賽季實際時程"
+    spec_impact: false
+    synced: false
+  - id: D002
+    chapter: 0
+    content: "swim_type 新增 open_water_lake（活水湖），對應台灣特有場地如活水湖"
+    spec_impact: true
+    synced: false
+```
+
+**完成內容**：
+- `EditionForm.tsx`：新增屆次開始日期預設為當年 `3/1`；選擇開始日期後結束日期自動填入隔天
+- `YearEditionBlock.tsx`（`EditYearForm`）：編輯屆次時，修改開始日期後結束日期自動填入隔天
+- 游泳環境新增 `open_water_lake`（活水湖）選項，更新 `types/database.ts`、後台三個表單元件、前台賽事詳情頁對照表
+- `supabase/migrations/20260626000001_swim_type_open_water_lake.sql`：移除舊 check constraint 並重建，加入 `open_water_lake`
+
+**技術決策**：
+- 日期改為 controlled input（`useState` + `value/onChange`），避免時區偏移問題（`new Date('YYYY-MM-DD')` 解析成 UTC，在 UTC+8 會少一天，改用 `new Date(y, m-1, d+1)` 本地時間建構）
+
+**已知問題 ／ TODO**：
+- `supabase/migrations/20260626000001_swim_type_open_water_lake.sql` 需手動執行（Supabase Dashboard SQL Editor 或 `supabase db push`）
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | 新增屆次開始日期預設值 | ✅ PASS | 顯示 2026-03-01 |
+| 2 | 選開始日期後結束自動 +1 天 | ✅ PASS | preview_fill 驗證，2026-03-01 → 結束 2026-03-02 |
+| 3 | 編輯屆次結束日期自動 +1 天 | ✅ PASS | 邏輯與新增表單相同，tsc 無誤 |
+| 4 | 活水湖選項顯示 | ⚠️ 待驗證 | 需先執行 migration，DB constraint 尚未更新 |
+
+**異動檔案**：
+- `src/app/(admin)/admin/races/[id]/EditionForm.tsx`
+- `src/app/(admin)/admin/races/[id]/YearEditionBlock.tsx`
+- `src/app/(admin)/admin/races/[id]/EditionActions.tsx`
+- `src/app/(main)/races/[slug]/[year]/page.tsx`
+- `src/types/database.ts`
+- `supabase/migrations/20260626000001_swim_type_open_water_lake.sql`
+
+---
+
 ### [2026-06-25] 手機版面修正 + About Hero 圖片調整
 
 **狀態**：✅ 完成

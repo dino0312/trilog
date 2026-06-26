@@ -2,13 +2,31 @@
   "meta": {
     "product": "Tri·log",
     "url": "trilog.run",
-    "version": "v6.2",
-    "date": "2026-06-25",
+    "version": "v6.5",
+    "date": "2026-06-26",
     "format_version": "1.0",
     "description": "Tri·log 鐵人三項成績記錄平台產品規格書",
     "source_docx": "trilog_spec_v46.docx"
   },
   "revision_history": [
+    {
+      "version": "v6.5",
+      "date": "2026-06-26",
+      "author": "Claude.ai",
+      "summary": "新增 §29.5 互動元件選取狀態統一設計規範：Toggle 按鈕（實心填色 accent + 白字）、單選按鈕組、Tab 切換（底線橘色）、ThemeSwitcher（維持 bg-hover）、FollowButton（實心星星）；三項運動分項顏色選擇性設計說明；WCAG AA 對比度說明。同步修訂 §34.4 接力分項按鈕選取視覺說明。"
+    },
+    {
+      "version": "v6.4",
+      "date": "2026-06-26",
+      "author": "Claude.ai",
+      "summary": "新增第 52 章：成績品質防護系統。§52.1 設計背景；§52.2 異常成績偵測（比對同距離最速，pending_review）；§52.3 前端警告 Modal；§52.4 管理員通知（badge + email + 審核佇列）；§52.5 社群補充 edition 距離組別（AddRaceEditionSheet，+2 積分，成績重新歸類）。補充 §16.4 verification_status 值域；新增 §24.6 待審核成績佇列。"
+    },
+    {
+      "version": "v6.3",
+      "date": "2026-06-26",
+      "author": "Claude.ai",
+      "summary": "同步 devlog：§41 swim_type 新增 open_water_lake（活水湖），migration 20260626000001"
+    },
     {
       "version": "v6.2",
       "date": "2026-06-25",
@@ -1225,7 +1243,7 @@
               {
                 "欄位": "verification_status",
                 "型別": "string",
-                "說明": "unverified / pending / verified"
+                "說明": "unverified（預設）/ pending_review（超越最速紀錄，待審核）/ verified / needs_correction"
               },
               {
                 "欄位": "swim_seconds",
@@ -2818,6 +2836,11 @@
           "id": "24.5",
           "title": "成績維護後台（/admin/manage-results）",
           "content": "助手以上（assistant+）可進入成績維護頁面，搜尋並刪除個人與接力成績。\n\n[功能]\n搜尋：URL query param ?q=（比對 athlete_name_snapshot 或隊名），?type=solo|relay，各限 50 筆。\n刪除個人成績：需二次確認；source_credibility = official 的成績拒絕刪除。\n刪除接力成績：刪除對應 results 後 CASCADE 自動清理 teams + team_members。\n\n[權限]\nassistant+ 才可操作；未登入或一般用戶 redirect → /login。\n\n[AdminTabs 位置]\n後台導覽新增「成績維護」Tab，位於現有 Tab 之後。"
+        },
+        {
+          "id": "24.6",
+          "title": "待審核成績佇列（修訂 §24.5）",
+          "content": "/admin/races/review 頁面（或 /admin/manage-results）新增「待審核成績」區塊。\n列出所有 verification_status = pending_review 且 source_credibility ≠ official 的成績。\n每列顯示：選手姓名、距離、時間、超越的現有紀錄、新增時間。\n操作：「核准」（→ verified）、「退回」（→ needs_correction，通知用戶）、「刪除」。\n\nAdminTabs 加入待審核成績計數 badge（pending_review 筆數 > 0 時顯示橘色數字）。"
         }
       ]
     },
@@ -3447,6 +3470,11 @@
             "SVG 已設定 role=\"img\" 與 aria-label=\"Tri·log\"，螢幕閱讀器可正確識別",
             "動畫僅為視覺裝飾，不影響任何功能，停止動畫不影響使用體驗"
           ]
+        },
+        {
+          "id": "29.5",
+          "title": "互動元件選取狀態統一設計規範",
+          "content": "平台所有具「可選取」語意的互動元件，統一遵循以下視覺規範，\n確保用戶能一眼辨識哪些項目已被選取。\n\n[核心原則]\n選取狀態必須與未選取狀態有顯著的視覺差異，\n不依賴顏色深淺作為唯一區分，需同時改變背景填色（填滿 vs 空心）。\n所有選取狀態均使用 CSS 變數，深淺主題下自動切換。\n\n[標準選取狀態 Token]\n未選取：\n  background: transparent\n  border: 0.5px solid var(--border)\n  color: var(--ink-3)\n\n已選取：\n  background: var(--accent)（薄荷綠 #66c6be / 淺色主題 #3da89f）\n  border: 0.5px solid var(--accent)\n  color: #ffffff\n\n過渡動畫：transition: background 0.15s, color 0.15s, border-color 0.15s\n\n[各元件套用規則]\n\n── Toggle 按鈕（多選，可同時選取多個）──\n適用：接力成績分項選取（游泳 / 自行車 / 跑步）\n每個按鈕獨立切換，不影響其他按鈕。\naria-pressed=\"true/false\" 標記選取狀態（無障礙）。\n\n── 單選按鈕組（Radio 語意，只能選一個）──\n適用：接力「這是我」勾選（一次只能一人）、\n  成績登錄距離選擇、排行榜距離篩選\n選取新選項時，前一個選項自動取消選取。\naria-pressed 或 role=\"radio\" + aria-checked 標記。\n\n── Tab 切換元件 ──\n適用：成績登錄三 Tab、/my/races Tab、審核後台 Tab\n選取的 Tab 以底部橘色線（var(--run)，2px）+ 文字色加深（var(--ink)）標示。\n注意：Tab 採用底線而非實心填色，因為 Tab 是「頁面區域切換」語意，\n與「項目選取」語意不同，視覺上需區分。\n\n── ThemeSwitcher 三態按鈕 ──\n適用：深淺主題切換（§51.3）\n目前作用中選項以 var(--bg-hover) 背景高亮。\n此元件為「模式切換」語意，維持現有設計（不用 accent 實心），\n避免與功能性選取按鈕混淆。\n\n── FollowButton 星星 ──\n適用：追蹤選手（§38）\n未追蹤：空心星星 ti-star，color var(--ink-3)\n已追蹤：實心星星 ti-star-filled，color var(--accent)\n\n[三項運動分項顏色（特例）]\n游泳 / 自行車 / 跑步分項按鈕若要強調品牌色，\n已選取時可改用對應的三項顏色取代 accent：\n  游泳已選：background var(--swim) #4ea1ff\n  自行車已選：background var(--bike) #66c6be\n  跑步已選：background var(--run) #ff685e\n此為選擇性設計，優先確保可辨識性，若嫌複雜可統一用 accent。\n\n[淺色主題下的選取狀態]\n淺色主題（data-theme=\"light\"）下 --accent 為 #3da89f，\n白色文字在此底色上 contrast ratio ≈ 3.8:1，符合 WCAG AA 最低要求（3:1）。\n若需更高對比，可在淺色主題下改用深色文字（var(--ink)）。"
         }
       ]
     },
@@ -4096,7 +4124,7 @@
               }
             ]
           ],
-          "content": "成績登錄頁（/records/new）採三 Tab 設計，統一入口，消除獨立的 ?for=other 版面。\n\n[Tab 結構]\n  個人成績　｜　他人成績　｜　接力成績\n  (solo)        (other)       (relay)\n\n預設選中「個人成績」Tab。\n?for=other query param 向後相容，進入頁面後自動切換至「他人成績」Tab。\n?tab=relay 預選「接力成績」Tab（供 /records/relay/new redirect 使用）。\nTab 切換不重置已填欄位（RaceEditionPicker 等）。\n\n[個人成績 Tab（solo）]\n姓名：自動帶入登入者 name，readonly\n賽事：RaceEditionPicker（§25.5）\n完賽時間（swim / t1 / bike / t2 / run）\n號碼布（選填，§45.2）\n備注（選填）\n送出：claim_status = claimed，athlete_id = 登入者，source_credibility = self_reported\n\n[他人成績 Tab（other）]\n姓名：空白，手動填寫，placeholder「選手真實姓名」\n其餘欄位與個人成績 Tab 相同\n送出：claim_status = unclaimed，athlete_id = null，athlete_name_snapshot = 填入姓名\n\n[接力成績 Tab（relay）]\n隊名（必填）\n賽事：RaceEditionPicker（同上）\n成員列表（1–3 名）：\n  每位成員欄位：姓名（手填）+ 「這是我」勾選框 + 負責分項（swim/bike/run）+ 分項時間 + 號碼布（選填）\n  勾選「這是我」的成員：姓名自動帶入登入者 name，readonly\n  一次只能勾選一位（radio 語意，勾選新的自動取消舊的）\n  未勾選任何人亦合法（幫整支別人的隊伍記錄）\nT1 / T2 換區時間（隊伍層級，選填）\n備注（選填）\n\n[接力送出後的 claim_status]\n  勾選「這是我」的成員：claim_status = claimed，athlete_id = 登入者\n  未勾選的成員：claim_status = unclaimed，athlete_id = null\n  無任何人勾選：所有成員 unclaimed（適用幫整隊記錄的情境）\n\n[送出後 redirect]\n個人成績 / 幫他人新增 → /records\n接力成績 → /records（含接力區塊）\n\n[他人成績 Tab 送出前同意聲明（合規要求）]\n送出按鈕上方加入勾選框（非預設勾選）：\n「我確認已獲得該選手的明確同意，同意本平台依隱私權政策蒐集其個人資料，\n並對所填寫資料的正確性負責。」\n未勾選時送出按鈕 disabled，無法送出。\nServer Action createResult 在 for_other 模式下寫入 contributor_consented_at = now()。"
+          "content": "成績登錄頁（/records/new）採三 Tab 設計，統一入口，消除獨立的 ?for=other 版面。\n\n[Tab 結構]\n  個人成績　｜　他人成績　｜　接力成績\n  (solo)        (other)       (relay)\n\n預設選中「個人成績」Tab。\n?for=other query param 向後相容，進入頁面後自動切換至「他人成績」Tab。\n?tab=relay 預選「接力成績」Tab（供 /records/relay/new redirect 使用）。\nTab 切換不重置已填欄位（RaceEditionPicker 等）。\n\n[個人成績 Tab（solo）]\n姓名：自動帶入登入者 name，readonly\n賽事：RaceEditionPicker（§25.5）\n完賽時間（swim / t1 / bike / t2 / run）\n號碼布（選填，§45.2）\n備注（選填）\n送出：claim_status = claimed，athlete_id = 登入者，source_credibility = self_reported\n\n[他人成績 Tab（other）]\n姓名：空白，手動填寫，placeholder「選手真實姓名」\n其餘欄位與個人成績 Tab 相同\n送出：claim_status = unclaimed，athlete_id = null，athlete_name_snapshot = 填入姓名\n\n[接力成績 Tab（relay）]\n隊名（必填）\n賽事：RaceEditionPicker（同上）\n成員列表（1–3 名）：\n  每位成員欄位：姓名（手填）+ 「這是我」勾選框 + 負責分項（swim/bike/run）+ 分項時間 + 號碼布（選填）\n  勾選「這是我」的成員：姓名自動帶入登入者 name，readonly\n  一次只能勾選一位（radio 語意，勾選新的自動取消舊的）\n  未勾選任何人亦合法（幫整支別人的隊伍記錄）\nT1 / T2 換區時間（隊伍層級，選填）\n備注（選填）\n\n[接力送出後的 claim_status]\n  勾選「這是我」的成員：claim_status = claimed，athlete_id = 登入者\n  未勾選的成員：claim_status = unclaimed，athlete_id = null\n  無任何人勾選：所有成員 unclaimed（適用幫整隊記錄的情境）\n\n[送出後 redirect]\n個人成績 / 幫他人新增 → /records\n接力成績 → /records（含接力區塊）\n\n[他人成績 Tab 送出前同意聲明（合規要求）]\n送出按鈕上方加入勾選框（非預設勾選）：\n「我確認已獲得該選手的明確同意，同意本平台依隱私權政策蒐集其個人資料，\n並對所填寫資料的正確性負責。」\n未勾選時送出按鈕 disabled，無法送出。\nServer Action createResult 在 for_other 模式下寫入 contributor_consented_at = now()。\n\n[接力分項按鈕選取視覺（§29.5 規範）]\n游泳 / 自行車 / 跑步三個 Toggle 按鈕依 §29.5 選取狀態規範：\n未選取：空心邊框，var(--ink-3) 文字\n已選取：實心填色（accent 或對應三項色），白色文字\n支援多選（接力可由不同人負責不同項目，每個按鈕獨立切換）。\naria-pressed 標記每個按鈕的選取狀態。"
         },
         {
           "id": "34.5",
@@ -6447,6 +6475,11 @@
             ]
           ],
           "content": "[US-01　考慮報名的選手查看賽事資訊] 身為一位正在考慮報名普悠瑪超鐵的選手，我在賽事列表點擊賽事名稱進入 /races/puyuma-ironman，看到賽事基本介紹（地點、主辦、歷屆列表），點擊 2027 屆次後進入 /races/puyuma-ironman/2027，看到「想參加」按鈕，點擊後標記意願，系統記錄我對此屆的 wishlist。 [US-02　完賽選手查找自己的成績] 身為一位 2024 年完賽普悠瑪超鐵的選手，我進入 /races/puyuma-ironman/2024，在成績區塊搜尋自己的名字，找到成績列，點擊「認領」確認這是我的成績。 [US-03　查看當年比賽天氣] 身為一位正在評估 2025 年普悠瑪難度的選手，我進入 /races/puyuma-ironman/2025 查看天氣區塊，看到「氣溫 28°C，東北風 18 km/h，濕度 72%」，對當年的賽事條件有了具體了解。 [US-04　選手標記「參加過」觸發成績登錄] 身為一位完賽 Challenge Taiwan 2024 但還沒登錄成績的選手，我在屆次頁點擊「參加過」，系統標記後出現 toast 提示「記得登錄你的成績！」，我點擊連結直接進入成績登錄表單，race_edition 自動帶入。 [US-05　分享特定屆次連結] 身為一位完賽選手，我想把 2024 年普悠瑪的成績頁分享給練友，複製 /races/puyuma-ironman/2024 的 URL 傳給對方，對方點開後直接看到 2024 屆次的成績列表。 [US-06　透過歷屆對比評估賽事] 身為一位正在研究 IRONMAN Taiwan 歷史數據的選手，我在屆次頁底部看到歷屆對比表，發現 2023 年完賽人數明顯下降（惡劣天氣），2024 年回升。天氣欄位佐證了我的推測（2023 年：雨，27°C；2024 年：晴，25°C）。"
+        },
+        {
+          "id": "41.11",
+          "title": "swim_type 值域補充（2026-06-26）",
+          "content": "swim_type 欄位合法值新增 open_water_lake（活水湖），對應台灣特有場地（如台東活水湖）。完整值域：pool / open_water_sea / open_water_lake / open_water_river / other。migration 20260626000001 移除舊 check constraint 並重建加入此值。"
         }
       ]
     },
@@ -8037,6 +8070,37 @@
           "id": "51.4",
           "title": "實作注意事項",
           "content": "[元件掃描替換對照]\n  #0b0f14          → var(--bg)\n  #161b22          → var(--bg-card)\n  #1e2d3d          → var(--bg-hover)\n  #e2e8f0          → var(--ink)\n  #a8b3c1          → var(--ink-2)\n  #8892a0          → var(--ink-3)\n  rgba(255,255,255,0.08) → var(--border)\n  #66c6be（文字色）→ var(--accent)\n  #ffffff（背景）  → var(--bg-card)\n\n[特別注意元件]\n  GuestBanner.tsx：Hero 遮罩改用 --about-hero-overlay-start/end CSS 變數\n  TrilogLogo.tsx：SVG 三色線條（swim/bike/run）在兩個主題下均有足夠對比，不需修改\n  GlobalVerifyBanner.tsx：banner 背景色確認使用 CSS 變數\n\n[Logo 與三項顏色]\nLogo SVG 三色（--swim / --bike / --run）兩個主題均不調整。\n飽和色在淺色和深色背景下都能成立，是品牌一致性的錨點。\n\n[Tailwind v4 注意]\n使用 @theme inline 語法（非 v3 的 tailwind.config.js）。\n新增 token 時，globals.css 的 :root {} 和 @theme inline {} 必須同時更新。"
+        }
+      ]
+    },
+    {
+      "id": "52",
+      "title": "成績品質防護系統",
+      "sections": [
+        {
+          "id": "52.1",
+          "title": "設計背景與問題根源",
+          "content": "當賽事屆次（race_edition）缺少正確的距離組別時，用戶可能被迫將短距離成績掛在長距離 edition 下，導致排行榜出現明顯異常（如 6 小時成績出現在 226 全距離榜）。\n\n本章涵蓋兩個互補的防護機制：\n1. 異常成績偵測：比對同距離最速選手，超越記錄時自動標記審核\n2. 社群補資料流程：讓用戶補充缺少的距離組別，解決根本問題"
+        },
+        {
+          "id": "52.2",
+          "title": "異常成績偵測與 pending_review 機制",
+          "content": "[觸發條件]\n成績登錄（createResult）時，若 total_seconds 小於同距離（distance_category）\n目前排行榜最快成績（leaderboard_entries view 的最小 total_seconds），\n則視為「超越現有紀錄」，觸發防護流程。\n比對維度：同 distance_category（full / 70.3 / olympic / sprint），不跨距離比對。\n\n[處理流程]\nStep 1：createResult Server Action 查詢同距離最速成績\n  SELECT MIN(total_seconds) FROM leaderboard_entries WHERE distance_category = $1\nStep 2：若 total_seconds < 最速成績：\n  a. 成績正常寫入 results 表\n  b. verification_status 設為 pending_review（而非預設的 unverified）\n  c. 成績不進入排行榜（leaderboard_entries view 過濾 pending_review）\n  d. 前端顯示警告 Modal（見 §52.3）\n  e. 觸發管理員通知（見 §52.4）\nStep 3：若 total_seconds ≥ 最速成績：正常流程，verification_status = unverified\n\n[首筆成績特例]\n若同距離目前無任何成績（MIN 為 null），不觸發防護，正常寫入。\n\n[pending_review 的後續處理]\n管理員於後台審核佇列（/admin/races/review 或成績維護頁）確認：\n  → 核准：verification_status = verified，成績進入排行榜\n  → 退回：通知用戶確認距離或更正時間，成績標記 needs_correction\n  → 刪除：若確認為誤植，可直接刪除"
+        },
+        {
+          "id": "52.3",
+          "title": "前端警告 Modal 設計",
+          "content": "成績送出成功後（非阻擋送出），若觸發異常偵測，顯示警告 Modal：\n\n[Modal 內容]\n標題：「成績已儲存，待審核確認」\n說明：\n  「您的成績（{time}）比目前 {distance} 距離的台灣最速紀錄（{record_time}，{record_holder}）\n  還要快，已自動進入審核程序。\n  審核通過後，成績將正式出現在排行榜上。」\n\n[按鈕]\n「我知道了」→ 關閉 Modal，導向 /records\n「修改成績」→ 關閉 Modal，返回表單允許修正\n\n[用戶成績頁顯示]\n/records 中，pending_review 的成績列顯示「⏳ 審核中」badge，\n說明文字：「此成績待管理員審核後才會出現在排行榜」。"
+        },
+        {
+          "id": "52.4",
+          "title": "管理員通知機制",
+          "content": "[即時通知：後台 badge]\n管理區導覽（AdminTabs）加入待審核成績計數 badge，\n顯示 pending_review 且 source_credibility ≠ official 的成績筆數。\n計數 > 0 時以橘色 badge 顯示數字。\n\n[即時通知：Email]\n使用 Resend 寄送通知信至管理員信箱（privacy@trilog.run）：\n  主旨：「[Tri·log] 新增待審核成績 — {distance} {time}」\n  內容：選手姓名、距離、時間、超越的現有紀錄、成績連結\n\n[審核佇列位置]\n現有 /admin/races/review 頁面加入「待審核成績」區塊，\n列出所有 verification_status = pending_review 的成績，\n每列提供「核准」、「退回」、「刪除」三個操作。"
+        },
+        {
+          "id": "52.5",
+          "title": "社群補充 Edition 距離組別（修訂第 50 章）",
+          "content": "解決資料根源問題：讓社群用戶補充賽事屆次缺少的距離組別。\n\n[入口]\n賽事屆次頁（/races/:slug/:year）若 race_editions 中缺少某距離，\n顯示「補充距離組別」連結，進入 AddRaceEditionSheet。\n\n[AddRaceEditionSheet]\n填寫欄位：距離（full / 70.3 / olympic / sprint）、\n  選手人數（選填）、成績查詢連結（選填）。\n送出後建立新的 race_edition 記錄，status = pending_review。\n管理員審核通過後，edition 上線，用戶可將成績重新歸類至正確距離。\n\n[貢獻積分]\n補充 edition 距離組別計 +2 分（event_type: add_race_edition），\n新增至 contribution_events，納入 §46 積分系統。\n\n[成績重新歸類入口]\n用戶的 /records 頁面，若成績所屬 edition 的距離與成績時間明顯不符，\n且已有更適合的 edition 存在，顯示「重新歸類成績」建議提示，\n引導用戶將成績移至正確的 race_edition。"
         }
       ]
     }

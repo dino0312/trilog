@@ -15,7 +15,7 @@ const DISTANCE_ORDER: Record<string, number> = {
   full: 0, '70.3': 1, olympic: 2, sprint: 3,
 }
 const SWIM_TYPE_LABEL: Record<string, string> = {
-  ocean: '海洋', lake: '湖泊', river: '河川', pool: '泳池', other: '其他',
+  ocean: '海洋', lake: '湖泊', open_water_lake: '活水湖', river: '河川', pool: '泳池', other: '其他',
 }
 
 export async function generateMetadata(

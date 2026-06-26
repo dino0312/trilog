@@ -37,22 +37,32 @@ export function ResultEntryPage({ profileComplete, profile, defaultTab = 'solo' 
   return (
     <main className="flex-1 p-6 max-w-2xl mx-auto w-full">
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 rounded-xl bg-bg-elev p-1 w-fit">
-        {TABS.map(tab => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => handleTabChange(tab.key)}
-            className={[
-              'px-4 py-2 rounded-lg text-sm font-medium transition',
-              activeTab === tab.key
-                ? 'bg-bg-card text-ink shadow-sm'
-                : 'text-ink-3 hover:text-ink',
-            ].join(' ')}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="flex mb-6" role="tablist" style={{ borderBottom: '1px solid var(--border)' }}>
+        {TABS.map(tab => {
+          const isActive = activeTab === tab.key
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => handleTabChange(tab.key)}
+              style={{
+                padding: '8px 16px',
+                fontSize: '14px',
+                fontWeight: 500,
+                color: isActive ? 'var(--ink)' : 'var(--ink-3)',
+                borderBottom: isActive ? '2px solid var(--run)' : '2px solid transparent',
+                background: 'transparent',
+                cursor: 'pointer',
+                transition: 'color 0.15s, border-color 0.15s',
+                marginBottom: '-1px',
+              }}
+            >
+              {tab.label}
+            </button>
+          )
+        })}
       </div>
 
       <div className="rounded-xl border border-border bg-bg-card p-6">

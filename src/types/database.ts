@@ -20,7 +20,7 @@ export type IssueStatus        = 'unread' | 'read' | 'resolved' | 'dismissed'
 export type RaceStatus         = 'active' | 'inactive' | 'cancelled' | 'pending_review'
 export type DistanceCategory   = 'sprint' | 'olympic' | '70.3' | 'full'
 export type WeatherSource      = 'open-meteo' | 'visual-crossing' | 'manual'
-export type SwimType           = 'ocean' | 'lake' | 'river' | 'pool' | 'other'
+export type SwimType           = 'ocean' | 'lake' | 'open_water_lake' | 'river' | 'pool' | 'other'
 export type ResultType         = 'solo' | 'relay'
 /** spec 22.2：取代舊 source_type + verification_status */
 export type SourceCredibility  = 'official' | 'certificate' | 'self_reported'

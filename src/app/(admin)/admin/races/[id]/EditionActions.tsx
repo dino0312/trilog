@@ -32,6 +32,24 @@ const initial: RaceActionState = { error: null, success: false }
 // ── 編輯表單 ──────────────────────────────────────────────────
 function EditForm({ edition, raceId, onClose }: { edition: Edition; raceId: string; onClose: () => void }) {
   const [state, action, pending] = useActionState(updateEdition, initial)
+  const [startDate, setStartDate] = useState(edition.race_date)
+  const [endDate,   setEndDate]   = useState(edition.race_date_end ?? '')
+
+  function formatDate(d: Date) {
+    const yyyy = d.getFullYear()
+    const mm   = String(d.getMonth() + 1).padStart(2, '0')
+    const dd   = String(d.getDate()).padStart(2, '0')
+    return `${yyyy}-${mm}-${dd}`
+  }
+
+  function handleStartDateChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value
+    setStartDate(val)
+    if (val) {
+      const [y, m, d] = val.split('-').map(Number)
+      setEndDate(formatDate(new Date(y, m - 1, d + 1)))
+    }
+  }
 
   useEffect(() => {
     if (state.success) onClose()
@@ -50,7 +68,8 @@ function EditForm({ edition, raceId, onClose }: { edition: Edition; raceId: stri
               <label className="text-xs text-ink-3">開始日期</label>
               <input
                 name="race_date" type="date" required
-                defaultValue={edition.race_date}
+                value={startDate}
+                onChange={handleStartDateChange}
                 className="rounded-lg border border-border-strong bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-accent"
               />
             </div>
@@ -59,7 +78,8 @@ function EditForm({ edition, raceId, onClose }: { edition: Edition; raceId: stri
               <label className="text-xs text-ink-3">結束日期</label>
               <input
                 name="race_date_end" type="date"
-                defaultValue={edition.race_date_end ?? ''}
+                value={endDate}
+                onChange={e => setEndDate(e.target.value)}
                 className="rounded-lg border border-border-strong bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-accent"
               />
             </div>
@@ -87,6 +107,7 @@ function EditForm({ edition, raceId, onClose }: { edition: Edition; raceId: stri
                 <option value="">（未指定）</option>
                 <option value="ocean">海洋</option>
                 <option value="lake">湖泊</option>
+                <option value="open_water_lake">活水湖</option>
                 <option value="river">河川</option>
                 <option value="pool">泳池</option>
                 <option value="other">其他</option>
@@ -185,7 +206,7 @@ export function EditionRow({ edition, raceId, distanceLabel }: {
   const [mode, setMode] = useState<'view' | 'edit' | 'delete'>('view')
 
   const SWIM_LABEL: Record<string, string> = {
-    ocean: '海洋', lake: '湖泊', river: '河川', pool: '泳池', other: '其他',
+    ocean: '海洋', lake: '湖泊', open_water_lake: '活水湖', river: '河川', pool: '泳池', other: '其他',
   }
 
   return (
