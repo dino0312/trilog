@@ -50,7 +50,7 @@ export default async function ContributionsPage() {
     `)
     .eq('created_by', uid)
     .eq('result_type', 'solo')
-    .neq('athlete_id', uid)
+    .or(`athlete_id.is.null,athlete_id.neq.${uid}`)
     .order('created_at', { ascending: false })
 
   // relay step 1：我新增的接力 result + 賽事資訊
@@ -78,9 +78,9 @@ export default async function ContributionsPage() {
   ] = await Promise.all([
     supabase.from('athletes').select('contribution_score').eq('id', uid).single(),
     supabase.from('results').select('*', { count: 'exact', head: true })
-      .eq('created_by', uid).eq('claim_status', 'unclaimed').neq('athlete_id', uid),
+      .eq('created_by', uid).eq('claim_status', 'unclaimed').or(`athlete_id.is.null,athlete_id.neq.${uid}`),
     supabase.from('results').select('*', { count: 'exact', head: true })
-      .eq('created_by', uid).eq('claim_status', 'claimed').neq('athlete_id', uid),
+      .eq('created_by', uid).eq('claim_status', 'claimed').or(`athlete_id.is.null,athlete_id.neq.${uid}`),
   ])
 
   // 整理 solo items
