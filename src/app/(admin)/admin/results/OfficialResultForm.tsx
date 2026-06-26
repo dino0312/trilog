@@ -73,10 +73,10 @@ export function OfficialResultForm({ editions }: { editions: RaceEdition[] }) {
             className="rounded-lg border border-border-strong bg-bg-elev px-3 py-2 text-sm text-ink placeholder:text-ink-4 outline-none focus:border-accent" />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-ink-2">性別</label>
-          <select name="gender"
+          <label className="text-sm font-medium text-ink-2">性別 *</label>
+          <select name="gender" required
             className="rounded-lg border border-border-strong bg-bg-elev px-3 py-2 text-sm text-ink outline-none focus:border-accent">
-            <option value="">—</option>
+            <option value="">請選擇…</option>
             <option value="M">男</option>
             <option value="F">女</option>
           </select>

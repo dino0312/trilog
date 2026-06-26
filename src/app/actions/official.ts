@@ -37,6 +37,7 @@ export async function addOfficialResult(
   const overallRank = formData.get('overall_rank') ? parseInt(formData.get('overall_rank') as string) : null
 
   if (!name) return { error: '請填入選手姓名', success: false }
+  if (!gender) return { error: '請選擇性別（排行榜分組必填）', success: false }
   const totalSeconds = parseTime(totalStr)
   if (!totalSeconds || totalSeconds <= 0) return { error: '請輸入正確的完賽時間', success: false }
 
