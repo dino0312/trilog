@@ -15,6 +15,18 @@ const SUB: Record<string, { M: number; F: number }> = {
   sprint:  { M:  3600, F:  4320 },  // Sub 1 / Sub 1.2
 }
 
+// 進榜資格上限（秒），超過此時間不進榜
+const CUTOFF_SECONDS: Partial<Record<string, number>> = {
+  '70.3':   18000,  // 5:00:00
+  'olympic': 9000,  // 2:30:00
+}
+
+// 每性別最多顯示人數
+const MAX_PER_GENDER: Partial<Record<string, number>> = {
+  '70.3':   100,
+  'olympic': 100,
+}
+
 const DISTANCE_TITLE: Record<string, string> = {
   full: '226', '70.3': '113', olympic: '51.5', sprint: 'Sprint',
 }
@@ -209,25 +221,33 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
     followingIds = new Set((follows ?? []).map(f => f.following_id))
   }
 
+  const cutoff = CUTOFF_SECONDS[distance]
+  const maxPer = MAX_PER_GENDER[distance]
+
+  const buildQuery = (gender: 'M' | 'F') => {
+    let q = supabase
+      .from('leaderboard_entries')
+      .select('result_id, total_seconds, display_name, athlete_id, race_name, edition_year, race_date, claim_status, source_credibility, claim_tag_count')
+      .eq('distance_category', distance as 'sprint' | 'olympic' | '70.3' | 'full')
+      .eq('gender', gender)
+      .order('total_seconds', { ascending: true })
+      .limit(500)
+    if (cutoff) q = q.lt('total_seconds', cutoff)
+    return q
+  }
+
   const [{ data: maleRaw }, { data: femaleRaw }] = await Promise.all([
-    supabase
-      .from('leaderboard_entries')
-      .select('result_id, total_seconds, display_name, athlete_id, race_name, edition_year, race_date, claim_status, source_credibility, claim_tag_count')
-      .eq('distance_category', distance as 'sprint' | 'olympic' | '70.3' | 'full')
-      .eq('gender', 'M')
-      .order('total_seconds', { ascending: true })
-      .limit(500),
-    supabase
-      .from('leaderboard_entries')
-      .select('result_id, total_seconds, display_name, athlete_id, race_name, edition_year, race_date, claim_status, source_credibility, claim_tag_count')
-      .eq('distance_category', distance as 'sprint' | 'olympic' | '70.3' | 'full')
-      .eq('gender', 'F')
-      .order('total_seconds', { ascending: true })
-      .limit(500),
+    buildQuery('M'),
+    buildQuery('F'),
   ])
 
-  const male   = deduplicateBest((maleRaw   ?? []) as Entry[])
-  const female = deduplicateBest((femaleRaw ?? []) as Entry[])
+  const dedupAndCap = (raw: Entry[]) => {
+    const deduped = deduplicateBest(raw)
+    return maxPer ? deduped.slice(0, maxPer) : deduped
+  }
+
+  const male   = dedupAndCap((maleRaw   ?? []) as Entry[])
+  const female = dedupAndCap((femaleRaw ?? []) as Entry[])
 
   // 最新賽事日期作為「更新時間」
   const allDates = [...(maleRaw ?? []), ...(femaleRaw ?? [])]
