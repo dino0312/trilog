@@ -490,6 +490,7 @@ export async function deleteContribution(_prev: ResultState, formData: FormData)
   const id = formData.get('id') as string
 
   // 只能刪自己新增、尚未認領、athlete_id 為 null 的成績
+  // source_credibility 不限（admin 可新增 official 成績後刪除）
   const { error } = await supabase
     .from('results')
     .delete()
@@ -497,7 +498,6 @@ export async function deleteContribution(_prev: ResultState, formData: FormData)
     .eq('created_by', user.id)
     .is('athlete_id', null)
     .eq('claim_status', 'unclaimed')
-    .eq('source_credibility', 'self_reported')
 
   if (error) return { error: error.message }
 
