@@ -2,68 +2,34 @@
 
 import { useActionState, useEffect, useState } from 'react'
 import { addOfficialResult, type OfficialResultState } from '@/app/actions/official'
-
-type RaceEdition = {
-  id: string
-  year: number
-  distance_category: string
-  races: { id: string; name: string } | null
-}
-
-const DISTANCE_LABEL: Record<string, string> = {
-  sprint: 'Sprint', olympic: '51.5', '70.3': '113', full: '226',
-}
+import { RaceEditionPicker, type RaceEditionValue } from '@/components/races/RaceEditionPicker'
 
 const initial: OfficialResultState = { error: null, success: false }
 
-export function OfficialResultForm({ editions }: { editions: RaceEdition[] }) {
+export function OfficialResultForm() {
   const [state, action, pending] = useActionState(addOfficialResult, initial)
-  const [editionId, setEditionId] = useState('')
+  const [edition, setEdition] = useState<RaceEditionValue | null>(null)
   const [successCount, setSuccessCount] = useState(0)
-  const [formKey, setFormKey] = useState(0) // 用於 reset form
+  const [formKey, setFormKey] = useState(0)
 
   useEffect(() => {
     if (state.success) {
       setSuccessCount(c => c + 1)
       setFormKey(k => k + 1)
+      setEdition(null)
     }
   }, [state.success])
 
-  // 依賽事分組 editions
-  const byRace = editions.reduce<Record<string, { raceName: string; editions: RaceEdition[] }>>(
-    (acc, e) => {
-      const raceId = e.races?.id ?? '__unknown'
-      if (!acc[raceId]) acc[raceId] = { raceName: e.races?.name ?? '—', editions: [] }
-      acc[raceId].editions.push(e)
-      return acc
-    }, {}
-  )
-
   return (
     <form key={formKey} action={action} className="flex flex-col gap-4">
-      <input type="hidden" name="edition_id" value={editionId} />
+      <input type="hidden" name="edition_id" value={edition?.editionId ?? ''} />
 
       {/* 選賽事屆次 */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-ink-2">賽事屆次</label>
-        <select
-          required
-          value={editionId}
-          onChange={e => setEditionId(e.target.value)}
-          className="rounded-lg border border-border-strong bg-bg-elev px-3 py-2 text-sm text-ink outline-none focus:border-accent"
-        >
-          <option value="">選擇賽事屆次…</option>
-          {Object.entries(byRace).map(([, { raceName, editions: eds }]) => (
-            <optgroup key={raceName} label={raceName}>
-              {eds.map(e => (
-                <option key={e.id} value={e.id}>
-                  {e.year} · {DISTANCE_LABEL[e.distance_category] ?? e.distance_category}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-      </div>
+      <RaceEditionPicker
+        value={edition}
+        onChange={setEdition}
+        error={!edition && state.error ? '請選擇賽事屆次' : undefined}
+      />
 
       {/* 選手資料 */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -111,7 +77,7 @@ export function OfficialResultForm({ editions }: { editions: RaceEdition[] }) {
       <div className="flex items-center gap-4">
         <button
           type="submit"
-          disabled={pending || !editionId}
+          disabled={pending || !edition}
           className="rounded-lg bg-accent px-5 py-2 text-sm font-semibold text-accent-ink hover:brightness-110 transition disabled:opacity-50"
         >
           {pending ? '新增中…' : '新增成績'}

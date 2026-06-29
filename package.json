@@ -1,6 +1,6 @@
 {
   "name": "trilog",
-  "version": "0.7.022-26062903",
+  "version": "0.7.023-26062904",
   "private": true,
   "scripts": {
     "dev": "next dev",

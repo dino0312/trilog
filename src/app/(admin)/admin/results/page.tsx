@@ -64,7 +64,7 @@ export default async function AdminResultsPage({ searchParams }: { searchParams:
       {/* 新增表單 */}
       <section className="rounded-xl border border-border bg-bg-card p-5 mb-8">
         <h2 className="text-sm font-semibold text-ink mb-4">新增官方成績</h2>
-        <OfficialResultForm editions={(editions ?? []) as any} />
+        <OfficialResultForm />
       </section>
 
       {/* 篩選 */}
