@@ -9,6 +9,10 @@ export const metadata: Metadata = { title: '我的貢獻 · Tri·log' }
 
 type ClaimStatus = 'unclaimed' | 'claimed' | 'partial' | 'pending'
 
+const DISTANCE_LABEL: Record<string, string> = {
+  sprint: 'Sprint', olympic: '51.5', '70.3': '113', full: '226',
+}
+
 type ContribItem = {
   type: 'solo' | 'relay'
   id: string
@@ -16,6 +20,7 @@ type ContribItem = {
   member_count?: number
   race_name: string
   race_year: number
+  distance: string
   claim_status: ClaimStatus
   created_at: string
 }
@@ -46,7 +51,7 @@ export default async function ContributionsPage() {
     .from('results')
     .select(`
       id, athlete_name_snapshot, claim_status, created_at,
-      race_editions ( year, races ( name, name_zh ) )
+      race_editions ( year, distance_category, races ( name, name_zh ) )
     `)
     .eq('created_by', uid)
     .eq('result_type', 'solo')
@@ -56,7 +61,7 @@ export default async function ContributionsPage() {
   // relay step 1：我新增的接力 result + 賽事資訊
   const { data: relayResultRows } = await supabase
     .from('results')
-    .select(`id, created_at, race_editions ( year, races ( name, name_zh ) )`)
+    .select(`id, created_at, race_editions ( year, distance_category, races ( name, name_zh ) )`)
     .eq('created_by', uid)
     .eq('result_type', 'relay')
     .order('created_at', { ascending: false })
@@ -93,6 +98,7 @@ export default async function ContributionsPage() {
       name:         r.athlete_name_snapshot ?? '（未知）',
       race_name:    (race?.name_zh ?? race?.name ?? '—') as string,
       race_year:    (edition?.year ?? 0) as number,
+      distance:     (edition?.distance_category ?? '') as string,
       claim_status: r.claim_status as ClaimStatus,
       created_at:   r.created_at,
     }
@@ -116,6 +122,7 @@ export default async function ContributionsPage() {
       member_count: members.length,
       race_name:    (race?.name_zh ?? race?.name ?? '—') as string,
       race_year:    (edition?.year ?? 0) as number,
+      distance:     (edition?.distance_category ?? '') as string,
       claim_status: cs,
       created_at:   resultRow?.created_at ?? '',
     }
@@ -173,6 +180,7 @@ export default async function ContributionsPage() {
                   </p>
                   <p className="text-xs text-ink-4 mt-0.5">
                     {item.race_name} · {item.race_year}
+                    {item.distance && ` · ${DISTANCE_LABEL[item.distance] ?? item.distance}`}
                   </p>
                 </div>
 
