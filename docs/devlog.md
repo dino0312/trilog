@@ -6,6 +6,43 @@
 
 ---
 
+### [2026-06-29] 後台賽事屆次管理改為先選賽事再展開內容
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: []
+status: implemented
+decisions:
+  - id: D001
+    chapter: 0
+    content: "後台 /admin/races 改為單頁選賽事模式：用 ?raceId= 搜尋參數帶狀態，選擇後在同頁展開 RaceEditForm + EditionFormPanel + YearEditionBlock，無需跳轉至 /admin/races/[id]"
+    spec_impact: true
+    synced: false
+```
+
+**完成內容**：
+- 新增 `RacePicker` client 組件（搜尋輸入 + 下拉選單，選定後顯示 chip），使用 `router.push('?raceId=xxx')` 更新 URL
+- 改寫 `admin/races/page.tsx`：讀 `searchParams.raceId`，若有值則平行拉取 race + editions 後直接 inline render 管理 UI
+- 保留「所有系列賽」一覽表，「管理 →」改為 `?raceId=race.id` 的頁內連結，當前選中列高亮顯示「管理中」
+- `/admin/races/[id]` 原有路由保持不動（不影響現有連結）
+
+**技術決策**：
+- 用 URL searchParams 而非 React state 管理選定賽事，支援直接連結 + 瀏覽器上下頁
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | TypeScript 型別檢查 | ✅ PASS | `npx tsc --noEmit` 無錯誤 |
+| 2 | 瀏覽器頁面載入 | ⚠️ 待驗證 | 需啟動 dev server 驗證 |
+
+**異動檔案**：
+- `src/app/(admin)/admin/races/page.tsx`（改寫）
+- `src/app/(admin)/admin/races/RacePicker.tsx`（新增）
+
+---
+
 ### [2026-06-26] 最速榜進榜門檻、後台性別必填、我的貢獻修正
 
 **狀態**：✅ 完成
@@ -39,14 +76,32 @@ decisions:
     content: "我的貢獻頁加入刪除功能（solo 未認領成績），deleteContribution server action 限制 created_by + athlete_id IS NULL + unclaimed"
     spec_impact: true
     synced: false
+  - id: D006
+    chapter: 0
+    content: "我的貢獻頁卡片加入距離欄位顯示（race_editions.distance_category → DISTANCE_LABEL）"
+    spec_impact: false
+    synced: false
 ```
 
 **完成內容**：
 - `leaderboard/page.tsx`：CUTOFF_SECONDS 支援 `number | {M,F}` 結構，113 男 5h / 女 6h，226 12h，51.5 2:30；男女各最多 100 人
-- `OfficialResultForm.tsx` / `official.ts`：後台性別欄位加 required + server-side 驗證
-- `NewResultForm.tsx` / `results.ts`：他人成績加性別下拉（curated_gender 必填）
-- `contributions/page.tsx`：or filter 修正 NULL neq 問題；solo 未認領列加刪除按鈕
-- `DeleteContributionButton.tsx`：新增 client component
+- `OfficialResultForm.tsx` / `official.ts`：後台官方成績輸入表單性別欄位加 `required` + server-side 驗證（missing gender → 回傳 error）
+- `NewResultForm.tsx` / `results.ts`：「幫他人」成績加性別下拉（name="curated_gender"，必填），server action insert 時帶入 `curated_gender`
+- `contributions/page.tsx`：`.neq('athlete_id', uid)` 改為 `.or('athlete_id.is.null,athlete_id.neq.${uid}')` 修正 NULL neq 問題；solo 未認領列加刪除按鈕；卡片加距離欄位顯示（race · year · 距離）
+- `DeleteContributionButton.tsx`：新增 client component（`useActionState` + `window.confirm`）
+
+**技術決策**：
+- `deleteContribution` 移除 `source_credibility = 'self_reported'` 限制，改由 RLS `results_admin_delete` policy 處理授權，避免管理員後台新增的 official 成績無法刪除
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | TypeScript 型別檢查 | ✅ PASS | 無型別錯誤 |
+| 2 | 後台輸入成績不填性別 → 擋住 | ⚠️ 待驗證 | 需登入後台測試 |
+| 3 | 幫他人新增成績（附性別）→ 出現在榜單 | ⚠️ 待驗證 | 需有排行榜門檻內資料 |
+| 4 | 我的貢獻頁顯示貢獻成績 + 距離 | ⚠️ 待驗證 | 需有貢獻資料 |
+| 5 | 刪除貢獻（solo 未認領）→ 成功 | ⚠️ 待驗證 | 需有貢獻資料 |
 
 **異動檔案**：
 - `src/app/(main)/leaderboard/page.tsx`
