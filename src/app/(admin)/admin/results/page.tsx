@@ -35,8 +35,15 @@ export default async function AdminResultsPage({ searchParams }: { searchParams:
     .order('total_seconds', { ascending: true })
     .limit(500)
 
-  if (editionFilter) query = query.eq('race_edition_id', editionFilter)
-  if (raceFilter)    query = query.eq('race_editions.races.id' as any, raceFilter)
+  if (editionFilter) {
+    query = query.eq('race_edition_id', editionFilter)
+  } else if (raceFilter) {
+    const raceEditionIds = (editions ?? [])
+      .filter(e => (e.races as any)?.id === raceFilter)
+      .map(e => e.id)
+    if (raceEditionIds.length) query = query.in('race_edition_id', raceEditionIds)
+    else query = query.eq('race_edition_id', 'no-match') // 確保空結果
+  }
 
   const { data: results } = await query
 
