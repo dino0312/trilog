@@ -87,7 +87,7 @@ export default async function RacesPage() {
       id, name, name_zh, slug, series, status,
       country, county, city, website,
       race_editions (
-        id, year, distance_category, race_date
+        id, year, distance_category, race_date, weather_data
       )
     `)
     .eq('status', 'active')
@@ -100,6 +100,7 @@ export default async function RacesPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const editions = ((race as any).race_editions ?? []) as {
       id: string; year: number; distance_category: string; race_date: string
+      weather_data: { temp_c: number; humidity_pct: number; wind_speed_ms: number; precipitation_mm: number } | null
     }[]
 
     const latestYear = editions.length
@@ -107,10 +108,13 @@ export default async function RacesPage() {
       : null
 
     // 依年份分組，同年的距離收在一起
-    const byYear: Record<number, { distances: string[]; race_date: string | null }> = {}
+    const byYear: Record<number, { distances: string[]; race_date: string | null; weather_data: { temp_c: number; precipitation_mm: number } | null }> = {}
     for (const e of editions) {
-      if (!byYear[e.year]) byYear[e.year] = { distances: [], race_date: e.race_date ?? null }
+      if (!byYear[e.year]) byYear[e.year] = { distances: [], race_date: e.race_date ?? null, weather_data: null }
       byYear[e.year].distances.push(e.distance_category)
+      if (!byYear[e.year].weather_data && e.weather_data) {
+        byYear[e.year].weather_data = { temp_c: e.weather_data.temp_c, precipitation_mm: e.weather_data.precipitation_mm }
+      }
     }
     // 距離排序
     for (const y of Object.keys(byYear)) {
@@ -219,7 +223,7 @@ export default async function RacesPage() {
                   {/* 屆次列表（年份分組，同年多距離顯示為 tag） */}
                   {race.yearGroups.length > 0 && (
                     <div className="mt-3 border-t border-border/50 pt-2.5 flex flex-col gap-1.5">
-                      {race.yearGroups.map(({ year, distances, race_date }) => {
+                      {race.yearGroups.map(({ year, distances, race_date, weather_data }) => {
                         const key = `${race.id}:${year}`
                         const dateStr = race_date
                           ? new Date(race_date).toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })
@@ -227,14 +231,21 @@ export default async function RacesPage() {
                         return (
                           <div key={year} className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-xs font-mono text-ink-3 w-10">{year}</span>
+                              <span className="text-xs font-mono text-ink-3">
+                                {year}{dateStr && <span className="text-ink-4"> · {dateStr}</span>}
+                              </span>
                               {distances.map(d => (
                                 <span key={d} className="text-xs font-mono px-1.5 py-0.5 rounded bg-bg-elev text-ink-4">
                                   {DISTANCE_LABEL[d] ?? d}
                                 </span>
                               ))}
-                              {dateStr && (
-                                <span className="text-xs text-ink-4">{dateStr}</span>
+                              {weather_data && (
+                                <span className="text-xs text-ink-4 flex items-center gap-1">
+                                  <span>{weather_data.temp_c}°C</span>
+                                  {weather_data.precipitation_mm > 0 && (
+                                    <span className="text-swim">☂ {weather_data.precipitation_mm}mm</span>
+                                  )}
+                                </span>
                               )}
                             </div>
                             <RaceInterestButtons
