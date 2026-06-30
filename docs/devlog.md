@@ -6,6 +6,39 @@
 
 ---
 
+### [2026-06-30] 賽事列表天氣顯示與年份日期合併
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: []
+status: implemented
+decisions:
+  - id: D001
+    chapter: 0
+    content: "賽事列表屆次列年份與日期合併為「2026 · 11/1」格式；距離 tag 後若有 weather_data 則顯示氣溫，有降雨時額外顯示降雨量"
+    spec_impact: true
+    synced: false
+```
+
+**完成內容**：
+- `races/page.tsx`：query 加入 `weather_data`；`byYear` 分組記錄第一筆有效 `weather_data`（`temp_c`、`precipitation_mm`）
+- 年份與日期合併顯示：`2026 · 11/1`
+- 距離 tag 後顯示天氣：`26.1°C`，有降雨時加藍色 `☂ 6.3mm`；無資料則不顯示
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | TypeScript 型別檢查 | ✅ PASS | 無型別錯誤 |
+| 2 | 有天氣資料的屆次顯示氣溫 | ⚠️ 待驗證 | 需部署後確認 |
+| 3 | 無天氣資料的屆次不顯示天氣欄 | ⚠️ 待驗證 | 需部署後確認 |
+
+**異動檔案**：
+- `src/app/(main)/races/page.tsx`
+
+---
+
 ### [2026-06-30] 賽事列表日期顯示、後台篩選修正、UI 微調
 
 **狀態**：✅ 完成
