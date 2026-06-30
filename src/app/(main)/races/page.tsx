@@ -107,9 +107,9 @@ export default async function RacesPage() {
       : null
 
     // 依年份分組，同年的距離收在一起
-    const byYear: Record<number, { distances: string[] }> = {}
+    const byYear: Record<number, { distances: string[]; race_date: string | null }> = {}
     for (const e of editions) {
-      if (!byYear[e.year]) byYear[e.year] = { distances: [] }
+      if (!byYear[e.year]) byYear[e.year] = { distances: [], race_date: e.race_date ?? null }
       byYear[e.year].distances.push(e.distance_category)
     }
     // 距離排序
@@ -219,8 +219,11 @@ export default async function RacesPage() {
                   {/* 屆次列表（年份分組，同年多距離顯示為 tag） */}
                   {race.yearGroups.length > 0 && (
                     <div className="mt-3 border-t border-border/50 pt-2.5 flex flex-col gap-1.5">
-                      {race.yearGroups.map(({ year, distances }) => {
+                      {race.yearGroups.map(({ year, distances, race_date }) => {
                         const key = `${race.id}:${year}`
+                        const dateStr = race_date
+                          ? new Date(race_date).toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })
+                          : null
                         return (
                           <div key={year} className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2 flex-wrap">
@@ -230,6 +233,9 @@ export default async function RacesPage() {
                                   {DISTANCE_LABEL[d] ?? d}
                                 </span>
                               ))}
+                              {dateStr && (
+                                <span className="text-xs text-ink-4">{dateStr}</span>
+                              )}
                             </div>
                             <RaceInterestButtons
                               raceId={race.id}
