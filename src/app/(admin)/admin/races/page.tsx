@@ -184,7 +184,7 @@ export default async function AdminRacesPage({
                         <span className="font-mono text-accent">{editionCount}</span>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <span className={`text-xs px-2 py-0.5 rounded-full border ${
+                        <span className={`text-xs px-2 py-0.5 rounded-full border whitespace-nowrap ${
                           race.status === 'active'
                             ? 'border-good/30 text-good'
                             : 'border-border-strong text-ink-4'
