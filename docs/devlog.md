@@ -6,6 +6,54 @@
 
 ---
 
+### [2026-06-30] 賽事列表日期顯示、後台篩選修正、UI 微調
+
+**狀態**：✅ 完成
+
+```spec-sync
+chapters: []
+status: implemented
+decisions:
+  - id: D001
+    chapter: 0
+    content: "賽事列表各屆次列在距離 tag 後加入 race_date 顯示（月/日格式）"
+    spec_impact: true
+    synced: false
+  - id: D002
+    chapter: 0
+    content: "官方成績管理賽事篩選失效：PostgREST 不支援 nested relation .eq() 過濾，改為先從 editions 取 IDs 再用 .in() 篩選"
+    spec_impact: false
+    synced: false
+  - id: D003
+    chapter: 0
+    content: "官方成績輸入表單賽事選擇改用 RaceEditionPicker（三步驟：搜尋→年份→距離），與新增成績頁 UX 一致"
+    spec_impact: true
+    synced: false
+```
+
+**完成內容**：
+- `races/page.tsx`：`byYear` 分組時記錄 `race_date`，屆次列距離 tag 後顯示比賽日期（月/日）
+- `admin/results/page.tsx`：賽事篩選改為 `.in('race_edition_id', raceEditionIds)`，修正篩選無效問題
+- `admin/results/OfficialResultForm.tsx`：移除 `editions` prop 及 grouped `<select>`，改用 `RaceEditionPicker`
+- `admin/races/page.tsx`：狀態 badge 加 `whitespace-nowrap`，修正「運作中」文字斷行
+
+**驗證紀錄**：
+
+| # | 測試項目 | 結果 | 說明 |
+|---|---------|------|------|
+| 1 | TypeScript 型別檢查 | ✅ PASS | 無型別錯誤 |
+| 2 | 賽事列表顯示日期 | ✅ PASS | 截圖確認部署後呈現正確 |
+| 3 | 官方成績管理賽事篩選 | ✅ PASS | 使用者回報篩選現已正常 |
+| 4 | 狀態 badge 不斷行 | ✅ PASS | 截圖確認修正 |
+
+**異動檔案**：
+- `src/app/(main)/races/page.tsx`
+- `src/app/(admin)/admin/results/page.tsx`
+- `src/app/(admin)/admin/results/OfficialResultForm.tsx`
+- `src/app/(admin)/admin/races/page.tsx`
+
+---
+
 ### [2026-06-29] 後台賽事屆次管理改為先選賽事再展開內容
 
 **狀態**：✅ 完成
